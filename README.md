@@ -6,6 +6,8 @@ Open access data and other resources from research supported by [Down Syndrome E
 
 - [Reading and Language Intervention for Children with Down Syndrome](projects/reading-language-intervention-trial)
 
+---
+
 ### Copyright
 
 Copyright (c) Down Syndrome Education International and contributors

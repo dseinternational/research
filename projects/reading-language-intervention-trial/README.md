@@ -1,4 +1,4 @@
-# Reading and Language Intervention for Children with Down Syndrome: Trial Data
+# Reading and Language Intervention for Children with Down Syndrome
 
 Open access data from the trial of the Reading and Language Intervention for Children with Down Syndrome (RLI).
 

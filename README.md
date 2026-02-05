@@ -8,8 +8,13 @@ Open access data and other resources from research supported by [Down Syndrome E
 
 ---
 
-### Copyright
+## License
 
-Copyright (c) Down Syndrome Education International and contributors
+All source code in this repository is licensed under the GNU Affero General Public License v3.0 **(AGPL-3.0-only)**. See `LICENSE`.
 
-The content of this repository is licensed under [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/).
+Some other artifacts are licensed under other licenses:
+
+- **Code**: GNU Affero General Public License v3.0 (AGPL-3.0) — see `LICENSE`.
+- **Data**: Generally, CC BY 4.0 — see project directories for details.
+
+AGPL-3.0 requires that if you modify and run this software to provide a network service, you must offer the corresponding source code to users of that service.

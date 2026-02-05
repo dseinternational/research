@@ -47,4 +47,3 @@ dependencies:
     - jaxlib>=0.7.2
     - numpyro>=0.20.0
     - shap>=0.50.0 # https://github.com/conda-forge/shap-feedstock/pull/101
-    - -e ./dse_utils

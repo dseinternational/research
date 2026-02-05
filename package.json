@@ -1,0 +1,22 @@
+{
+  "name": "dse-research",
+  "version": "0.1.0",
+  "description": "DSE research",
+  "homepage": "https://github.com/dseinternational/research#readme",
+  "bugs": {
+    "url": "https://github.com/dseinternational/research/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dseinternational/research.git"
+  },
+  "license": "AGPL-3.0-or-later",
+  "author": "Down Syndrome Education International",
+  "private": true,
+  "devDependencies": {
+    "cspell": "9.6.4"
+  },
+  "scripts": {
+    "spellcheck": "cspell \"**/*.md\""
+  }
+}

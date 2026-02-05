@@ -18,11 +18,13 @@ FIGSIZE_XL_PORTRAIT = (5.846, 8.268)  # 148.5mm x 210mm (A5 portrait)
 FIGSIZE_XXL_PORTRAIT = (8.268, 11.693)  # 210mm x 297mm (A4 portrait)
 
 DPI_NOTEBOOK = 120.0
+DPI_FILE = 300.0
 
 DEFAULT_STYLE_DICT = {
     # Figure Settings
     "figure.figsize": FIGSIZE_MD,
     "figure.dpi": DPI_NOTEBOOK,
+    "savefig.dpi": DPI_FILE,
     "figure.facecolor": "white",
     "figure.constrained_layout.use": True,
     "figure.titlesize": 10,

@@ -40,7 +40,7 @@ def describe(series: list[float] | np.ndarray | pd.Series, alpha: float) -> pd.S
     stats["shapiro_pvalue"] = shapiro_result.pvalue
     stats["shapiro_normality"] = shapiro_result.pvalue > alpha
 
-    anderson_result = anderson(series_non_na, method="interpolated")
+    anderson_result = anderson(series_non_na, method="interpolate")
     stats["anderson_stat"] = anderson_result.statistic
     stats["anderson_pvalue"] = anderson_result.pvalue
 

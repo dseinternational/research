@@ -1,0 +1,50 @@
+name: dse-research
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.14
+  - arviz
+  - dcor
+  - duckdb>=1.4.4
+  - formulaic
+  - graphviz
+  - hatch
+  - jupyter>=1.1.1
+  - lightgbm
+  - matplotlib>=3.10.8
+  - mpmath
+  - networkx
+  - numba
+  - numpy>=2.3.5,<2.4 # https://github.com/numba/numba/issues/10263
+  - optuna
+  - orjson
+  - pandas>=3.0.0
+  - pandas-stubs
+  - pandoc
+  - pingouin
+  - plotly
+  - polars
+  - preliz
+  - pyarrow
+  - pymc
+  - pyreadstat
+  - pytest
+  - pytorch
+  - pyxlsb
+  - scikit-learn
+  - scipy>=1.17.0
+  - scipy-stubs
+  - seaborn
+  - setuptools>=80.10.2
+  - statsmodels
+  - tabulate
+  - xarray
+  - xgboost
+  - zarr
+  - pip
+  - pip:  
+    - jaxlib>=0.7.2
+    - numpyro>=0.20.0
+    - shap>=0.50.0 # https://github.com/conda-forge/shap-feedstock/pull/101
+    - -e ./dse_utils

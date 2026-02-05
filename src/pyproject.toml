@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling >= 1.28"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dse-research-utils"
+dynamic = ["version"]
+description = "Shared library for DSE research projects."
+readme = "readme.md"
+requires-python = ">=3.14"
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "scikit-learn",
+    "matplotlib"
+]
+
+[tool.hatch.version]
+path = "src/dse_research_utils/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dse_research_utils"]
+
+[tool.hatch.build.dev-mode]

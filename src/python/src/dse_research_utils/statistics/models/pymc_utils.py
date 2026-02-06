@@ -1,13 +1,18 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-from graphviz import Digraph
+import pytensor.tensor as pt
 import pymc as pm
 import psutil
 
+from graphviz import Digraph
 
-def logit(p):
-    return pm.math.log(p) - pm.math.log(1.0 - p)
+from dse_research_utils.math.constants import EPSILON
+
+
+def logit(p, eps=EPSILON):
+    p = pm.math.clip(p, eps, 1 - eps)
+    return pm.math.log(p) - pt.log1p(-p)
 
 
 def get_available_cores() -> int:

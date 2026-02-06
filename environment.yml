@@ -4,7 +4,7 @@ channels:
   - defaults
 dependencies:
   - python=3.14
-  - arviz
+  - arviz>=0.23.4,<1.0
   - dcor
   - duckdb>=1.4.4
   - formulaic
@@ -27,12 +27,12 @@ dependencies:
   - polars
   - preliz
   - pyarrow
-  - pymc
+  - pymc>=5.27.1,<6.0
   - pyreadstat
   - pytest
   - pytorch
   - pyxlsb
-  - scikit-learn
+  - scikit-learn>=1.8.0
   - scipy>=1.17.0
   - scipy-stubs
   - seaborn

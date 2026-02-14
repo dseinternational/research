@@ -31,7 +31,7 @@ DEFAULT_STYLE_DICT = {
     "figure.titleweight": "bold",
     # Font and Text
     "font.family": "sans-serif",
-    "font.sans-serif": ["Noto Sans", "Helvetica", "Arial", "sans-serif"],
+    "font.sans-serif": ["Source Sans Pro", "Source Sans 3", "Source Sans", "Helvetica", "Arial", "sans-serif"],
     "font.size": 10,
     "text.color": "#333333",
     # Axes

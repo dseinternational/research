@@ -29,12 +29,13 @@ dependencies:
   - pyarrow
   - pymc>=5.27.1,<6.0
   - pyreadstat
-  - pytest
+  - pytest>=9.0.2
   - pytorch
   - pyxlsb
   - scikit-learn>=1.8.0
   - scipy>=1.17.0
   - scipy-stubs
+  - shap>=0.50.0
   - seaborn
   - setuptools>=80.10.2
   - statsmodels
@@ -44,6 +45,5 @@ dependencies:
   - zarr
   - pip
   - pip:  
-    - jaxlib>=0.7.2
+    - jaxlib>=0.9.0
     - numpyro>=0.20.0
-    - shap>=0.50.0 # https://github.com/conda-forge/shap-feedstock/pull/101

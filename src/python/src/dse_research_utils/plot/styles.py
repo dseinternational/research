@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 
 FIGSIZE_XS = (2.913, 2.060)  # 74mm x 52mm (A8 landscape)
 FIGSIZE_SM = (4.134, 2.923)  # 105mm x 74mm (A7 landscape)
-FIGSIZE_MD = (5.000, 3.536) # 127mm x 90mm
+FIGSIZE_MD = (5.000, 3.536)  # 127mm x 90mm
 FIGSIZE_LG = (5.827, 4.120)  # 148mm x 105mm (A6 landscape)
 FIGSIZE_XL = (8.268, 5.846)  # 210mm x 148.5mm (A5 landscape)
 FIGSIZE_XXL = (11.693, 8.268)  # 297mm x 210mm (A4 landscape)
 
 FIGSIZE_XS_PORTRAIT = (2.060, 2.913)  # 52mm x 74mm (A8 portrait)
 FIGSIZE_SM_PORTRAIT = (2.923, 4.134)  # 74mm x 105mm (A7 portrait)
-FIGSIZE_MD_PORTRAIT = (3.536, 5.000) # 90mm x 127mm
+FIGSIZE_MD_PORTRAIT = (3.536, 5.000)  # 90mm x 127mm
 FIGSIZE_LG_PORTRAIT = (4.120, 5.827)  # 105mm x 148mm (A6 portrait)
 FIGSIZE_XL_PORTRAIT = (5.846, 8.268)  # 148.5mm x 210mm (A5 portrait)
 FIGSIZE_XXL_PORTRAIT = (8.268, 11.693)  # 210mm x 297mm (A4 portrait)

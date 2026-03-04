@@ -1,7 +1,6 @@
 name: dse-research
 channels:
   - conda-forge
-  - defaults
 dependencies:
   - python=3.14
   - arviz>=0.23.4,<1.0
@@ -17,7 +16,7 @@ dependencies:
   - mpmath
   - numba>=0.64.0
   - networkx
-  - numpy>=2.4.1
+  - numpy>=2.4.2
   - optuna
   - orjson
   - pandas>=3.0.1

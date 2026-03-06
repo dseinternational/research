@@ -9,6 +9,25 @@ import sys
 import pandas as pd
 import platform
 import psutil
+from rich import print
+
+
+def get_execution_context() -> str:
+    try:
+        from IPython import get_ipython
+
+        ip = get_ipython()
+        if ip is None:
+            return "script"
+
+        shell = ip.__class__.__name__
+        if shell == "ZMQInteractiveShell":
+            return "jupyter"
+        if shell == "TerminalInteractiveShell":
+            return "ipython"
+        return "interactive-other"
+    except Exception:
+        return "script"
 
 
 def get_environment_info(as_dataframe=False) -> dict | pd.DataFrame:
@@ -22,6 +41,7 @@ def get_environment_info(as_dataframe=False) -> dict | pd.DataFrame:
         "cpu_count_physical": psutil.cpu_count(logical=False),
         "memory_total_gb": int(round(vm.total / 1024 / 1024 / 1024, 0)),
         "python": sys.version,
+        "execution_context": get_execution_context(),
     }
     if as_dataframe:
         df = pd.DataFrame(list(environment.items()), columns=["name", "value"])
@@ -34,4 +54,3 @@ def report_environment_info():
     print("Environment:")
     for key, value in environment.items():
         print(f"  {key}: {value}")
-    

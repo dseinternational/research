@@ -3,6 +3,7 @@
 
 import pandas as pd
 from importlib.metadata import version
+from rich import print
 
 
 def get_package_version(pkg_name) -> str:
@@ -12,13 +13,16 @@ def get_package_version(pkg_name) -> str:
         return "Not found"
 
 
-def get_package_versions(pkg_names : list[str], as_dataframe=False) -> dict | pd.DataFrame:
+def get_package_versions(
+    pkg_names: list[str], as_dataframe=False
+) -> dict | pd.DataFrame:
     versions = {}
     for pkg in pkg_names:
         versions[pkg] = get_package_version(pkg)
     if as_dataframe:
         return pd.DataFrame.from_dict(versions, orient="index", columns=["version"])
     return versions
+
 
 def report_package_versions(pkg_names):
     versions = get_package_versions(pkg_names)

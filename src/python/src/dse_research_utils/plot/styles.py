@@ -20,6 +20,19 @@ FIGSIZE_XXL_PORTRAIT = (8.268, 11.693)  # 210mm x 297mm (A4 portrait)
 DPI_NOTEBOOK = 120.0
 DPI_FILE = 300.0
 
+COLOUR_BLUE = "#1f77b4"
+COLOUR_ORANGE = "#ff7f0e"
+COLOUR_GREEN = "#2ca02c"
+COLOUR_RED = "#d62728"
+COLOUR_YELLOW = "#ffbb00"
+COLOUR_PURPLE = "#9467bd"
+
+TEXT_COLOUR = "#333333"
+
+LINE_COLOUR = "#c0c0c0"
+
+FONT_SIZE_DEFAULT = 10
+
 DEFAULT_STYLE_DICT = {
     # Figure Settings
     "figure.figsize": FIGSIZE_MD,
@@ -27,36 +40,36 @@ DEFAULT_STYLE_DICT = {
     "savefig.dpi": DPI_FILE,
     "figure.facecolor": "white",
     "figure.constrained_layout.use": True,
-    "figure.titlesize": 10,
+    "figure.titlesize": FONT_SIZE_DEFAULT,
     "figure.titleweight": "bold",
     # Font and Text
     "font.family": "sans-serif",
     "font.sans-serif": ["Noto Sans", "Helvetica", "Arial", "sans-serif"],
     "font.stretch": "semi-condensed",
-    "font.size": 10,
-    "text.color": "#333333",
+    "font.size": FONT_SIZE_DEFAULT,
+    "text.color": TEXT_COLOUR,
     # Axes
-    "axes.labelsize": 10,
-    "axes.titlesize": 10,
+    "axes.labelsize": FONT_SIZE_DEFAULT,
+    "axes.titlesize": FONT_SIZE_DEFAULT,
     "axes.titleweight": "medium",
     "axes.labelweight": "medium",
-    "axes.labelcolor": "#333333",
+    "axes.labelcolor": TEXT_COLOUR,
     "axes.axisbelow": True,
     "axes.grid": True,
     "axes.grid.which": "major",
     "axes.facecolor": "white",
-    "axes.edgecolor": "#c0c0c0",
+    "axes.edgecolor": LINE_COLOUR,
     "axes.linewidth": 0,
     # Grid
     "grid.linestyle": "-",
-    "grid.color": "#c0c0c0",
+    "grid.color": LINE_COLOUR,
     "grid.linewidth": 0.25,
     "grid.alpha": 1,
     # Ticks
-    "xtick.labelsize": 10,
-    "ytick.labelsize": 10,
-    "xtick.color": "#333333",
-    "ytick.color": "#333333",
+    "xtick.labelsize": FONT_SIZE_DEFAULT,
+    "ytick.labelsize": FONT_SIZE_DEFAULT,
+    "xtick.color": TEXT_COLOUR,
+    "ytick.color": TEXT_COLOUR,
     "xtick.direction": "out",
     "ytick.direction": "out",
     "xtick.major.size": 0,
@@ -72,8 +85,8 @@ DEFAULT_STYLE_DICT = {
     "image.cmap": "tab10",
     "pcolormesh.snap": True,
     # Legend
-    "legend.fontsize": 10,
-    "legend.title_fontsize": 10,
+    "legend.fontsize": FONT_SIZE_DEFAULT,
+    "legend.title_fontsize": FONT_SIZE_DEFAULT,
     "legend.frameon": True,
     "legend.numpoints": 1,
     "legend.scatterpoints": 1,

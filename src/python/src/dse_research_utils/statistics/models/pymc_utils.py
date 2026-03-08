@@ -9,7 +9,7 @@ import psutil
 import xarray as xr
 
 from arviz import InferenceData
-from pyparsing import Union
+from pyparsing.helpers import Union
 from pytensor.tensor.variable import TensorVariable
 from graphviz import Digraph
 

@@ -51,8 +51,10 @@ Use **conda**, not pip or venv — the VS Code workspace is configured to use co
 
 ```bash
 conda env create -f environment.yml   # create environment
-conda activate <env-name>             # activate it
+conda activate dse-research           # activate it
 ```
+
+The conda environment targets **Python 3.14**. The `dse-research-utils` package also requires `python >= 3.14`.
 
 Key dependencies: PyMC ≥ 5.28, ArviZ ≥ 0.23, JAX, pandas ≥ 3.0, polars, numpy ≥ 2.4, scipy ≥ 1.17, statsmodels, pingouin, scikit-learn ≥ 1.8, PyTorch, Optuna, DuckDB ≥ 1.5, matplotlib ≥ 3.10, Jupytext.
 
@@ -79,6 +81,14 @@ Package source mapping is enforced with `<clear />`, so only these two sources a
 **Type hints**: always used on function signatures.
 
 **Docstrings**: NumPy-style with `Parameters`, `Returns`, and `---` separators.
+
+**Type union syntax**: Use `X | Y` (not `Union[X, Y]`) — e.g. `list[float] | np.ndarray | pd.Series`.
+
+**`print`**: Files import `from rich import print` to override the built-in.
+
+**Dataclasses**: `@dataclass` from stdlib (`dataclasses`) and from `attr` are both used. `statistics/models/` uses `attr`; `statistics/models/data.py` uses stdlib — follow the convention of the file being edited.
+
+**Notebook/script setup**: Call `dse_research_utils.environment.setup.init_workbook()` at the top of Jupyter notebooks (prints environment info) or `init_script()` for scripts (silent setup). Both apply the default matplotlib style via `set_matplotlib_default_style()`.
 
 **Bayesian sampling presets** (in `statistics/models/sampling.py`):
 - `dev` — 2 chains × 1000 draws (fast iteration)

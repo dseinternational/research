@@ -3,15 +3,14 @@
 
 import arviz as az
 import pandas as pd
-import pytensor.tensor as pt
-import pymc as pm
 import psutil
+import pymc as pm
+import pytensor.tensor as pt
 import xarray as xr
-
 from arviz import InferenceData
+from graphviz import Digraph
 from pyparsing.helpers import Union
 from pytensor.tensor.variable import TensorVariable
-from graphviz import Digraph
 
 from dse_research_utils.math.constants import EPSILON
 
@@ -60,8 +59,6 @@ def report_model_summary(model: pm.Model):
     print("Observed random variables:")
     for rv in model.observed_RVs:
         print(f"  {rv.name} [{rv.type}]")
-
-    model.basic_RVs
 
 
 def model_to_graphviz(model: pm.Model) -> Digraph:
@@ -131,8 +128,6 @@ def get_summary_diagnostics(
     """
     var_names = [var.name for var in model.unobserved_RVs if var.size.eval() <= 2]
 
-    diagnostics_df = az.summary(
-        trace, var_names=var_names, round_to=round_to, hdi_prob=hdi_prob
-    )
+    diagnostics_df = az.summary(trace, var_names=var_names, round_to=round_to, hdi_prob=hdi_prob)
 
     return diagnostics_df

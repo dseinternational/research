@@ -3,7 +3,7 @@
 
 import numpy as np
 import pandas as pd
-from scipy.stats import shapiro, anderson
+from scipy.stats import anderson, shapiro
 
 
 def describe(series: list[float] | np.ndarray | pd.Series, alpha: float) -> pd.Series:
@@ -22,9 +22,8 @@ def describe(series: list[float] | np.ndarray | pd.Series, alpha: float) -> pd.S
     pd.Series
         A series containing the descriptive statistics and normality test results.
     """
-    if isinstance(series, np.ndarray):
-        if series.ndim != 1:
-            raise ValueError("Only 1-dimensional arrays are supported.")
+    if isinstance(series, np.ndarray) and series.ndim != 1:
+        raise ValueError("Only 1-dimensional arrays are supported.")
     if not isinstance(series, pd.Series):
         series = pd.Series(series)
 

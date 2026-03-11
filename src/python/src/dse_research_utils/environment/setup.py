@@ -1,8 +1,9 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-from dse_research_utils.plot.styles import set_matplotlib_default_style
 from dse_research_utils.environment.info import report_environment_info
+from dse_research_utils.plot.styles import set_matplotlib_default_style
+
 
 def init():
     """Initialize the environment."""

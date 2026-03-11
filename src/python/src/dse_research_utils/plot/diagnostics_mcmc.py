@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 
-import arviz as az
-import matplotlib.pyplot as plt
 import os
 
+import arviz as az
+import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 
 

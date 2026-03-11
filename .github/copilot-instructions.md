@@ -6,12 +6,17 @@ This is the **Down Syndrome Education International (DSE) Research** monorepo. I
 
 ```
 research/
-├── projects/                        # Self-contained research projects (data + analysis)
-│   └── reading-language-intervention-trial/
-│       ├── data/rli-trial-data.csv          # Trial dataset
-│       └── data/rli-trial-data-variables.csv # Variable codebook
+├── projects/                        # Self-contained research projects
+│   └── <project-name>/
+│       ├── data/                    # Datasets + *-variables.csv codebooks
+│       ├── docs/                    # Markdown/Quarto reports and write-ups
+│       ├── notes/                   # Working notes and scratch analysis
+│       ├── scripts/                 # Python scripts (analysis pipelines, data prep)
+│       ├── src/                     # Project-specific Python modules
+│       ├── README.md
+│       └── LICENSE
 └── src/
-    ├── python/                      # dse-research-utils package (v0.1.0)
+    ├── python/                      # dse-research-utils shared package (v0.1.0)
     │   └── src/dse_research_utils/
     │       ├── environment/         # System info and execution context
     │       ├── math/                # Constants (EPSILON, etc.)
@@ -22,7 +27,7 @@ research/
     └── dotnet/                      # Future .NET utilities (TODO placeholder)
 ```
 
-Each research project under `projects/` is self-contained with its own `README.md`, `LICENSE`, and `data/` folder.
+Each research project under `projects/` is self-contained with its own `README.md`, `LICENSE`, and `data/` folder. Project-specific Python modules live in the project's `src/` folder; reusable utilities that mature beyond a single project should be promoted into `dse-research-utils` under `src/python/`.
 
 ## Commands
 
@@ -36,6 +41,14 @@ npm run spellcheck      # runs cspell over all *.md files
 ```bash
 cd src/python
 python -m build         # builds wheel via hatchling
+```
+
+### Python lint and format
+```bash
+cd src/python
+ruff check .              # lint
+ruff check . --fix        # lint with auto-fix
+ruff format .             # format
 ```
 
 ### Python tests (pytest — no tests written yet)

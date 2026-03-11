@@ -1,9 +1,9 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import numpy as np
-
 from dataclasses import dataclass
+
+import numpy as np
 
 
 @dataclass
@@ -27,6 +27,7 @@ class BinomialModelData(ModelData):
     """
     Data for a binomial model with one predictor variable and a count outcome variable.
     """
+
     n_trials: int
     """
     Number of trials (maximum score count).
@@ -40,9 +41,7 @@ class BinomialModelData(ModelData):
             raise ValueError("X_obs must be a 2D array with shape (n, 1).")
 
         if self.y_obs.ndim != 1 or self.y_obs.shape[0] != self.X_obs.shape[0]:
-            raise ValueError(
-                "y_obs must be a 1D array with the same number of rows as X_obs."
-            )
+            raise ValueError("y_obs must be a 1D array with the same number of rows as X_obs.")
 
         if np.any(self.y_obs < 0) or np.any(self.y_obs > self.n_trials):
             raise ValueError("y_obs values must be in the range [0, n_trials].")

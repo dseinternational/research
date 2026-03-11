@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import os
+
 from attr import dataclass
+
 
 @dataclass
 class ReportingConfiguration:
@@ -22,25 +24,24 @@ class ReportingConfiguration:
     """
     High density interval width for reporting (e.g., 0.95 for 95% HDI).
     """
-    
+
     @property
     def models_dir(self) -> str:
         """
         Directory for saving model outputs (plots, data, report).
         """
         return os.path.join(self.output_root_dir, "models")
-    
+
     @property
     def model_label(self) -> str:
         """
         Label for the model.
         """
         return f"{self.model_name}-{self.config_name}"
-    
+
     @property
     def output_dir(self) -> str:
         """
         Directory for saving model outputs (plots, data).
         """
         return os.path.join(self.models_dir, self.model_label)
-    

@@ -5,9 +5,10 @@
 Module for gathering and reporting environment information.
 """
 
-import sys
-import pandas as pd
 import platform
+import sys
+
+import pandas as pd
 import psutil
 from rich import print
 

@@ -16,7 +16,7 @@ dependencies:
   - mpmath
   - numba>=0.64.0
   - networkx
-  - numpy>=2.4.3
+  - numpy>=2.4.2
   - optuna
   - orjson
   - pandas>=3.0.1
@@ -36,7 +36,7 @@ dependencies:
   - scikit-learn>=1.8.0
   - scipy>=1.17.1
   - scipy-stubs
-  - shap>=0.51.0
+  - shap>=0.50.0
   - seaborn
   - setuptools>=80.10.2
   - statsmodels

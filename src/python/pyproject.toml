@@ -9,7 +9,7 @@ description = "Shared library for DSE research projects."
 readme = "readme.md"
 requires-python = ">=3.14"
 dependencies = [
-    "numpy>=2.4.2",
+    "numpy>=2.4.3",
     "pandas>=3.0.1",
     "preliz",
     "rich>=14.3.3",

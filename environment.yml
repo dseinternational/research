@@ -9,23 +9,25 @@ dependencies:
   - formulaic
   - graphviz
   - hatch
-  - jupyter>=1.1.1
+  - ipython>=9.11.0
+  - ipywidgets>=8.1.8
   - jupytext
   - lightgbm
   - matplotlib>=3.10.8
   - mpmath
-  - numba>=0.64.0
-  - nutpie>=0.16.8
   - networkx
-  - numpy>=2.4.2
+  - notebook>=7.5.5
+  - numba>=0.64.0
+  - numpy>=2.4.3
+  - nutpie>=0.16.8
   - optuna
   - orjson
-  - pandas>=3.0.1
   - pandas-stubs
+  - pandas>=3.0.1
   - pandoc
   - pingouin
   - plotly
-  - polars
+  - polars>=1.39.2
   - preliz
   - pyarrow
   - pymc>=5.28.1,<6.0
@@ -34,19 +36,19 @@ dependencies:
   - pytorch
   - pyxlsb
   - rich
-  - ruff
+  - ruff>=0.15.5
   - scikit-learn>=1.8.0
-  - scipy>=1.17.1
   - scipy-stubs
-  - shap>=0.50.0
-  - seaborn
+  - scipy>=1.17.1
+  - seaborn>=0.13.2
   - setuptools>=80.10.2
+  - shap>=0.51.0
   - statsmodels
   - tabulate
   - xarray
   - xgboost
   - zarr
   - pip
-  - pip:  
-    - jaxlib>=0.9.1
-    - numpyro>=0.20.0
+  - pip:
+      - jaxlib>=0.9.2
+      - numpyro>=0.20.0

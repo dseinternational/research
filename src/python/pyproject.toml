@@ -10,7 +10,7 @@ readme = "readme.md"
 requires-python = ">=3.14"
 dependencies = [
     "numpy>=2.4.3",
-    "pandas>=3.0.1",
+    "pandas>=3.0.2",
     "preliz",
     "rich>=14.3.3",
     "scipy>=1.17.1",

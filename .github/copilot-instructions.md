@@ -1,20 +1,11 @@
 # Copilot Instructions
 
-This is the **Down Syndrome Education International (DSE) Research** monorepo. It hosts open-access research datasets and a shared Python utility library (`dse-research-utils`) used across research projects.
+This is the **Down Syndrome Education International (DSE) Research** shared library repository. It hosts `dse-research-utils`, a Python utility package used across DSE research projects (each in its own repository).
 
 ## Repository Structure
 
 ```
 research/
-├── projects/                        # Self-contained research projects
-│   └── <project-name>/
-│       ├── data/                    # Datasets + *-variables.csv codebooks
-│       ├── docs/                    # Markdown/Quarto reports and write-ups
-│       ├── notes/                   # Working notes and scratch analysis
-│       ├── scripts/                 # Python scripts (analysis pipelines, data prep)
-│       ├── src/                     # Project-specific Python modules
-│       ├── README.md
-│       └── LICENSE
 └── src/
     ├── python/                      # dse-research-utils shared package (v0.1.0)
     │   └── src/dse_research_utils/
@@ -26,8 +17,6 @@ research/
     │       └── statistics/          # Descriptive stats, intervals, PyMC models
     └── dotnet/                      # Future .NET utilities (TODO placeholder)
 ```
-
-Each research project under `projects/` is self-contained with its own `README.md`, `LICENSE`, and `data/` folder. Project-specific Python modules live in the project's `src/` folder; reusable utilities that mature beyond a single project should be promoted into `dse-research-utils` under `src/python/`.
 
 ## Commands
 
@@ -93,13 +82,19 @@ Package source mapping is enforced with `<clear />`, so only these two sources a
 
 **Type hints**: always used on function signatures.
 
-**Docstrings**: NumPy-style with `Parameters`, `Returns`, and `---` separators.
+**Docstrings**: NumPy-style with `Parameters`, `Returns`, and `---` separators. Dataclass fields use attribute docstrings (bare string literals after the field declaration).
 
 **Type union syntax**: Use `X | Y` (not `Union[X, Y]`) — e.g. `list[float] | np.ndarray | pd.Series`.
 
 **`print`**: Files import `from rich import print` to override the built-in.
 
-**Dataclasses**: `@dataclass` from stdlib (`dataclasses`) and from `attr` are both used. `statistics/models/` uses `attr`; `statistics/models/data.py` uses stdlib — follow the convention of the file being edited.
+**Imports**: Use fully-qualified absolute imports for internal modules — e.g. `from dse_research_utils.math.constants import EPSILON`. No relative imports. No `__init__.py` re-exports; all subpackage `__init__.py` files are empty.
+
+**Dataclasses**: stdlib `@dataclass` from `dataclasses` — used throughout `statistics/models/`. Use `__post_init__` for validation.
+
+**Ruff config** (in `src/python/pyproject.toml`): line-length 120, target Python 3.14, lint rules: `F`, `E`, `W`, `I`, `UP`, `B`, `SIM`, `RUF`.
+
+**Plot functions**: Create a figure, render the plot, optionally save to `output_dir` as both `.png` (300 DPI) and `.svg`, then `return plt.gcf()`.
 
 **Notebook/script setup**: Call `dse_research_utils.environment.setup.init_workbook()` at the top of Jupyter notebooks (prints environment info) or `init_script()` for scripts (silent setup). Both apply the default matplotlib style via `set_matplotlib_default_style()`.
 
@@ -107,6 +102,4 @@ Package source mapping is enforced with `<clear />`, so only these two sources a
 - `dev` — 2 chains × 1000 draws (fast iteration)
 - `reporting` / `rep` — 6 chains × 6000 draws, higher `target_accept`
 
-## Data Conventions
 
-Research datasets live at `projects/<project-name>/data/`. Every dataset CSV is accompanied by a `*-variables.csv` codebook describing each variable. Data may carry a separate license (e.g. CC BY 4.0) distinct from the code license.

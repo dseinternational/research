@@ -1,3 +1,0 @@
-# Vocabulary Growth
-
-TODO

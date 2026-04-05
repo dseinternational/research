@@ -35,6 +35,7 @@ dependencies:
       - plotly
       - polars>=1.39.2
       - preliz
+      - psutil>=7.2.2
       - pyarrow
       - pyreadstat
       - pytest>=9.0.2

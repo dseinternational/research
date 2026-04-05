@@ -9,6 +9,8 @@ description = "Shared library for DSE research projects."
 readme = "readme.md"
 requires-python = ">=3.14"
 dependencies = [
+    "arviz>=0.23.4,<1.0",
+    "attr>=0.3.2",
     "numpy>=2.4.3",
     "pandas>=3.0.2",
     "preliz",
@@ -16,6 +18,8 @@ dependencies = [
     "rich>=14.3.3",
     "scipy>=1.17.1",
     "scikit-learn>=1.8.0",
+    "scipy>=1.17.1",
+    "statsmodels>=0.14.6",
     "matplotlib>=3.10.8"
 ]
 

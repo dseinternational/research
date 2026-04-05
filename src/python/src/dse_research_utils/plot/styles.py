@@ -51,8 +51,8 @@ DEFAULT_STYLE_DICT = {
     "figure.titleweight": "bold",
     # Font and Text
     "font.family": "sans-serif",
-    "font.sans-serif": ["Noto Sans", "Helvetica", "Arial", "sans-serif"],
-    "font.stretch": "semi-condensed",
+    "font.sans-serif": ["Helvetica", "Arial", "sans-serif"],
+    # "font.stretch": "semi-condensed",
     "font.size": FONT_SIZE_DEFAULT,
     "text.color": TEXT_COLOUR,
     # Axes

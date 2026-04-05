@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-from attr import dataclass
+from dataclasses import dataclass
 
 import dse_research_utils.statistics.models.pymc_utils as pymc_utils
 

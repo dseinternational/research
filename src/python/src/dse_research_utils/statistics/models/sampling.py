@@ -35,12 +35,16 @@ class SamplingConfiguration:
 
 
 CHAINS_DEV = 2
+CHAINS_TEST = 4
 CHAINS_REP = 6
-TUNES_DEV = 1000
+TUNES_DEV = 500
+TUNES_TEST = 2000
 TUNES_REP = 6000
 SAMPLES_DEV = 500
+SAMPLES_TEST = 2000
 SAMPLES_REP = 6000
 TARGET_ACCEPT_DEV = 0.85
+TARGET_ACCEPT_TEST = 0.90
 TARGET_ACCEPT_REP = 0.95
 
 
@@ -48,7 +52,7 @@ def get_sampling_configuration(config: str = "dev", random_seed: int = 47) -> Sa
     """
     Returns a sampling configuration.
     """
-    if config == "reporting" or config == "rep":
+    if config == "reporting" or config == "report" or config == "rep":
         return SamplingConfiguration(
             draws=SAMPLES_REP,
             tune=TUNES_REP,
@@ -67,5 +71,15 @@ def get_sampling_configuration(config: str = "dev", random_seed: int = 47) -> Sa
             target_accept=TARGET_ACCEPT_DEV,
             random_seed=random_seed,
         )
-
+    
+    if config == "test" or config == "testing":
+        return SamplingConfiguration(
+            draws=SAMPLES_TEST,
+            tune=TUNES_TEST,
+            chains=CHAINS_TEST,
+            cores=min(CHAINS_TEST, pymc_utils.get_available_cores()),
+            target_accept=TARGET_ACCEPT_TEST,
+            random_seed=random_seed,
+        )
+    
     raise ValueError(f"Invalid sampling configuration: {config}")

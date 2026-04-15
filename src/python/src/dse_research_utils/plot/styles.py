@@ -51,7 +51,7 @@ DEFAULT_STYLE_DICT = {
     "figure.titleweight": "bold",
     # Font and Text
     "font.family": "sans-serif",
-    "font.sans-serif": ["Helvetica", "Arial", "DejaVu Sans", "sans-serif"],
+    "font.sans-serif": ["Helvetica Neue LT Std", "Helvetica", "Arial", "DejaVu Sans", "sans-serif"],
     # "font.stretch": "semi-condensed",
     "font.size": FONT_SIZE_DEFAULT,
     "text.color": TEXT_COLOUR,

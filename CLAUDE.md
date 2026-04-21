@@ -8,6 +8,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Shared library repository for [Down Syndrome Education International (DSE)](https://www.down-syndrome.org/) research projects. The primary artifact is `dse-research-utils`, a Python utility package (`src/python/`). A .NET utilities area (`src/dotnet/`) is a future placeholder.
 
+## Repositories using these libraries
+
+Current projects using these libraries include:
+
+- [dseinternational/language-reading-predictors](https://github.com/dseinternational/language-reading-predictors)
+- [dseinternational/vocabulary-growth](https://github.com/dseinternational/vocabulary-growth)
+- [dspopulations/us-birth-certificates](https://github.com/dspopulations/us-birth-certificates)
+
+To support developing across these repositories simultaneously, we typically check these out relative to this project as follows:
+
+- ../language-reading-predictors
+- ../vocabulary-growth
+- ../../dspopulations/us-birth-certificates
+
 ## Commands
 
 ### Spellcheck

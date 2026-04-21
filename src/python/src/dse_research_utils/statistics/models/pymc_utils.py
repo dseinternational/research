@@ -6,10 +6,8 @@ import pandas as pd
 import psutil
 import pymc as pm
 import pytensor.tensor as pt
-import xarray as xr
 from arviz import InferenceData
 from graphviz import Digraph
-from pyparsing.helpers import Union
 from pytensor.tensor.variable import TensorVariable
 
 from dse_research_utils.math.constants import EPSILON
@@ -110,7 +108,7 @@ def get_summary_diagnostics(
     trace: InferenceData,
     round_to: int = 3,
     hdi_prob: float = 0.89,
-) -> Union[pd.DataFrame, xr.Dataset]:
+) -> pd.DataFrame:
     """
     Get summary diagnostics for the PyMC model.
 
@@ -123,8 +121,8 @@ def get_summary_diagnostics(
 
     Returns
     -------
-    pd.DataFrame or xr.Dataset
-        A DataFrame or Dataset containing the summary diagnostics for each variable.
+    pd.DataFrame
+        A DataFrame containing the summary diagnostics for each variable.
     """
     var_names = [var.name for var in model.unobserved_RVs if var.size.eval() <= 2]
 

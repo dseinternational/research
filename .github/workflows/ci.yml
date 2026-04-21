@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   spellcheck:
     runs-on: ubuntu-24.04
@@ -40,3 +43,22 @@ jobs:
         working-directory: src/python
         run: |
           python -m build
+
+  test-python:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup conda environment
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-file: environment.yml
+          cache-environment: true
+          cache-downloads: true
+
+      - name: Run pytest
+        working-directory: src/python
+        run: pytest

@@ -4,7 +4,9 @@
 from importlib.metadata import version
 
 import pandas as pd
-from rich import print
+
+from dse_research_utils.console.sections import section_header
+from dse_research_utils.console.tables import print_key_value_table
 
 
 def get_package_version(pkg_name) -> str:
@@ -25,6 +27,5 @@ def get_package_versions(pkg_names: list[str], as_dataframe=False) -> dict | pd.
 
 def report_package_versions(pkg_names):
     versions = get_package_versions(pkg_names)
-    print("Package Versions:")
-    for pkg, ver in versions.items():
-        print(f"  {pkg}: {ver}")
+    section_header("Package Versions")
+    print_key_value_table(versions, key_header="Package", value_header="Version")

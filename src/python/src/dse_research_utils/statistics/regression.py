@@ -2,8 +2,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import numpy as np
-import pandas as pd
-
 import statsmodels.api as sm
 
 
@@ -26,7 +24,7 @@ def linear_regression_ols(x, y):
         - 'slope': The estimated slope of the regression line.
         - 'fitted': The fitted values (predicted y values).
         - 'residuals': The residuals (differences between observed and fitted values).
-        - 'r_squared': The coefficient of determination (R²) indicating the proportion of variance explained by the model.
+        - 'r_squared': The coefficient of determination (R²) — proportion of variance explained by the model.
         - 'residual_standard_error': The standard error of the residuals.
         - 'model': The statsmodels OLS model object.
         - 'results': The statsmodels OLS results object containing detailed regression output.

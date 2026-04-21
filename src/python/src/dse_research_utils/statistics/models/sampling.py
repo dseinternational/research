@@ -71,7 +71,7 @@ def get_sampling_configuration(config: str = "dev", random_seed: int = 47) -> Sa
             target_accept=TARGET_ACCEPT_DEV,
             random_seed=random_seed,
         )
-    
+
     if config == "test" or config == "testing":
         return SamplingConfiguration(
             draws=SAMPLES_TEST,
@@ -81,5 +81,5 @@ def get_sampling_configuration(config: str = "dev", random_seed: int = 47) -> Sa
             target_accept=TARGET_ACCEPT_TEST,
             random_seed=random_seed,
         )
-    
+
     raise ValueError(f"Invalid sampling configuration: {config}")

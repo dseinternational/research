@@ -70,9 +70,10 @@ pytest path/to/test_file.py::test_function_name  # single test
 
 All `__init__.py` files are empty — no re-exports. Use fully-qualified absolute imports everywhere (e.g. `from dse_research_utils.math.constants import EPSILON`).
 
-Bayesian sampling presets in `statistics/models/sampling.py`:
-- `dev` — 2 chains × 1000 draws (fast iteration)
-- `reporting` / `rep` — 6 chains × 6000 draws, higher `target_accept`
+Bayesian sampling presets in `statistics/models/sampling.py`, selected via `get_sampling_configuration(config)`:
+- `dev` / `development` — 2 chains × 500 draws, `target_accept=0.85` (fast iteration)
+- `test` / `testing` — 4 chains × 2000 draws, `target_accept=0.90`
+- `reporting` / `report` / `rep` — 6 chains × 6000 draws, `target_accept=0.95`
 
 ## Python Conventions
 

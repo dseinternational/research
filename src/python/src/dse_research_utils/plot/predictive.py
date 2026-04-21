@@ -18,19 +18,21 @@ def plot_prior_samples_binomial(
     x_observed: np.ndarray | pd.Series,
     y_observed: np.ndarray | pd.Series,
     n_trials: int = 100,
-    n_curves=500,
+    n_curves: int = 500,
     x_label: str = "x",
     y_label: str = "y",
     filename: str | None = None,
     output_dir: str | None = None,
     report_figs_dir: str | None = None,
+    random_seed: int | None = None,
 ) -> Figure:
 
     plt.figure(figsize=plot_styles.FIGSIZE_XL)
 
     n_samples = y_samples.shape[1]
 
-    idx = np.random.randint(0, n_samples, n_curves)
+    rng = np.random.default_rng(random_seed)
+    idx = rng.integers(0, n_samples, n_curves)
 
     for i in idx:
         counts = y_samples[:, i] * n_trials
@@ -49,9 +51,11 @@ def plot_prior_samples_binomial(
     plt.ylabel(y_label)
 
     if filename is not None and output_dir is not None:
+        os.makedirs(output_dir, exist_ok=True)
         plt.savefig(os.path.join(output_dir, f"{filename}.png"), dpi=300)
         plt.savefig(os.path.join(output_dir, f"{filename}.svg"))
         if report_figs_dir is not None:
+            os.makedirs(report_figs_dir, exist_ok=True)
             plt.savefig(os.path.join(report_figs_dir, f"{filename}.png"), dpi=300)
 
     return plt.gcf()
@@ -74,7 +78,8 @@ def _plot_predictive_checks(
         figsize=plot_styles.FIGSIZE_MD,
     )
 
-    if output_dir and filename:
+    if output_dir is not None and filename is not None:
+        os.makedirs(output_dir, exist_ok=True)
         plt.savefig(os.path.join(output_dir, f"{filename}.png"), dpi=300)
         plt.savefig(os.path.join(output_dir, f"{filename}.svg"))
 

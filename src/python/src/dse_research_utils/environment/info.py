@@ -10,7 +10,9 @@ import sys
 
 import pandas as pd
 import psutil
-from rich import print
+
+from dse_research_utils.console.sections import section_header
+from dse_research_utils.console.tables import print_key_value_table
 
 
 def get_execution_context() -> str:
@@ -52,6 +54,5 @@ def get_environment_info(as_dataframe=False) -> dict | pd.DataFrame:
 
 def report_environment_info():
     environment = get_environment_info()
-    print("Environment:")
-    for key, value in environment.items():
-        print(f"  {key}: {value}")
+    section_header("Environment")
+    print_key_value_table(environment, key_header="Field", value_header="Value")

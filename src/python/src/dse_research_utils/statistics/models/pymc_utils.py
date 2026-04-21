@@ -10,6 +10,8 @@ from arviz import InferenceData
 from graphviz import Digraph
 from pytensor.tensor.variable import TensorVariable
 
+from dse_research_utils.console.console import get_console
+from dse_research_utils.console.sections import section_header, subsection
 from dse_research_utils.math.constants import EPSILON
 
 
@@ -43,20 +45,20 @@ def report_model_summary(model: pm.Model):
     model : pm.Model
         The PyMC model to summarize.
     """
-    print("PyMC Model summary:")
-    print("-------------------")
+    console = get_console()
+    section_header("PyMC Model summary")
 
-    print("Free random variables:")
+    subsection("Free random variables")
     for rv in model.free_RVs:
-        print(f"  {rv.name} [{rv.type}]")
+        console.print(f"  {rv.name} [{rv.type}]")
 
-    print("Deterministic random variables:")
+    subsection("Deterministic random variables")
     for urv in model.deterministics:
-        print(f"  {urv.name} [{urv.type}]")
+        console.print(f"  {urv.name} [{urv.type}]")
 
-    print("Observed random variables:")
+    subsection("Observed random variables")
     for rv in model.observed_RVs:
-        print(f"  {rv.name} [{rv.type}]")
+        console.print(f"  {rv.name} [{rv.type}]")
 
 
 def model_to_graphviz(model: pm.Model) -> Digraph:

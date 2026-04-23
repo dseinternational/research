@@ -15,7 +15,7 @@ dependencies:
   - pandas-stubs
   - pandas>=3.0.2
   - polars>=1.40.0
-  - pyarrow>=23.0.1
+  - pyarrow>=24.0.0
   - pymc>=5.28.4,<6.0
   - pytorch>=2.10.0
   - scikit-learn>=1.8.0

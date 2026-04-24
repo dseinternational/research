@@ -32,7 +32,7 @@ dependencies:
       - ipywidgets>=8.1.8
       - jupytext
       - lightgbm
-      - matplotlib>=3.10.8
+      - matplotlib>=3.10.9
       - mpmath
       - networkx
       - notebook>=7.5.5

@@ -8,7 +8,7 @@ dependencies:
   - jax
   - numba>=0.65.1
   - numpy>=2.4.3
-  - numpyro>=0.20.1
+  - numpyro>=0.21.0
   - nutpie>=0.16.8
   - optuna>=4.8.0
   - optuna-integration[lightgbm,shap,scikit-learn,xgboost]

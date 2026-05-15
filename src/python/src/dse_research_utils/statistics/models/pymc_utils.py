@@ -6,9 +6,9 @@ import pandas as pd
 import psutil
 import pymc as pm
 import pytensor.tensor as pt
-from arviz import InferenceData
 from graphviz import Digraph
 from pytensor.tensor.variable import TensorVariable
+from xarray import DataTree
 
 from dse_research_utils.console.console import get_console
 from dse_research_utils.console.sections import section_header, subsection
@@ -107,7 +107,7 @@ def get_variables_dict(model: pm.Model) -> dict[str, TensorVariable]:
 
 def get_summary_diagnostics(
     model: pm.Model,
-    trace: InferenceData,
+    trace: DataTree,
     round_to: int = 3,
     hdi_prob: float = 0.89,
 ) -> pd.DataFrame:
@@ -118,7 +118,7 @@ def get_summary_diagnostics(
     ----------
     model : pm.Model
         The PyMC model to analyze.
-    trace : InferenceData
+    trace : xarray.DataTree
         The trace object containing the samples from the model.
 
     Returns
@@ -128,6 +128,12 @@ def get_summary_diagnostics(
     """
     var_names = [var.name for var in model.unobserved_RVs if var.size.eval() <= 2]
 
-    diagnostics_df = az.summary(trace, var_names=var_names, round_to=round_to, hdi_prob=hdi_prob)
+    diagnostics_df = az.summary(
+        trace,
+        var_names=var_names,
+        round_to=round_to,
+        ci_prob=hdi_prob,
+        ci_kind="hdi",
+    )
 
     return diagnostics_df

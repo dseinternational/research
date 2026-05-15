@@ -3,10 +3,11 @@
 
 import os
 
-import arviz as az
+import arviz_plots as azp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from arviz_plots import PlotCollection
 from matplotlib.figure import Figure
 
 import dse_research_utils.plot.styles as plot_styles
@@ -63,27 +64,29 @@ def plot_prior_samples_binomial(
 
 def _plot_predictive_checks(
     data,
-    group="posterior",
-    num_pp_samples=None,
+    group: str = "posterior",
+    num_pp_samples: int | None = None,
     random_seed=None,
-    output_dir=None,
-    filename=None,
-) -> Figure:
+    output_dir: str | None = None,
+    filename: str | None = None,
+) -> PlotCollection:
 
-    az.plot_ppc(
+    kwargs: dict = {}
+    if num_pp_samples is not None:
+        kwargs["num_samples"] = num_pp_samples
+
+    pc = azp.plot_ppc_dist(
         data,
-        group=group,
-        num_pp_samples=num_pp_samples,
-        random_seed=random_seed,
-        figsize=plot_styles.FIGSIZE_MD,
+        group=f"{group}_predictive",
+        **kwargs,
     )
 
     if output_dir is not None and filename is not None:
         os.makedirs(output_dir, exist_ok=True)
-        plt.savefig(os.path.join(output_dir, f"{filename}.png"), dpi=300)
-        plt.savefig(os.path.join(output_dir, f"{filename}.svg"))
+        pc.savefig(os.path.join(output_dir, f"{filename}.png"), dpi=300)
+        pc.savefig(os.path.join(output_dir, f"{filename}.svg"))
 
-    return plt.gcf()
+    return pc
 
 
 def plot_prior_predictive_checks(
@@ -92,7 +95,7 @@ def plot_prior_predictive_checks(
     random_seed=None,
     output_dir=None,
     filename=None,
-) -> Figure:
+) -> PlotCollection:
 
     return _plot_predictive_checks(
         data,
@@ -110,7 +113,7 @@ def plot_posterior_predictive_checks(
     random_seed=None,
     output_dir=None,
     filename=None,
-) -> Figure:
+) -> PlotCollection:
 
     return _plot_predictive_checks(
         data,

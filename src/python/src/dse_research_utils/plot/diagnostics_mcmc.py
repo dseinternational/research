@@ -4,9 +4,8 @@
 
 import os
 
-import arviz as az
-import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
+import arviz_plots as azp
+from arviz_plots import PlotCollection
 
 
 def plot_kde_pair(
@@ -14,25 +13,25 @@ def plot_kde_pair(
     var_names: list[str],
     output_dir: str | None = None,
     filename: str | None = None,
-) -> Figure:
+) -> PlotCollection:
     """
     KDE pair plot with divergences.
 
     Returns
     -------
-    matplotlib.figure.Figure
+    arviz_plots.PlotCollection
     """
-    az.plot_pair(
+    pc = azp.plot_pair(
         data,
         var_names=var_names,
-        kind="kde",
-        marginals=True,
-        divergences=True,
+        marginal=True,
+        marginal_kind="kde",
+        visuals={"divergence": True},
     )
 
     if output_dir is not None and filename is not None:
         os.makedirs(output_dir, exist_ok=True)
-        plt.savefig(os.path.join(output_dir, f"{filename}.png"), dpi=300)
-        plt.savefig(os.path.join(output_dir, f"{filename}.svg"))
+        pc.savefig(os.path.join(output_dir, f"{filename}.png"), dpi=300)
+        pc.savefig(os.path.join(output_dir, f"{filename}.svg"))
 
-    return plt.gcf()
+    return pc

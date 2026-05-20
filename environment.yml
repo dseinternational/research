@@ -2,7 +2,7 @@ name: dse-research
 channels:
   - conda-forge
 dependencies:
-  - python=3.14.4
+  - python=3.14.5
   - arviz>=1.1.0
   - arviz-base>=1.1.0
   - arviz-stats>=1.1.0

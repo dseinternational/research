@@ -29,7 +29,7 @@ dependencies:
   - pip
   - pip:
       - dcor
-      - duckdb>=1.5.2
+      - duckdb>=1.5.3
       - formulaic
       - hatch
       - ipython>=9.13.0

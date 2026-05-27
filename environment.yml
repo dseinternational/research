@@ -18,7 +18,7 @@ dependencies:
   - optuna-integration[lightgbm,shap,scikit-learn,xgboost]
   - pandas-stubs
   - pandas>=3.0.3
-  - polars>=1.40.1
+  - polars>=1.41.0
   - pyarrow>=23.0.1
   - pymc>=6.0
   - pytorch>=2.10.0
@@ -50,7 +50,7 @@ dependencies:
       - pytest>=9.0.3
       - pyxlsb
       - rich>=15.0.0
-      - ruff>=0.15.13
+      - ruff>=0.15.14
       - scipy-stubs
       - scipy>=1.17.1
       - seaborn>=0.13.2

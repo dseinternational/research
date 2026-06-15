@@ -37,15 +37,19 @@ class SamplingConfiguration:
 CHAINS_DEV = 2
 CHAINS_TEST = 4
 CHAINS_REP = 6
+CHAINS_REP_LITE = 4
 TUNES_DEV = 500
 TUNES_TEST = 2000
 TUNES_REP = 6000
+TUNES_REP_LITE = 4000
 SAMPLES_DEV = 500
 SAMPLES_TEST = 2000
 SAMPLES_REP = 6000
+SAMPLES_REP_LITE = 4000
 TARGET_ACCEPT_DEV = 0.85
 TARGET_ACCEPT_TEST = 0.90
 TARGET_ACCEPT_REP = 0.95
+TARGET_ACCEPT_REP_LITE = 0.95
 
 
 def get_sampling_configuration(config: str = "dev", random_seed: int = 47) -> SamplingConfiguration:
@@ -59,6 +63,21 @@ def get_sampling_configuration(config: str = "dev", random_seed: int = 47) -> Sa
             chains=CHAINS_REP,
             cores=min(CHAINS_REP, pymc_utils.get_available_cores()),
             target_accept=TARGET_ACCEPT_REP,
+            random_seed=random_seed,
+        )
+
+    if config == "rep-lite" or config == "reporting-lite" or config == "rep_lite":
+        # Reporting-grade rigour (keeps rep's target_accept) but lighter: ESS,
+        # not raw draws, is the binding metric, so fewer draws still clears the
+        # ESS > 400 bar with wide margin. 4 chains keeps the config portable on
+        # <=5-core machines; raise to 6 on >=6-core hardware for extra R-hat
+        # robustness at ~no wall-time cost. See dseinternational/vocabulary-growth#50.
+        return SamplingConfiguration(
+            draws=SAMPLES_REP_LITE,
+            tune=TUNES_REP_LITE,
+            chains=CHAINS_REP_LITE,
+            cores=min(CHAINS_REP_LITE, pymc_utils.get_available_cores()),
+            target_accept=TARGET_ACCEPT_REP_LITE,
             random_seed=random_seed,
         )
 

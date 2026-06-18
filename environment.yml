@@ -6,7 +6,7 @@ dependencies:
   - arviz>=1.1.0
   - arviz-base>=1.2.0
   - arviz-stats>=1.2.0
-  - arviz-plots>=1.1.0
+  - arviz-plots>=1.2.0
   - h5netcdf
   - graphviz>=14.1.2
   - jax>=0.10.1

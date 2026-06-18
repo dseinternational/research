@@ -14,7 +14,7 @@ dependencies = [
     "arviz-plots>=1.1.0",
     "numpy>=2.4.4",
     "pandas>=3.0.3",
-    "preliz",
+    "preliz>=0.27.0",
     "psutil>=7.2.2",
     "rich>=15.0.0",
     "scipy>=1.17.1",

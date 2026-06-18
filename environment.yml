@@ -44,7 +44,7 @@ dependencies:
       - pandoc
       - pingouin
       - plotly
-      - preliz
+      - preliz>=0.27.0
       - psutil>=7.2.2
       - pyreadstat>=1.3.5
       - pytest>=9.1.0

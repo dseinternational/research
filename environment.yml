@@ -10,7 +10,7 @@ dependencies:
   - h5netcdf
   - graphviz>=14.1.2
   - numba>=0.65.1
-  - numpy>=2.4.6
+  - numpy>=2.5.0
   - nutpie>=0.16.10
   - optuna>=4.9.0
   - optuna-integration[lightgbm,shap,scikit-learn,xgboost]
@@ -24,7 +24,7 @@ dependencies:
   - pip
   - pip:
       - dcor
-      - duckdb>=1.5.3
+      - duckdb>=1.5.4
       - formulaic
       - hatch
       - ipython>=9.14.1
@@ -34,7 +34,7 @@ dependencies:
       - matplotlib>=3.11.0
       - mpmath
       - networkx
-      - notebook>=7.5.7
+      - notebook>=7.6.0
       - orjson>=3.11.9
       - pandoc
       - pingouin
@@ -42,12 +42,12 @@ dependencies:
       - polars>=1.41.2
       - preliz>=0.27.0
       - psutil>=7.2.2
-      - pyarrow>=23.0.1
+      - pyarrow>=24.0.0
       - pyreadstat>=1.3.5
-      - pytest>=9.1.0
+      - pytest>=9.1.1
       - pyxlsb
       - rich>=15.0.0
-      - ruff>=0.15.18
+      - ruff>=0.15.19
       - scipy-stubs
       - scipy>=1.18.0
       - seaborn>=0.13.2

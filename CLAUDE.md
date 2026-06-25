@@ -18,14 +18,26 @@ When you draft or author any of the following, you **must** prefix it with a cal
 - comments on pull requests
 - comments on issues
 
-Use a GitHub-style warning callout, for example:
+Substitute the actual tool and model you are running as (for example, `GitHub Copilot` or `Claude Code/Opus 4.8`). This requirement applies to every drafted artifact so that human reviewers can readily distinguish AI-generated content.
+
+Use the callout syntax that matches where the text will render:
+
+**GitHub surfaces** — pull request descriptions, issues, and their comments — use [GitHub alert syntax](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts):
 
 ```markdown
 > [!NOTE]
 > Drafted by a LLM-based AI tool (Claude Code/Opus 4.8).
 ```
 
-Substitute the actual tool and model you are running as (for example, `GitHub Copilot` or `Claude Code/Opus 4.8`). This requirement applies to every drafted artifact so that human reviewers can readily distinguish AI-generated content.
+**Quarto documents** (`.qmd`) — GitHub alert syntax does **not** render in Quarto, so use a [Quarto callout block](https://quarto.org/docs/authoring/callouts.html) instead:
+
+```markdown
+::: {.callout-note appearance="simple"}
+Drafted by a LLM-based AI tool (Claude Code/Opus 4.8).
+:::
+```
+
+Quarto supports five callout types (`note`, `tip`, `warning`, `caution`, `important`); use `note` for attribution. Drop `appearance="simple"` for the default boxed style, or add `collapse="true"` to make it collapsible.
 
 ## Repositories using these libraries
 

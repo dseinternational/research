@@ -8,6 +8,25 @@ This file provides guidance to AI coding agents when working with code in this r
 
 Shared library repository for [Down Syndrome Education International (DSE)](https://www.down-syndrome.org/) research projects. The primary artifact is `dse-research-utils`, a Python utility package (`src/python/`). A .NET utilities area (`src/dotnet/`) is a future placeholder.
 
+## AI tool attribution
+
+When you draft or author any of the following, you **must** prefix it with a callout that identifies the AI tool used. Place the callout as the first lines of the body:
+
+- document drafts
+- pull request descriptions
+- issue descriptions
+- comments on pull requests
+- comments on issues
+
+Use a GitHub-style warning callout, for example:
+
+```markdown
+> [!WARNING]
+> Drafted by a LLM-based AI tool (Claude Code/Opus 4.8).
+```
+
+Substitute the actual tool and model you are running as (for example, `GitHub Copilot` or `Claude Code/Opus 4.8`). This requirement applies to every drafted artifact so that human reviewers can readily distinguish AI-generated content.
+
 ## Repositories using these libraries
 
 Current projects using these libraries include:

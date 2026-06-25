@@ -21,7 +21,7 @@ When you draft or author any of the following, you **must** prefix it with a cal
 Use a GitHub-style warning callout, for example:
 
 ```markdown
-> [!WARNING]
+> [!NOTE]
 > Drafted by a LLM-based AI tool (Claude Code/Opus 4.8).
 ```
 

@@ -47,7 +47,7 @@ dependencies:
       - pytest>=9.1.1
       - pyxlsb
       - rich>=15.0.0
-      - ruff>=0.15.19
+      - ruff>=0.15.20
       - scipy-stubs
       - scipy>=1.18.0
       - seaborn>=0.13.2

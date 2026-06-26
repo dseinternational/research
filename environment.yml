@@ -3,29 +3,24 @@ channels:
   - conda-forge
 dependencies:
   - python=3.14.6
-  - arviz>=1.2.0
-  - arviz-base>=1.2.0
-  - arviz-stats>=1.2.0
-  - arviz-plots>=1.2.0
-  - h5netcdf
   - graphviz>=14.1.2
   - numba>=0.65.1
-  - numpy>=2.4.6
+  - numpy>=2.4.6,<2.5 # numba 0.65.1 requires numpy <2.5; lift cap when numba supports 2.5
   - nutpie>=0.16.10
-  - optuna>=4.9.0
-  - optuna-integration[lightgbm,shap,scikit-learn,xgboost]
-  - pandas-stubs
-  - pandas>=3.0.3
   - pymc>=6.0.1
-  - scikit-learn>=1.9.0
-  - shap>=0.52.0
-  - xarray>=2026.4.0
-  - xgboost>=3.2.0
+  - scipy>=1.18.0
   - pip
   - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cu132
+      - torch>=2.12.1
+      - arviz-base>=1.2.0
+      - arviz-plots>=1.2.0
+      - arviz-stats>=1.2.0
+      - arviz>=1.2.0
       - dcor
       - duckdb>=1.5.4
       - formulaic
+      - h5netcdf
       - hatch
       - ipython>=9.14.1
       - ipywidgets>=8.1.8
@@ -35,7 +30,11 @@ dependencies:
       - mpmath
       - networkx
       - notebook>=7.6.0
+      - optuna-integration[lightgbm,shap,scikit-learn,xgboost]
+      - optuna>=4.9.0
       - orjson>=3.11.9
+      - pandas-stubs
+      - pandas>=3.0.3
       - pandoc
       - pingouin
       - plotly
@@ -48,11 +47,14 @@ dependencies:
       - pyxlsb
       - rich>=15.0.0
       - ruff>=0.15.20
+      - scikit-learn>=1.9.0
       - scipy-stubs
-      - scipy>=1.18.0
       - seaborn>=0.13.2
-      - setuptools>=82.0.1
+      - setuptools>=81.0.0,<82.0.0 # torch
       - shap>=0.51.0
+      - shap>=0.52.0
       - statsmodels>=0.14.6
       - tabulate
+      - xarray>=2026.4.0
+      - xgboost>=3.2.0
       - zarr

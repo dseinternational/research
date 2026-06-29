@@ -17,6 +17,8 @@ dependencies:
       - arviz-plots>=1.2.0
       - arviz-stats>=1.2.0
       - arviz>=1.2.0
+      - azure-identity
+      - azure-storage-blob
       - dcor
       - duckdb>=1.5.4
       - formulaic

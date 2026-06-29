@@ -17,6 +17,8 @@ dependencies:
       - arviz-plots>=1.2.0
       - arviz-stats>=1.2.0
       - arviz>=1.2.0
+      - azure-identity
+      - azure-storage-blob
       - dcor
       - duckdb>=1.5.4
       - formulaic
@@ -34,7 +36,7 @@ dependencies:
       - optuna>=4.9.0
       - orjson>=3.11.9
       - pandas-stubs
-      - pandas>=3.0.4
+      - pandas>=3.0.3
       - pandoc
       - pingouin
       - plotly

@@ -12,6 +12,8 @@ dependencies = [
     "arviz-plots>=1.2.0",
     "arviz-stats>=1.2.0",
     "arviz>=1.2.0",
+    "azure-identity",
+    "azure-storage-blob",
     "matplotlib>=3.11.0",
     "numpy>=2.4.4",
     "pandas>=3.0.3",

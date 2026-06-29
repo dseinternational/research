@@ -56,24 +56,37 @@ To support developing across these repositories simultaneously, we typically che
 ## Commands
 
 ### Spellcheck
+
 ```bash
 npm ci
 npm run spellcheck      # runs cspell over all *.md files
 ```
 
+### Markdown format
+
+```bash
+npm run format          # rewrites Markdown files in place
+npm run format:check    # checks Markdown formatting without rewriting
+```
+
+Uses Prettier with `proseWrap: "preserve"` so existing prose line breaks are kept.
+
 ### Python — environment
+
 ```bash
 conda env create -f environment.yml   # create (Python 3.14, conda required — not pip/venv)
 conda activate dse-research
 ```
 
 ### Python — build
+
 ```bash
 cd src/python
 python -m build         # builds wheel via hatchling
 ```
 
 ### Python — lint and format
+
 ```bash
 cd src/python
 ruff check .            # lint
@@ -82,6 +95,7 @@ ruff format .           # format
 ```
 
 ### Python — tests
+
 ```bash
 pytest                                           # full suite
 pytest path/to/test_file.py                      # single file
@@ -102,6 +116,7 @@ pytest path/to/test_file.py::test_function_name  # single test
 All `__init__.py` files are empty — no re-exports. Use fully-qualified absolute imports everywhere (e.g. `from dse_research_utils.math.constants import EPSILON`).
 
 Bayesian sampling presets in `statistics/models/sampling.py`, selected via `get_sampling_configuration(config)`:
+
 - `dev` / `development` — 2 chains × 500 draws, `target_accept=0.85` (fast iteration)
 - `test` / `testing` — 4 chains × 2000 draws, `target_accept=0.90`
 - `reporting` / `report` / `rep` — 6 chains × 6000 draws, `target_accept=0.95`
@@ -109,6 +124,7 @@ Bayesian sampling presets in `statistics/models/sampling.py`, selected via `get_
 ## Python Conventions
 
 **License header** — every source file starts with:
+
 ```python
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later

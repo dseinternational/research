@@ -1,6 +1,6 @@
 # Research
 
-***Shared libraries and utilities for research supported by [Down Syndrome Education International](https://www.down-syndrome.org/).**
+**\*Shared libraries and utilities for research supported by [Down Syndrome Education International](https://www.down-syndrome.org/).**
 
 Current projects using these libraries include:
 

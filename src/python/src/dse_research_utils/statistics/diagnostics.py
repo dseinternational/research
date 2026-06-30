@@ -98,7 +98,10 @@ def write_diagnostics_summary(
     rhat_failing: list[str] = []
     ess_failing: list[str] = []
     try:
-        s = az.summary(trace, var_names=var_names, round_to=4, ci_kind="eti")
+        # Evaluate the gate on unrounded diagnostics; presentation rounding is
+        # applied by convergence_banner_markdown, not here (else a borderline
+        # R-hat such as 1.01004 would round to 1.0100 and slip through the gate).
+        s = az.summary(trace, var_names=var_names, round_to=None, ci_kind="eti")
         if "r_hat" in s:
             max_rhat = float(np.nanmax(s["r_hat"].values))
             rhat_failing = [str(i) for i in s.index[s["r_hat"] > RHAT_MAX]]

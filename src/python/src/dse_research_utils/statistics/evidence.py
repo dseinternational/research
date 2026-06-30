@@ -38,6 +38,8 @@ def evidence_label(prob: float) -> str:
         One of ``"inconclusive"``, ``"suggestive"``, ``"moderate"``, ``"strong"``,
         or ``"very strong"``.
     """
+    if not 0.0 <= float(prob) <= 1.0:
+        raise ValueError(f"prob must be a probability in [0, 1], got {prob!r}")
     for threshold, label in _EVIDENCE_LADDER:
         if prob < threshold:
             return label

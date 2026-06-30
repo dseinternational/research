@@ -46,3 +46,16 @@ def test_odds_string_clamps_extremes():
     # No ZeroDivision / inf at the boundaries.
     assert odds_string(1.0).endswith(":1")
     assert odds_string(0.0).startswith("1:")
+
+
+@pytest.mark.parametrize("bad", [-0.01, 1.01, 2.0, -1.0, float("nan")])
+def test_evidence_label_rejects_out_of_range(bad):
+    # The label is only meaningful for a probability; out-of-range / NaN inputs
+    # are an upstream mistake and should fail fast rather than mislabel.
+    with pytest.raises(ValueError):
+        evidence_label(bad)
+
+
+@pytest.mark.parametrize("ok", [0.0, 1.0])
+def test_evidence_label_accepts_closed_interval_endpoints(ok):
+    assert evidence_label(ok) in {"inconclusive", "very strong"}

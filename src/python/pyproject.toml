@@ -15,7 +15,7 @@ dependencies = [
     "azure-identity",
     "azure-storage-blob",
     "matplotlib>=3.11.0",
-    "numpy>=2.4.4",
+    "numpy>=2.4.6,<2.5",  # numba 0.65.1 requires numpy <2.5; lift cap when numba supports 2.5
     "pandas>=3.0.3",
     "preliz>=0.27.0",
     "psutil>=7.2.2",

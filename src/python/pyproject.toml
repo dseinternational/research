@@ -25,6 +25,14 @@ dependencies = [
     "statsmodels>=0.14.6"
 ]
 
+[project.optional-dependencies]
+# Heavyweight / system-binary plotting backends, kept out of the base install so
+# every consumer is not forced to carry them. The helpers that need them lazy-import
+# and raise a clear error when the extra is absent.
+viz = ["seaborn>=0.13"]            # dse_research_utils.plot.grids (histogram grids)
+graphs = ["graphviz", "networkx"]  # dse_research_utils.plot.graphs (needs system Graphviz)
+notebook = ["ipython"]             # dse_research_utils.plot.io.display_image
+
 [tool.hatch.version]
 path = "src/dse_research_utils/__init__.py"
 

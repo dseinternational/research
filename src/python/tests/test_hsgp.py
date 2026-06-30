@@ -16,7 +16,7 @@ def test_build_hsgp_1d_registers_named_nodes():
     rng = np.random.default_rng(0)
     x = rng.normal(size=40)
     with pm.Model() as model:
-        f = build_hsgp_1d("f_age", x, m=10)
+        build_hsgp_1d("f_age", x, m=10)
     names = set(model.named_vars)
     assert {"f_age", "f_age__eta", "f_age__ell"}.issubset(names)
     assert any(n.startswith("f_age__g_unit") for n in names)

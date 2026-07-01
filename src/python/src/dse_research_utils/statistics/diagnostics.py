@@ -114,12 +114,25 @@ def write_diagnostics_summary(
         rprint(f"[yellow]R-hat/ESS summary for the gate failed: {exc}[/yellow]")
 
     bfmi = _bfmi_per_chain(trace)
+    # Order-independent and NaN-safe. A degenerate chain (zero energy variance ->
+    # non-finite BFMI) must not be able to pass the gate just because a healthy
+    # chain happens to sort first under the builtin ``min()`` (NaN comparisons are
+    # all False, so ``min`` is order-dependent on a list containing NaN). Require
+    # every chain to have a finite BFMI at or above the threshold.
+    bfmi_ok = bool(bfmi) and all(np.isfinite(b) and b >= BFMI_THRESHOLD for b in bfmi)
+    # Non-finite BFMI does not serialise as valid JSON (json emits a bare ``NaN``
+    # token); store ``None`` for those chains instead.
+    bfmi_json = (
+        [None if (b is None or not np.isfinite(b)) else float(b) for b in bfmi]
+        if bfmi is not None
+        else None
+    )
 
     checks = {
         "rhat": bool(max_rhat is not None and max_rhat <= RHAT_MAX),
         "ess": bool(min_ess is not None and min_ess >= ESS_THRESHOLD),
         "divergences": bool(n_div == 0),
-        "bfmi": bool(bfmi is not None and min(bfmi) >= BFMI_THRESHOLD),
+        "bfmi": bfmi_ok,
     }
     passed = all(checks.values())
 
@@ -129,7 +142,7 @@ def write_diagnostics_summary(
         "divergences": n_div,
         "max_rhat": max_rhat,
         "min_ess": min_ess,
-        "bfmi_per_chain": bfmi,
+        "bfmi_per_chain": bfmi_json,
         "rhat_failing": rhat_failing,
         "ess_failing": ess_failing,
         "thresholds": {
@@ -189,7 +202,9 @@ def convergence_banner_markdown(summary: dict | None, *, dev_note: bool = True) 
     )
     mr, me = summary.get("max_rhat"), summary.get("min_ess")
     bf = summary.get("bfmi_per_chain")
-    bf_s = ", ".join(f"{x:.2f}" for x in bf) if bf else "n/a"
+    bf_s = (
+        ", ".join("n/a" if x is None else f"{x:.2f}" for x in bf) if bf else "n/a"
+    )
     lines = [f'::: {{.{box} title="{head}"}}', ""]
     lines.append(f"- **Divergences:** {summary.get('divergences')} (target 0)")
     lines.append(

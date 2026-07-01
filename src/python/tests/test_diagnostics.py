@@ -71,6 +71,58 @@ def test_bfmi_per_chain_handles_missing_energy():
     assert _bfmi_per_chain(trace) is None
 
 
+def test_bfmi_per_chain_nan_for_degenerate_chain():
+    # A chain with constant (zero-variance) energy has an undefined BFMI: the
+    # denominator Sum((E - mean)^2) is 0, so the helper returns NaN for it.
+    energy = np.vstack([np.full(500, 2.0), np.random.default_rng(0).normal(size=500)])
+    ss = xr.Dataset({"energy": (("chain", "draw"), energy)})
+    bf = _bfmi_per_chain(SimpleNamespace(sample_stats=ss))
+    assert bf is not None and len(bf) == 2
+    assert not np.isfinite(bf[0])  # constant-energy chain -> NaN
+    assert np.isfinite(bf[1])
+
+
+def _make_trace_degenerate_bfmi(seed: int = 1) -> xr.DataTree:
+    """Well-mixed posterior, but chain 0 has constant energy (NaN BFMI)."""
+    rng = np.random.default_rng(seed)
+    shape = (2, 800)
+    posterior = xr.Dataset(
+        {
+            "mu": (("chain", "draw"), rng.normal(0.0, 1.0, size=shape)),
+            "sigma": (("chain", "draw"), rng.normal(2.0, 0.5, size=shape)),
+        },
+        coords={"chain": range(shape[0]), "draw": range(shape[1])},
+    )
+    energy = rng.normal(size=shape)
+    energy[0, :] = 3.14  # constant -> zero energy variance -> NaN BFMI
+    sample_stats = xr.Dataset(
+        {
+            "diverging": (("chain", "draw"), np.zeros(shape, dtype=bool)),
+            "energy": (("chain", "draw"), energy),
+        },
+        coords={"chain": range(shape[0]), "draw": range(shape[1])},
+    )
+    return xr.DataTree.from_dict({"posterior": posterior, "sample_stats": sample_stats})
+
+
+def test_write_diagnostics_summary_degenerate_bfmi_fails_and_serialises(tmp_path):
+    # A non-finite per-chain BFMI must fail the gate (order-independently), not
+    # slip through because a healthy chain sorts first under the builtin min().
+    payload = write_diagnostics_summary(_make_trace_degenerate_bfmi(), str(tmp_path))
+    assert payload["checks"]["bfmi"] is False
+    assert payload["passed"] is False
+
+    # ...and must serialise as valid JSON (None, never a bare ``NaN`` token).
+    text = (tmp_path / "diagnostics_summary.json").read_text()
+    assert "NaN" not in text
+    reloaded = json.loads(text)
+    assert reloaded["bfmi_per_chain"][0] is None
+    assert reloaded["bfmi_per_chain"][1] is not None
+
+    # The banner tolerates the None entry rather than raising on ``f"{None:.2f}"``.
+    assert "n/a" in convergence_banner_markdown(payload)
+
+
 def test_write_diagnostics_summary_passes_on_clean_trace(tmp_path):
     tables: dict = {}
     payload = write_diagnostics_summary(_make_trace(), str(tmp_path), tables=tables)

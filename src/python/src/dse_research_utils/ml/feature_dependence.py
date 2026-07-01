@@ -6,7 +6,9 @@
 Spearman / distance-correlation / mutual-information dissimilarity matrices over a
 ``(n_samples, n_features)`` design, plus a Ward-linkage helper, for feature
 clustering and redundancy analysis. Distance correlation uses the optional ``dcor``
-dependency, imported lazily so it is only required when that path is used.
+dependency (install the ``dependence`` extra: ``pip install
+dse-research-utils[dependence]``), imported lazily so it is only required when
+that path is used.
 """
 
 from __future__ import annotations
@@ -84,7 +86,13 @@ def distance_corr_matrix(X: pd.DataFrame | np.ndarray | list[float]):
     - More computationally expensive than standard correlation (O(n²) for n features)
     - Values range from 0 (independent) to 1 (perfectly dependent)
     """
-    import dcor  # lazy: only this function needs the optional dependency
+    try:
+        import dcor  # lazy: only this function needs the optional dependency
+    except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
+        raise ModuleNotFoundError(
+            "distance_corr_matrix requires dcor; install the 'dependence' extra "
+            "(pip install dse-research-utils[dependence])."
+        ) from exc
 
     X = np.asarray(X, dtype=np.float64)
     n = X.shape[1]

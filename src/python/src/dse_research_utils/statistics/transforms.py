@@ -25,19 +25,19 @@ def standardize(x: np.ndarray) -> np.ndarray:
     return (x - mean_x) / std_x
 
 
-def logit(p: float) -> float:
-    """NumPy logit: ``log(p / (1 - p))``."""
+def logit(p: float | np.ndarray) -> float | np.ndarray:
+    """NumPy logit: ``log(p / (1 - p))``. Vectorised — accepts scalars or arrays."""
     return np.log(p / (1 - p))
 
 
-def invlogit(x: float) -> float:
-    """NumPy inverse logit (logistic sigmoid): ``1 / (1 + exp(-x))``."""
+def invlogit(x: float | np.ndarray) -> float | np.ndarray:
+    """NumPy inverse logit (logistic sigmoid): ``1 / (1 + exp(-x))``. Vectorised."""
     return 1 / (1 + np.exp(-x))
 
 
 def convert_to_categorical(
     data: pd.DataFrame | pd.Series,
-) -> np.ndarray | pd.DataFrame | pd.Series:
+) -> pd.DataFrame | pd.Series:
     """Convert input data to categorical codes."""
     if isinstance(data, pd.DataFrame):
         return data.apply(lambda col: convert_to_categorical(col))

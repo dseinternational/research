@@ -14,6 +14,7 @@ from sklearn.model_selection import KFold
 
 from dse_research_utils.ml.cross_validation import cross_validation_score_rows
 from dse_research_utils.ml.feature_dependence import (
+    distance_corr_matrix,
     mutual_info_dissimilarity,
     spearman_distance_matrix,
 )
@@ -42,6 +43,31 @@ def test_spearman_distance_matrix_basic():
     assert np.allclose(dist, dist.T)
     # a and b are monotonic transforms -> Spearman |corr| = 1 -> distance 0.
     assert dist[0, 1] == pytest.approx(0.0, abs=1e-9)
+
+
+def test_distance_corr_matrix_basic():
+    pytest.importorskip("dcor")
+    rng = np.random.default_rng(0)
+    a = rng.normal(size=200)
+    X = np.column_stack([a, 2 * a + 1.0, rng.normal(size=200)])
+    M = distance_corr_matrix(X)
+    assert M.shape == (3, 3)
+    assert np.allclose(np.diag(M), 1.0)
+    assert np.allclose(M, M.T)
+    # a and (2a+1) are a deterministic linear transform of each other -> dcor ~ 1.
+    assert M[0, 1] == pytest.approx(1.0, abs=1e-6)
+
+
+def test_distance_corr_matrix_missing_dcor_raises_clear_error(monkeypatch):
+    # Simulate the optional 'dcor' dependency being absent: the lazy import
+    # inside distance_corr_matrix must raise a ModuleNotFoundError naming the
+    # 'dependence' extra, not a bare import traceback.
+    import sys
+
+    monkeypatch.setitem(sys.modules, "dcor", None)
+    X = np.random.default_rng(0).normal(size=(20, 2))
+    with pytest.raises(ModuleNotFoundError, match=r"dependence.*extra"):
+        distance_corr_matrix(X)
 
 
 def test_mutual_info_dissimilarity_diagonal_zero():

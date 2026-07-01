@@ -32,6 +32,7 @@ dependencies = [
 viz = ["seaborn>=0.13"]            # dse_research_utils.plot.grids (histogram grids)
 graphs = ["graphviz", "networkx"]  # dse_research_utils.plot.graphs (needs system Graphviz)
 notebook = ["ipython"]             # dse_research_utils.plot.io.display_image
+dependence = ["dcor"]              # dse_research_utils.ml.feature_dependence.distance_corr_matrix
 
 [tool.hatch.version]
 path = "src/dse_research_utils/__init__.py"

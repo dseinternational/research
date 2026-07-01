@@ -42,7 +42,7 @@ dependencies:
       - pandoc
       - pingouin
       - plotly
-      - polars>=1.42.0
+      - polars>=1.42.1
       - preliz>=0.27.0
       - psutil>=7.2.2
       - pyarrow>=24.0.0

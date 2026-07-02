@@ -51,13 +51,19 @@ jobs:
           python -m build
 
   test-python:
-    runs-on: ubuntu-26.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # Native Windows is intentionally omitted: jax/jaxlib have no conda-forge
+        # win-64 build, so the compiled stack cannot solve there. Windows users work
+        # in Ubuntu on WSL (linux-64), which the ubuntu runner covers.
+        os: [ubuntu-26.04, macos-latest]
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         shell: bash -el {0}
     steps:
       - uses: actions/checkout@v7.0.0
-
 
       - name: Setup conda environment
         uses: mamba-org/setup-micromamba@v3.0.0
@@ -65,6 +71,9 @@ jobs:
           environment-file: environment.yml
           cache-environment: true
           cache-downloads: true
+
+      - name: Verify environment core matches the canonical spec
+        run: dse-check-env environment.yml
 
       - name: Run pytest
         working-directory: src/python

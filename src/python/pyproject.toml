@@ -19,6 +19,7 @@ dependencies = [
     "pandas>=3.0.3",
     "preliz>=0.27.0",
     "psutil>=7.2.2",
+    "pyyaml>=6.0",  # dse_research_utils.environment.check (dse-check-env console script)
     "rich>=15.0.0",
     "scikit-learn>=1.9.0",
     "scipy>=1.18.0",
@@ -31,8 +32,15 @@ dependencies = [
 # and raise a clear error when the extra is absent.
 viz = ["seaborn>=0.13"]            # dse_research_utils.plot.grids (histogram grids)
 graphs = ["graphviz", "networkx"]  # dse_research_utils.plot.graphs (needs system Graphviz)
-notebook = ["ipython"]             # dse_research_utils.plot.io.display_image
+notebook = ["ipython>=9.15.0", "ipywidgets>=8.1.8", "notebook>=7.6.0", "jupytext"]  # notebook/Jupyter stack (ipython drives plot.io.display_image)
 dependence = ["dcor"]              # dse_research_utils.ml.feature_dependence.distance_corr_matrix
+# Shared pure-Python tail for consuming projects (the pip layer of the hybrid env
+# model); the compiled scientific core lives in conda-forge (data/environment-core.yml).
+tuning = ["optuna>=4.9.0", "optuna-integration>=4.9.0"]
+io = ["orjson>=3.11.9", "tabulate>=0.10.0"]
+
+[project.scripts]
+dse-check-env = "dse_research_utils.environment.check:main"
 
 [tool.hatch.version]
 path = "src/dse_research_utils/__init__.py"

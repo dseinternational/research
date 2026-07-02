@@ -14,26 +14,6 @@ updates:
     assignees:
       - frankbuckley
 
-  - package-ecosystem: conda
-    directory: /
-    schedule:
-      interval: daily
-      time: "05:00"
-      timezone: "Europe/London"
-    groups:
-      conda-dependencies:
-        patterns:
-          - "*"
-    ignore:
-      # numpy 2.5.0 has no standard-ABI (cp314) build for Python 3.14 — only the
-      # free-threaded (cp314t) variant — which conflicts with pymc -> pytensor;
-      # numba (via shap) also pins numpy <2.5. Remove once the conda-forge
-      # py3.14 builds and numba catch up.
-      - dependency-name: "numpy"
-        versions: [">=2.5.0"]
-    assignees:
-      - frankbuckley
-
   - package-ecosystem: npm
     directory: /
     schedule:

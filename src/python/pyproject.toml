@@ -32,7 +32,7 @@ dependencies = [
 # and raise a clear error when the extra is absent.
 viz = ["seaborn>=0.13"]            # dse_research_utils.plot.grids (histogram grids)
 graphs = ["graphviz", "networkx"]  # dse_research_utils.plot.graphs (needs system Graphviz)
-notebook = ["ipython>=9.15.0", "ipywidgets>=8.1.8", "notebook>=7.6.0", "jupytext"]  # notebook/Jupyter stack (ipython drives plot.io.display_image)
+notebook = ["jupyter>=1.1.0", "jupytext>=1.19.4"]  # notebook/Jupyter stack (ipython drives plot.io.display_image)
 dependence = ["dcor"]              # dse_research_utils.ml.feature_dependence.distance_corr_matrix
 # Shared pure-Python tail for consuming projects (the pip layer of the hybrid env
 # model); the compiled scientific core lives in conda-forge (data/environment-core.yml).

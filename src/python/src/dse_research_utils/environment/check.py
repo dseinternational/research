@@ -19,12 +19,13 @@ from __future__ import annotations
 import argparse
 from importlib.resources import files
 from pathlib import Path
+from types import ModuleType
 
 _CORE_RESOURCE = "data/environment-core.yml"
 _NAME_DELIMITERS = "<>=!~ "
 
 
-def _require_yaml():
+def _require_yaml() -> ModuleType:
     try:
         import yaml
     except ModuleNotFoundError as exc:  # pragma: no cover - trivial guard

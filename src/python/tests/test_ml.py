@@ -105,3 +105,11 @@ def test_grouped_permutation_importance_flags_predictive_block():
     # Permuting the signal block should raise held-out RMSE; the noise block barely.
     assert deltas[0].mean() > 0.5
     assert abs(deltas[1].mean()) < deltas[0].mean()
+
+
+def test_grouped_permutation_importance_rejects_mismatched_fold_inputs():
+    X = pd.DataFrame({"x": [1.0, 2.0, 3.0]})
+    y = np.array([1.0, 2.0, 3.0])
+
+    with pytest.raises(ValueError, match="zip\\(\\) argument"):
+        grouped_permutation_importance([], X, y, [np.array([0, 1])], {0: [0]}, n_repeats=1, seed=0)

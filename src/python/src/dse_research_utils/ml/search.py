@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -13,20 +15,20 @@ from sklearn.model_selection import RandomizedSearchCV
 
 
 def hyperparam_search_randomized(
-    X,
-    y,
-    groups,
-    estimator,
+    X: Any,
+    y: Any,
+    groups: Any,
+    estimator: Any,
     param_distributions: dict[str, Any],
     n_iter: int = 10,
-    scoring=None,
-    n_jobs=None,
-    cv=None,
-    verbose=0,
-    random_state=None,
-    error_score=np.nan,
-    output_csv=None,
-):
+    scoring: str | Mapping[str, Any] | None = None,
+    n_jobs: int | None = None,
+    cv: Any | None = None,
+    verbose: int = 0,
+    random_state: int | None = None,
+    error_score: float | str = np.nan,
+    output_csv: str | Path | None = None,
+) -> tuple[RandomizedSearchCV, pd.DataFrame, dict[str, Any]]:
     """Fit a ``RandomizedSearchCV`` (group-aware) and return the search + results.
 
     Returns ``(search, cv_results_dataframe, best_params_)``. ``best_params_`` is

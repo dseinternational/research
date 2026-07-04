@@ -33,7 +33,7 @@ def get_execution_context() -> str:
         return "script"
 
 
-def get_environment_info(as_dataframe=False) -> dict | pd.DataFrame:
+def get_environment_info(as_dataframe: bool = False) -> dict | pd.DataFrame:
     vm = psutil.virtual_memory()
     environment = {
         "platform": platform.platform(),
@@ -52,7 +52,7 @@ def get_environment_info(as_dataframe=False) -> dict | pd.DataFrame:
     return environment
 
 
-def report_environment_info():
+def report_environment_info() -> None:
     environment = get_environment_info()
     section_header("Environment")
     print_key_value_table(environment, key_header="Field", value_header="Value")

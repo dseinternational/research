@@ -119,6 +119,7 @@ Bayesian sampling presets in `statistics/models/sampling.py`, selected via `get_
 
 - `dev` / `development` — 2 chains × 500 draws, `target_accept=0.85` (fast iteration)
 - `test` / `testing` — 4 chains × 2000 draws, `target_accept=0.90`
+- `rep-lite` / `reporting-lite` / `rep_lite` — 4 chains × 4000 draws, `target_accept=0.95`
 - `reporting` / `report` / `rep` — 6 chains × 6000 draws, `target_accept=0.95`
 
 ## Python Conventions
@@ -135,12 +136,12 @@ Bayesian sampling presets in `statistics/models/sampling.py`, selected via `get_
 - **Type unions**: `X | Y` syntax (not `Union[X, Y]`)
 - **Docstrings**: NumPy-style (`Parameters`, `Returns`, `---` separators); dataclass fields use attribute docstrings (bare string literals after the field declaration)
 - **`print`**: import `from rich import print` to override built-in
-- **Imports**: fully-qualified absolute imports only — no relative imports, no `__init__.py` re-exports
+- **Imports**: fully-qualified absolute imports only — no relative imports, no `__init__.py` re-exports. The package root `__init__.py` is the one exception: it stores `__version__` for Hatch.
 - **Dataclasses**: stdlib `@dataclass`; use `__post_init__` for validation
 - **Plot functions**: create figure → render → optionally save to `output_dir` as `.png` (300 DPI) and `.svg` → `return plt.gcf()`
 - **Notebooks**: call `init_workbook()` at top (prints environment info); scripts call `init_script()` (silent setup); both apply the default matplotlib style via `set_matplotlib_default_style()`
 
-Ruff config (in `src/python/pyproject.toml`): line-length 120, target Python 3.14, rules: `F`, `E`, `W`, `I`, `UP`, `B`, `SIM`, `RUF`.
+Ruff config (in `src/python/pyproject.toml`): line-length 120, target Python 3.14, rules: `F`, `E`, `W`, `I`, `UP`, `B`, `SIM`, `RUF`, `ANN` (source only; tests ignore annotation rules).
 
 ## .NET
 

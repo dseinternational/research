@@ -5,17 +5,17 @@ from dse_research_utils.environment.info import report_environment_info
 from dse_research_utils.plot.styles import set_matplotlib_default_style
 
 
-def init():
+def init() -> None:
     """Initialize the environment."""
     set_matplotlib_default_style()
 
 
-def init_script():
+def init_script() -> None:
     """Initialize the script environment."""
     init()
 
 
-def init_workbook():
+def init_workbook() -> None:
     """Initialize the workbook environment."""
     init()
     report_environment_info()

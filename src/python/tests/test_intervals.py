@@ -53,6 +53,14 @@ class TestHdi1d:
         assert isinstance(lo, float)
         assert isinstance(hi, float)
 
+    def test_full_probability_returns_range(self) -> None:
+        assert hdi_1d([3.0, 1.0, 2.0], hdi_prob=1.0) == (1.0, 3.0)
+
+    @pytest.mark.parametrize("bad", [0.0, -0.1, 1.1])
+    def test_rejects_invalid_probability(self, bad: float) -> None:
+        with pytest.raises(ValueError, match="hdi_prob"):
+            hdi_1d([1.0, 2.0, 3.0], hdi_prob=bad)
+
 
 class TestEti1d:
     def test_empty_input_returns_nan(self) -> None:
@@ -76,3 +84,11 @@ class TestEti1d:
         samples = rng.normal(size=500)
         lo, hi = eti_1d(samples, eti_prob=0.9)
         assert lo <= hi
+
+    def test_full_probability_returns_range(self) -> None:
+        assert eti_1d([3.0, 1.0, 2.0], eti_prob=1.0) == (1.0, 3.0)
+
+    @pytest.mark.parametrize("bad", [0.0, -0.1, 1.1])
+    def test_rejects_invalid_probability(self, bad: float) -> None:
+        with pytest.raises(ValueError, match="eti_prob"):
+            eti_1d([1.0, 2.0, 3.0], eti_prob=bad)

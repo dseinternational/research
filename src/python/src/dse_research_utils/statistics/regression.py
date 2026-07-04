@@ -1,11 +1,13 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+from typing import Any
+
 import numpy as np
 import statsmodels.api as sm
 
 
-def linear_regression_ols(x, y):
+def linear_regression_ols(x: list[float] | np.ndarray, y: list[float] | np.ndarray) -> dict[str, Any]:
     """
     Perform ordinary least squares linear regression.
 

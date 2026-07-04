@@ -9,14 +9,20 @@ https://github.com/pymc-devs/pymc-examples/blob/main/examples/statistical_rethin
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable, Sequence
+from typing import Any
 
+import matplotlib.axes as mpaxes
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as stats
 
 
-def plot_scatter(xs, ys, **scatter_kwargs):
+def plot_scatter(
+    xs: Sequence[float] | np.ndarray,
+    ys: Sequence[float] | np.ndarray,
+    **scatter_kwargs: Any,
+) -> None:
     """Draw scatter plot with consistent style (e.g. unfilled points)."""
     defaults = {"alpha": 0.6, "lw": 3, "s": 80, "color": "C0", "facecolors": "none"}
 
@@ -27,7 +33,11 @@ def plot_scatter(xs, ys, **scatter_kwargs):
     plt.scatter(xs, ys, **scatter_kwargs)
 
 
-def plot_line(xs, ys, **plot_kwargs):
+def plot_line(
+    xs: Sequence[float] | np.ndarray,
+    ys: Sequence[float] | np.ndarray,
+    **plot_kwargs: Any,
+) -> None:
     """Plot line with consistent style (e.g. bordered lines)."""
     linewidth = plot_kwargs.get("linewidth", 3)
     plot_kwargs["linewidth"] = linewidth
@@ -42,13 +52,21 @@ def plot_line(xs, ys, **plot_kwargs):
     plt.plot(xs, ys, **plot_kwargs, zorder=31)
 
 
-def plot_errorbar(xs, ys, error_lower, error_upper, colors="C0", error_width=12, alpha=0.3):
+def plot_errorbar(
+    xs: Sequence[float] | np.ndarray,
+    ys: Sequence[float] | np.ndarray,
+    error_lower: Sequence[float] | np.ndarray,
+    error_upper: Sequence[float] | np.ndarray,
+    colors: str | Sequence[str] = "C0",
+    error_width: float = 12,
+    alpha: float = 0.3,
+) -> None:
     """Draw thick y-error bars with consistent style."""
     if isinstance(colors, str):
         colors = [colors] * len(xs)
-    for ii, (x, y, err_l, err_u) in enumerate(
-        zip(xs, ys, error_lower, error_upper, strict=False)
-    ):
+    elif len(colors) != len(xs):
+        raise ValueError("colors must be a string or have the same length as xs.")
+    for ii, (x, y, err_l, err_u) in enumerate(zip(xs, ys, error_lower, error_upper, strict=True)):
         marker, _, bar = plt.errorbar(
             x=x,
             y=y,
@@ -63,13 +81,21 @@ def plot_errorbar(xs, ys, error_lower, error_upper, colors="C0", error_width=12,
         bar[0].set_linewidth(error_width)
 
 
-def plot_x_errorbar(xs, ys, error_lower, error_upper, colors="C0", error_width=12, alpha=0.3):
+def plot_x_errorbar(
+    xs: Sequence[float] | np.ndarray,
+    ys: Sequence[float] | np.ndarray,
+    error_lower: Sequence[float] | np.ndarray,
+    error_upper: Sequence[float] | np.ndarray,
+    colors: str | Sequence[str] = "C0",
+    error_width: float = 12,
+    alpha: float = 0.3,
+) -> None:
     """Draw thick x-error bars with consistent style."""
     if isinstance(colors, str):
         colors = [colors] * len(xs)
-    for ii, (x, y, err_l, err_u) in enumerate(
-        zip(xs, ys, error_lower, error_upper, strict=False)
-    ):
+    elif len(colors) != len(xs):
+        raise ValueError("colors must be a string or have the same length as xs.")
+    for ii, (x, y, err_l, err_u) in enumerate(zip(xs, ys, error_lower, error_upper, strict=True)):
         marker, _, bar = plt.errorbar(
             x=x,
             y=y,
@@ -85,8 +111,13 @@ def plot_x_errorbar(xs, ys, error_lower, error_upper, colors="C0", error_width=1
 
 
 def plot_kernel_function(
-    kernel_function, max_distance=1, resolution=100, label=None, ax=None, **line_kwargs
-):
+    kernel_function: Callable[[np.ndarray, np.ndarray], np.ndarray],
+    max_distance: float = 1,
+    resolution: int = 100,
+    label: str | None = None,
+    ax: mpaxes.Axes | None = None,
+    **line_kwargs: Any,
+) -> None:
     """Plot a (stationary) kernel function over a range of distances."""
     X = np.linspace(0, max_distance, resolution)[:, None]
     covariance = kernel_function(X, X)
@@ -103,14 +134,14 @@ def plot_kernel_function(
 
 
 def plot_gaussian_process(
-    X,
-    samples: Iterable | None = None,
-    mean=None,
-    cov=None,
-    X_obs=None,
-    Y_obs=None,
-    uncertainty_prob=0.89,
-):
+    X: np.ndarray,
+    samples: Iterable[np.ndarray] | None = None,
+    mean: np.ndarray | None = None,
+    cov: np.ndarray | None = None,
+    X_obs: np.ndarray | None = None,
+    Y_obs: np.ndarray | None = None,
+    uncertainty_prob: float = 0.89,
+) -> None:
     """Plot GP samples and/or a mean function with an uncertainty band."""
     X = X.ravel()
 
@@ -151,14 +182,22 @@ def plot_gaussian_process(
     plt.legend()
 
 
-def gaussian_process_prior(X_pred, kernel_function):
+def gaussian_process_prior(
+    X_pred: np.ndarray,
+    kernel_function: Callable[[np.ndarray, np.ndarray], np.ndarray],
+) -> Any:
     """Initialise a Gaussian-process prior distribution for the given kernel."""
     mean = np.zeros(X_pred.shape).ravel()
     cov = kernel_function(X_pred, X_pred)
     return stats.multivariate_normal(mean=mean, cov=cov, allow_singular=True)
 
 
-def plot_gaussian_process_prior(kernel_function, n_samples=3, figsize=(10, 5), resolution=100):
+def plot_gaussian_process_prior(
+    kernel_function: Callable[[np.ndarray, np.ndarray], np.ndarray],
+    n_samples: int = 3,
+    figsize: tuple[float, float] = (10, 5),
+    resolution: int = 100,
+) -> np.ndarray:
     """Plot prior GP samples alongside the kernel function."""
     X = np.linspace(-5, 5, resolution)[:, None]
 
@@ -175,7 +214,13 @@ def plot_gaussian_process_prior(kernel_function, n_samples=3, figsize=(10, 5), r
     return axs
 
 
-def plot_2d_function(xrange, yrange, func, ax=None, **countour_kwargs):
+def plot_2d_function(
+    xrange: np.ndarray,
+    yrange: np.ndarray,
+    func: Callable[[np.ndarray, np.ndarray], np.ndarray],
+    ax: mpaxes.Axes | None = None,
+    **countour_kwargs: Any,
+) -> Any:
     """Evaluate ``func(xs, ys)`` over a grid and plot the value contour.
 
     Parameters

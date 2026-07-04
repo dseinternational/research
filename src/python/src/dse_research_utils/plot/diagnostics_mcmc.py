@@ -3,13 +3,14 @@
 
 
 import os
+from typing import Any
 
 import arviz_plots as azp
 from arviz_plots import PlotCollection
 
 
 def plot_kde_pair(
-    data,
+    data: Any,
     var_names: list[str],
     output_dir: str | None = None,
     filename: str | None = None,

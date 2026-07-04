@@ -20,7 +20,7 @@ from scipy.spatial.distance import squareform
 from sklearn.feature_selection import mutual_info_regression
 
 
-def spearman_distance_matrix(X: pd.DataFrame | np.ndarray | list[float]):
+def spearman_distance_matrix(X: pd.DataFrame | np.ndarray | list[float]) -> tuple[np.ndarray, np.ndarray]:
     """
     Compute Spearman rank correlation between all pairs of features in X (DataFrame or ndarray).
     Returns distance matrix (1 - |correlation|) and correlation matrix.
@@ -62,7 +62,7 @@ def spearman_distance_matrix(X: pd.DataFrame | np.ndarray | list[float]):
     return distance, corr
 
 
-def distance_corr_matrix(X: pd.DataFrame | np.ndarray | list[float]):
+def distance_corr_matrix(X: pd.DataFrame | np.ndarray | list[float]) -> np.ndarray:
     """
     Compute pairwise distance correlation matrix for all feature pairs.
 
@@ -120,7 +120,7 @@ def distance_corr_matrix(X: pd.DataFrame | np.ndarray | list[float]):
     return M
 
 
-def distance_corr_dissimilarity(X: pd.DataFrame | np.ndarray | list[float]):
+def distance_corr_dissimilarity(X: pd.DataFrame | np.ndarray | list[float]) -> tuple[np.ndarray, np.ndarray]:
     """
     Compute pairwise distance correlation dissimilarity matrix for all feature pairs.
 
@@ -153,7 +153,9 @@ def distance_corr_dissimilarity(X: pd.DataFrame | np.ndarray | list[float]):
     return dissim, corr_matrix
 
 
-def distance_corr_dissimilarity_linkage(X):
+def distance_corr_dissimilarity_linkage(
+    X: pd.DataFrame | np.ndarray | list[float],
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Compute condensed distance correlation dissimilarity matrix for linkage clustering.
 
@@ -187,13 +189,13 @@ def distance_corr_dissimilarity_linkage(X):
 
 
 def mutual_info_dissimilarity(
-    X,
-    discrete_features="auto",
-    n_neighbors=3,
-    copy=True,
-    random_state=None,
-    n_jobs=None,
-):
+    X: pd.DataFrame | np.ndarray,
+    discrete_features: str | bool | list[bool] | np.ndarray = "auto",
+    n_neighbors: int = 3,
+    copy: bool = True,
+    random_state: int | None = None,
+    n_jobs: int | None = None,
+) -> np.ndarray:
     """
     Compute pairwise mutual information dissimilarity matrix for all feature pairs.
 

@@ -9,7 +9,10 @@ from sklearn.neighbors import KernelDensity
 from dse_research_utils.statistics.transforms import standardize
 
 
-def differential_entropy_standardized(x, bandwidth="scott"):
+def differential_entropy_standardized(
+    x: list[float] | np.ndarray | pd.Series,
+    bandwidth: str | float = "scott",
+) -> float:
     """
     Compute differential entropy of standardized data using Gaussian KDE.
 

@@ -1,7 +1,6 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import math
 from pathlib import Path
 
 import pandas as pd
@@ -76,4 +75,5 @@ class TestFormatDuration:
         assert "01m" in result
 
     def test_nan_safe(self):
-        assert not math.isnan(0.5)
+        assert format_duration(float("nan")) == EM_DASH
+        assert format_duration(float("inf")) == EM_DASH

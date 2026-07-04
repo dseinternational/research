@@ -9,8 +9,10 @@ import pytest
 from dse_research_utils.ml.kernels import quadratic_distance_kernel
 from dse_research_utils.plot.gaussian_process import (
     gaussian_process_prior,
+    plot_errorbar,
     plot_kernel_function,
     plot_line,
+    plot_x_errorbar,
 )
 from dse_research_utils.plot.io import save_figure
 
@@ -20,6 +22,15 @@ def test_plot_line_draws_two_layers():
     plot_line(np.arange(5), np.arange(5), label="x")
     # bordered style draws a white background line + the foreground line.
     assert len(ax.lines) == 2
+    plt.close(fig)
+
+
+def test_errorbar_rejects_mismatched_lengths():
+    fig, _ax = plt.subplots()
+    with pytest.raises(ValueError, match="zip\\(\\) argument"):
+        plot_errorbar([1, 2], [1, 2], [0.1], [0.2, 0.3])
+    with pytest.raises(ValueError, match="same length"):
+        plot_x_errorbar([1, 2], [1, 2], [0.1, 0.2], [0.2, 0.3], colors=["C0"])
     plt.close(fig)
 
 
@@ -52,3 +63,18 @@ def test_plot_histograms_optional_seaborn(tmp_path):
     fig, axes = plot_histograms(df)
     assert axes.shape[0] >= 1
     plt.close(fig)
+
+
+def test_plot_histograms_rejects_no_numeric_columns():
+    pytest.importorskip("seaborn")
+    from dse_research_utils.plot.grids import plot_histograms
+
+    with pytest.raises(ValueError, match="numeric column"):
+        plot_histograms(pd.DataFrame({"label": ["a", "b"]}))
+
+
+def test_plot_histograms_rejects_invalid_layout_arguments():
+    from dse_research_utils.plot.grids import plot_histograms
+
+    with pytest.raises(ValueError, match="max_cols"):
+        plot_histograms(pd.DataFrame({"a": [1.0, 2.0]}), max_cols=0)

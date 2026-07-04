@@ -65,7 +65,14 @@ select = [
     "B",      # flake8-bugbear
     "SIM",    # flake8-simplify
     "RUF",    # ruff-specific rules
+    "ANN",    # flake8-annotations
 ]
+ignore = [
+    "ANN401",  # generic utilities may accept or return arbitrary library values
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["ANN"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["dse_research_utils"]

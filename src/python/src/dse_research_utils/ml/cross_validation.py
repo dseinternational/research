@@ -73,7 +73,7 @@ def cross_validation_score_rows(
     return rows
 
 
-def report_cross_validation_scores(model_name: str, scores: dict[str, np.ndarray]):
+def report_cross_validation_scores(model_name: str, scores: dict[str, np.ndarray]) -> None:
     """Print a cross-validation score table via the shared console layer."""
     from dse_research_utils.console.console import print_table
     from dse_research_utils.console.sections import section_header

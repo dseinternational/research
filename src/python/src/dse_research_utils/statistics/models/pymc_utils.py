@@ -1,21 +1,27 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 import arviz as az
 import pandas as pd
 import psutil
 import pymc as pm
 import pytensor.tensor as pt
-from graphviz import Digraph
 from pytensor.tensor.variable import TensorVariable
-from xarray import DataTree
 
 from dse_research_utils.console.console import get_console
 from dse_research_utils.console.sections import section_header, subsection
 from dse_research_utils.math.constants import EPSILON
 
+if TYPE_CHECKING:
+    from graphviz import Digraph
+    from xarray import DataTree
 
-def logit(p, eps=EPSILON):
+
+def logit(p: Any, eps: float = EPSILON) -> Any:
     p = pm.math.clip(p, eps, 1 - eps)
     return pm.math.log(p) - pt.log1p(-p)
 
@@ -36,7 +42,7 @@ def get_available_cores() -> int:
     return max(4, n_cpus - 1)
 
 
-def report_model_summary(model: pm.Model):
+def report_model_summary(model: pm.Model) -> None:
     """
     Print a summary of the PyMC model.
 
@@ -74,6 +80,14 @@ def model_to_graphviz(model: pm.Model) -> Digraph:
     Digraph
         The Graphviz Digraph object representing the model.
     """
+    try:
+        import graphviz as _graphviz  # noqa: F401
+    except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
+        raise ModuleNotFoundError(
+            "model_to_graphviz requires graphviz; install the 'graphs' extra "
+            "(pip install dse-research-utils[graphs]) and the system Graphviz binaries."
+        ) from exc
+
     dg = pm.model_to_graphviz(model)
     dg.graph_attr["fontname"] = "Helvetica"
     dg.node_attr["fontname"] = "Helvetica"

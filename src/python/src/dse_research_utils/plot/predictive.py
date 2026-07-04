@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import os
+from typing import Any
 
 import arviz_plots as azp
 import matplotlib.pyplot as plt
@@ -63,10 +64,10 @@ def plot_prior_samples_binomial(
 
 
 def _plot_predictive_checks(
-    data,
+    data: Any,
     group: str = "posterior",
     num_pp_samples: int | None = None,
-    random_seed=None,
+    random_seed: int | None = None,
     output_dir: str | None = None,
     filename: str | None = None,
 ) -> PlotCollection:
@@ -90,11 +91,11 @@ def _plot_predictive_checks(
 
 
 def plot_prior_predictive_checks(
-    data,
-    num_pp_samples=None,
-    random_seed=None,
-    output_dir=None,
-    filename=None,
+    data: Any,
+    num_pp_samples: int | None = None,
+    random_seed: int | None = None,
+    output_dir: str | None = None,
+    filename: str | None = None,
 ) -> PlotCollection:
 
     return _plot_predictive_checks(
@@ -108,11 +109,11 @@ def plot_prior_predictive_checks(
 
 
 def plot_posterior_predictive_checks(
-    data,
-    num_pp_samples=None,
-    random_seed=None,
-    output_dir=None,
-    filename=None,
+    data: Any,
+    num_pp_samples: int | None = None,
+    random_seed: int | None = None,
+    output_dir: str | None = None,
+    filename: str | None = None,
 ) -> PlotCollection:
 
     return _plot_predictive_checks(

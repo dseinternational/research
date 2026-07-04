@@ -94,6 +94,8 @@ def format_duration(seconds: float) -> str:
     str
         The formatted duration.
     """
+    if not math.isfinite(seconds):
+        return EM_DASH
     if seconds < 1:
         return f"{seconds * 1000:.0f} ms"
     if seconds < 60:

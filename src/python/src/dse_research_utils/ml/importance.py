@@ -9,20 +9,24 @@ is importable and unit-testable on its own.
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping, Sequence
+from typing import Any
+
 import numpy as np
+import pandas as pd
 from sklearn.metrics import root_mean_squared_error
 
 
 def grouped_permutation_importance(
-    estimators,
-    X,
-    y,
-    test_indices,
-    cluster_cols,
+    estimators: Iterable[Any],
+    X: pd.DataFrame,
+    y: np.ndarray | Sequence[float],
+    test_indices: Iterable[np.ndarray],
+    cluster_cols: Mapping[int, Sequence[int]],
     *,
-    n_repeats,
-    seed,
-):
+    n_repeats: int,
+    seed: int,
+) -> dict[int, np.ndarray]:
     """Joint (grouped) out-of-fold permutation deltas, one block per cluster.
 
     For each held-out fold it permutes ALL of a cluster's columns together (one
@@ -56,7 +60,7 @@ def grouped_permutation_importance(
     """
     y = np.asarray(y, dtype=float)
     deltas: dict[int, list[float]] = {c: [] for c in cluster_cols}
-    for est, val_idx in zip(estimators, test_indices, strict=False):
+    for est, val_idx in zip(estimators, test_indices, strict=True):
         X_val = X.iloc[val_idx]
         y_val = y[val_idx]
         base_rmse = root_mean_squared_error(y_val, est.predict(X_val))

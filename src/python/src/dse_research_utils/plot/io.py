@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Any
 
 import matplotlib.pyplot as plt
 from rich import print as rprint
@@ -19,7 +20,7 @@ def save_figure(
     format: str = "png",
     dpi: int = 300,
     bbox_inches: str = "tight",
-):
+) -> None:
     """Save the current matplotlib figure to ``output_dir / filename``."""
     out = Path(output_dir)
     out.mkdir(exist_ok=True, parents=True)
@@ -28,7 +29,7 @@ def save_figure(
     plt.savefig(figure_path, format=format, dpi=dpi, bbox_inches=bbox_inches)
 
 
-def display_image(filename: str, output_dir: str | os.PathLike, width: int = 600):
+def display_image(filename: str, output_dir: str | os.PathLike, width: int = 600) -> Any:
     """Display an image from ``output_dir / filename`` in a notebook.
 
     Requires IPython (install the ``notebook`` extra:

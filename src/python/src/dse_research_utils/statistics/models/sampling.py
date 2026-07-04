@@ -3,7 +3,7 @@
 
 from dataclasses import dataclass
 
-import dse_research_utils.statistics.models.pymc_utils as pymc_utils
+import psutil
 
 
 @dataclass
@@ -52,6 +52,14 @@ TARGET_ACCEPT_REP = 0.95
 TARGET_ACCEPT_REP_LITE = 0.95
 
 
+def _get_available_cores() -> int:
+    """Return the available physical core count, keeping one core spare where possible."""
+    n_cpus = psutil.cpu_count(logical=False)
+    if n_cpus is None:
+        n_cpus = psutil.cpu_count(logical=True) or 2
+    return max(1, n_cpus - 1)
+
+
 def get_sampling_configuration(config: str = "dev", random_seed: int = 47) -> SamplingConfiguration:
     """
     Returns a sampling configuration.
@@ -61,7 +69,7 @@ def get_sampling_configuration(config: str = "dev", random_seed: int = 47) -> Sa
             draws=SAMPLES_REP,
             tune=TUNES_REP,
             chains=CHAINS_REP,
-            cores=min(CHAINS_REP, pymc_utils.get_available_cores()),
+            cores=min(CHAINS_REP, _get_available_cores()),
             target_accept=TARGET_ACCEPT_REP,
             random_seed=random_seed,
         )
@@ -76,7 +84,7 @@ def get_sampling_configuration(config: str = "dev", random_seed: int = 47) -> Sa
             draws=SAMPLES_REP_LITE,
             tune=TUNES_REP_LITE,
             chains=CHAINS_REP_LITE,
-            cores=min(CHAINS_REP_LITE, pymc_utils.get_available_cores()),
+            cores=min(CHAINS_REP_LITE, _get_available_cores()),
             target_accept=TARGET_ACCEPT_REP_LITE,
             random_seed=random_seed,
         )
@@ -86,7 +94,7 @@ def get_sampling_configuration(config: str = "dev", random_seed: int = 47) -> Sa
             draws=SAMPLES_DEV,
             tune=TUNES_DEV,
             chains=CHAINS_DEV,
-            cores=min(CHAINS_DEV, pymc_utils.get_available_cores()),
+            cores=min(CHAINS_DEV, _get_available_cores()),
             target_accept=TARGET_ACCEPT_DEV,
             random_seed=random_seed,
         )
@@ -96,7 +104,7 @@ def get_sampling_configuration(config: str = "dev", random_seed: int = 47) -> Sa
             draws=SAMPLES_TEST,
             tune=TUNES_TEST,
             chains=CHAINS_TEST,
-            cores=min(CHAINS_TEST, pymc_utils.get_available_cores()),
+            cores=min(CHAINS_TEST, _get_available_cores()),
             target_accept=TARGET_ACCEPT_TEST,
             random_seed=random_seed,
         )

@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import os
+from typing import Any
 
 import arviz as az
 import numpy as np
@@ -29,7 +30,7 @@ ESS_THRESHOLD = 400
 BFMI_THRESHOLD = 0.3
 
 
-def _bfmi_per_chain(trace) -> list[float] | None:
+def _bfmi_per_chain(trace: Any) -> list[float] | None:
     """Per-chain BFMI from the sampler energy (Betancourt 2016).
 
     ``arviz.bfmi`` was removed in the 1.x split, so compute it directly:
@@ -49,12 +50,12 @@ def _bfmi_per_chain(trace) -> list[float] | None:
 
 
 def write_diagnostics_summary(
-    trace,
+    trace: Any,
     output_dir: str,
     *,
     var_names: list[str] | None = None,
-    tables: dict | None = None,
-) -> dict:
+    tables: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Emit ``diagnostics_summary.json`` -- the report's pass/fail convergence gate.
 
     One robust summary built from stable ArviZ surfaces: divergences from

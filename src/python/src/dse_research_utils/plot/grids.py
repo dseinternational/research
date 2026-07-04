@@ -48,6 +48,11 @@ def plot_histograms(
     Requires ``seaborn`` (install the ``viz`` extra: ``pip install
     dse-research-utils[viz]``).
     """
+    if max_cols < 1:
+        raise ValueError("max_cols must be at least 1.")
+    if max_bins < 2:
+        raise ValueError("max_bins must be at least 2.")
+
     try:
         import seaborn as sns
     except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
@@ -58,6 +63,9 @@ def plot_histograms(
 
     df = data.select_dtypes(include=["number"])
     n_cols = df.shape[1]
+    if n_cols == 0:
+        raise ValueError("plot_histograms requires at least one numeric column.")
+
     cols = min(max_cols, n_cols)
     rows = math.ceil(n_cols / cols)
 

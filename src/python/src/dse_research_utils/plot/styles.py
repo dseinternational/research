@@ -100,6 +100,6 @@ DEFAULT_STYLE_DICT = {
 }
 
 
-def set_matplotlib_default_style():
+def set_matplotlib_default_style() -> None:
     """Applies the default custom matplotlib style dictionary."""
     plt.style.use(DEFAULT_STYLE_DICT)

@@ -11,10 +11,18 @@ https://github.com/pymc-devs/pymc-examples/blob/main/examples/statistical_rethin
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+from typing import Any
+
 import numpy as np
 
 
-def draw_causal_graph(edge_list, node_props=None, edge_props=None, graph_direction="UD"):
+def draw_causal_graph(
+    edge_list: Sequence[tuple[str, str]],
+    node_props: Mapping[str, Mapping[str, Any]] | None = None,
+    edge_props: Mapping[tuple[str, str], Mapping[str, Any]] | None = None,
+    graph_direction: str = "UD",
+) -> Any:
     """Draw a causal (directed) graph with graphviz; returns the ``Digraph``."""
     try:
         import graphviz as gr
@@ -37,7 +45,7 @@ def draw_causal_graph(edge_list, node_props=None, edge_props=None, graph_directi
     return g
 
 
-def plot_graph(graph, **graph_kwargs):
+def plot_graph(graph: Any, **graph_kwargs: Any) -> Any:
     """Draw a network graph with networkx.
 
     Parameters

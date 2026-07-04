@@ -4,7 +4,7 @@
 import numpy as np
 
 
-def hdi_1d(x, hdi_prob: float = 0.90) -> tuple[float, float]:
+def hdi_1d(x: list[float] | np.ndarray, hdi_prob: float = 0.90) -> tuple[float, float]:
     """
     Compute the highest density interval (HDI) for a 1D array of samples.
 
@@ -25,6 +25,9 @@ def hdi_1d(x, hdi_prob: float = 0.90) -> tuple[float, float]:
     tuple
         A tuple containing the lower and upper bounds of the HDI.
     """
+    if not 0.0 < hdi_prob <= 1.0:
+        raise ValueError(f"hdi_prob must be in (0, 1], got {hdi_prob!r}")
+
     x = np.asarray(x, dtype=float)
     x = x[np.isfinite(x)]
     n = len(x)
@@ -34,6 +37,9 @@ def hdi_1d(x, hdi_prob: float = 0.90) -> tuple[float, float]:
 
     # Sort samples to treat as a distribution
     x = np.sort(x)
+
+    if hdi_prob == 1.0:
+        return float(x[0]), float(x[-1])
 
     # Calculate the number of elements that should be in the interval
     interval_idx_inc = int(np.floor(hdi_prob * n))
@@ -53,7 +59,7 @@ def hdi_1d(x, hdi_prob: float = 0.90) -> tuple[float, float]:
     return float(low_ends[min_idx]), float(high_ends[min_idx])
 
 
-def eti_1d(x, eti_prob=0.90):
+def eti_1d(x: list[float] | np.ndarray, eti_prob: float = 0.90) -> tuple[float, float]:
     """
     Equal-Tailed Interval from 1D samples.
 
@@ -73,6 +79,9 @@ def eti_1d(x, eti_prob=0.90):
     tuple
         A tuple containing the lower and upper bounds of the ETI.
     """
+    if not 0.0 < eti_prob <= 1.0:
+        raise ValueError(f"eti_prob must be in (0, 1], got {eti_prob!r}")
+
     x = np.asarray(x, dtype=float)
     x = x[np.isfinite(x)]
 
@@ -85,4 +94,5 @@ def eti_1d(x, eti_prob=0.90):
 
     # Use numpy.percentile to find the values at those probabilities
     # We multiply by 100 because np.percentile expects 0-100 range
-    return tuple(np.percentile(x, [lower_tail * 100, upper_tail * 100]))
+    lower, upper = np.percentile(x, [lower_tail * 100, upper_tail * 100])
+    return float(lower), float(upper)

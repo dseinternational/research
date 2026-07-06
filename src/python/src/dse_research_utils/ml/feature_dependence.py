@@ -4,7 +4,7 @@
 """Pairwise feature-dependence and clustering primitives.
 
 Spearman / distance-correlation / mutual-information dissimilarity matrices over a
-``(n_samples, n_features)`` design, plus a Ward-linkage helper, for feature
+``(n_samples, n_features)`` design, plus an average-linkage helper, for feature
 clustering and redundancy analysis. Distance correlation uses the optional ``dcor``
 dependency (install the ``dependence`` extra: ``pip install
 dse-research-utils[dependence]``), imported lazily so it is only required when

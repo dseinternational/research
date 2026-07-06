@@ -144,10 +144,17 @@ def test_grouped_permutation_importance_flags_predictive_block():
     assert abs(deltas[1].mean()) < deltas[0].mean()
 
 
-def test_hyperparam_search_randomized_multimetric_requires_refit_metric():
+@pytest.mark.parametrize(
+    "scoring",
+    [
+        {"mae": "neg_mean_absolute_error", "r2": "r2"},
+        ["neg_mean_absolute_error", "r2"],
+        ("neg_mean_absolute_error", "r2"),
+    ],
+)
+def test_hyperparam_search_randomized_multimetric_requires_refit_metric(scoring):
     X = np.arange(20.0).reshape(-1, 1)
     y = np.arange(20.0)
-    scoring = {"mae": "neg_mean_absolute_error", "r2": "r2"}
 
     with pytest.raises(ValueError, match="refit"):
         hyperparam_search_randomized(

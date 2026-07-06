@@ -21,7 +21,7 @@ def hyperparam_search_randomized(
     estimator: Any,
     param_distributions: dict[str, Any],
     n_iter: int = 10,
-    scoring: str | Mapping[str, Any] | None = None,
+    scoring: str | Callable[..., Any] | list[str] | tuple[str, ...] | set[str] | Mapping[str, Any] | None = None,
     n_jobs: int | None = None,
     cv: Any | None = None,
     verbose: int = 0,
@@ -34,11 +34,11 @@ def hyperparam_search_randomized(
 
     Returns ``(search, cv_results_dataframe, best_params_)``. ``best_params_`` is
     sklearn's own tie-broken best configuration; deriving it from ``cv_results_``
-    by hand was fragile under ties in ``rank_test_score``. When ``scoring`` is a
-    mapping, pass ``refit`` as one of the scorer keys or a callable so sklearn
-    knows which metric defines ``best_params_``.
+    by hand was fragile under ties in ``rank_test_score``. When ``scoring`` is
+    multi-metric, pass ``refit`` as one of the scorer keys or a callable so
+    sklearn knows which metric defines ``best_params_``.
     """
-    if isinstance(scoring, Mapping) and isinstance(refit, bool):
+    if _is_multi_metric_scoring(scoring) and isinstance(refit, bool):
         raise ValueError(
             "Multi-metric scoring requires refit to be a scorer key or callable "
             "because hyperparam_search_randomized returns best_params_."
@@ -68,3 +68,8 @@ def hyperparam_search_randomized(
     best_params = search.best_params_
 
     return search, results, best_params
+
+
+def _is_multi_metric_scoring(scoring: Any) -> bool:
+    """Return whether sklearn will treat ``scoring`` as multi-metric."""
+    return isinstance(scoring, (Mapping, list, tuple, set))

@@ -9,16 +9,19 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.base import clone
+from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import KFold
 
-from dse_research_utils.ml.cross_validation import cross_validation_score_rows
+import dse_research_utils.ml.feature_dependence as feature_dependence
+from dse_research_utils.ml.cross_validation import DEFAULT_REGRESSION_SCORERS, cross_validation_score_rows
 from dse_research_utils.ml.feature_dependence import (
     distance_corr_matrix,
     mutual_info_dissimilarity,
     spearman_distance_matrix,
 )
 from dse_research_utils.ml.importance import grouped_permutation_importance
+from dse_research_utils.ml.search import hyperparam_search_randomized
 
 
 def test_cross_validation_score_rows_sign_logic():
@@ -31,6 +34,18 @@ def test_cross_validation_score_rows_sign_logic():
     assert set(rows) == {"neg_mean_absolute_error", "r2"}
     assert rows["neg_mean_absolute_error"]["mean"] == pytest.approx(2.0)  # flipped positive
     assert rows["r2"]["mean"] == pytest.approx(0.1)  # true (possibly negative) sign kept
+
+
+def test_cross_validation_score_rows_flips_default_display_labels():
+    scores = {
+        f"test_{label}": np.array([-1.0, -3.0])
+        for label, scorer in DEFAULT_REGRESSION_SCORERS.items()
+        if scorer.startswith("neg_")
+    }
+    rows = {r["metric"]: r for r in cross_validation_score_rows(scores)}
+    assert rows["Mean Absolute Error (MAE)"]["mean"] == pytest.approx(2.0)
+    assert rows["Root Mean Squared Error (RMSE)"]["mean"] == pytest.approx(2.0)
+    assert rows["Median Absolute Error (MedAE)"]["mean"] == pytest.approx(2.0)
 
 
 def test_spearman_distance_matrix_basic():
@@ -56,6 +71,30 @@ def test_distance_corr_matrix_basic():
     assert np.allclose(M, M.T)
     # a and (2a+1) are a deterministic linear transform of each other -> dcor ~ 1.
     assert M[0, 1] == pytest.approx(1.0, abs=1e-6)
+
+
+def test_distance_corr_dissimilarity_linkage_uses_average_linkage(monkeypatch):
+    dissim = np.array(
+        [
+            [0.0, 0.2, 0.8],
+            [0.2, 0.0, 0.7],
+            [0.8, 0.7, 0.0],
+        ]
+    )
+    expected_linkage = np.array([[0.0, 1.0, 0.2, 2.0], [2.0, 3.0, 0.75, 3.0]])
+
+    monkeypatch.setattr(
+        feature_dependence,
+        "distance_corr_dissimilarity",
+        lambda X: (dissim.copy(), 1.0 - dissim),
+    )
+    monkeypatch.setattr(feature_dependence.hierarchy, "average", lambda condensed: expected_linkage)
+    monkeypatch.setattr(feature_dependence.hierarchy, "ward", lambda condensed: pytest.fail("ward should not be used"))
+
+    out_dissim, condensed, linkage = feature_dependence.distance_corr_dissimilarity_linkage(np.ones((5, 3)))
+    np.testing.assert_allclose(out_dissim, dissim)
+    np.testing.assert_allclose(condensed, np.array([0.2, 0.8, 0.7]))
+    np.testing.assert_allclose(linkage, expected_linkage)
 
 
 def test_distance_corr_matrix_missing_dcor_raises_clear_error(monkeypatch):
@@ -99,12 +138,50 @@ def test_grouped_permutation_importance_flags_predictive_block():
         test_indices.append(te)
 
     cluster_cols = {0: [0, 1], 1: [2]}  # signal block vs noise
-    deltas = grouped_permutation_importance(
-        estimators, X, y, test_indices, cluster_cols, n_repeats=5, seed=0
-    )
+    deltas = grouped_permutation_importance(estimators, X, y, test_indices, cluster_cols, n_repeats=5, seed=0)
     # Permuting the signal block should raise held-out RMSE; the noise block barely.
     assert deltas[0].mean() > 0.5
     assert abs(deltas[1].mean()) < deltas[0].mean()
+
+
+def test_hyperparam_search_randomized_multimetric_requires_refit_metric():
+    X = np.arange(20.0).reshape(-1, 1)
+    y = np.arange(20.0)
+    scoring = {"mae": "neg_mean_absolute_error", "r2": "r2"}
+
+    with pytest.raises(ValueError, match="refit"):
+        hyperparam_search_randomized(
+            X,
+            y,
+            None,
+            DummyRegressor(),
+            {"strategy": ["mean", "median"]},
+            n_iter=2,
+            scoring=scoring,
+            cv=KFold(2),
+            random_state=0,
+        )
+
+
+def test_hyperparam_search_randomized_multimetric_refit_key_returns_best_params():
+    X = np.arange(20.0).reshape(-1, 1)
+    y = np.arange(20.0)
+    search, results, best_params = hyperparam_search_randomized(
+        X,
+        y,
+        None,
+        DummyRegressor(),
+        {"strategy": ["mean", "median"]},
+        n_iter=2,
+        scoring={"mae": "neg_mean_absolute_error", "r2": "r2"},
+        refit="mae",
+        cv=KFold(2),
+        random_state=0,
+    )
+
+    assert search.refit == "mae"
+    assert "mean_test_mae" in results.columns
+    assert best_params["strategy"] in {"mean", "median"}
 
 
 def test_grouped_permutation_importance_rejects_mismatched_fold_inputs():

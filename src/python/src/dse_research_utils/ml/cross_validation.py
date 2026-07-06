@@ -44,7 +44,7 @@ _NEG_SCORER_LABELS = frozenset(
         "neg_median_absolute_error",
         "neg_mean_squared_error",
     }
-)
+) | frozenset(label for label, scorer in DEFAULT_REGRESSION_SCORERS.items() if scorer.startswith("neg_"))
 
 
 def cross_validation_score_rows(

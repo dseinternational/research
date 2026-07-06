@@ -65,3 +65,28 @@ class TestBinomialModelData:
                 y_obs=np.array([0, 6]),
                 n_trials=5,
             )
+
+    def test_rejects_fractional_y_counts(self) -> None:
+        with pytest.raises(ValueError, match="integer counts"):
+            BinomialModelData(
+                X_obs=np.array([[1.0], [2.0]]),
+                y_obs=np.array([0.5, 1.0]),
+                n_trials=5,
+            )
+
+    def test_rejects_non_finite_y_counts(self) -> None:
+        with pytest.raises(ValueError, match="finite"):
+            BinomialModelData(
+                X_obs=np.array([[1.0], [2.0]]),
+                y_obs=np.array([0.0, np.nan]),
+                n_trials=5,
+            )
+
+    @pytest.mark.parametrize("n_trials", [0, -1, 5.0, True])
+    def test_rejects_invalid_trial_count(self, n_trials: int | float | bool) -> None:
+        with pytest.raises(ValueError, match="positive integer"):
+            BinomialModelData(
+                X_obs=np.array([[1.0], [2.0]]),
+                y_obs=np.array([0, 1]),
+                n_trials=n_trials,
+            )

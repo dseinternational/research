@@ -4,7 +4,7 @@
 """Pairwise feature-dependence and clustering primitives.
 
 Spearman / distance-correlation / mutual-information dissimilarity matrices over a
-``(n_samples, n_features)`` design, plus a Ward-linkage helper, for feature
+``(n_samples, n_features)`` design, plus an average-linkage helper, for feature
 clustering and redundancy analysis. Distance correlation uses the optional ``dcor``
 dependency (install the ``dependence`` extra: ``pip install
 dse-research-utils[dependence]``), imported lazily so it is only required when
@@ -157,7 +157,7 @@ def distance_corr_dissimilarity_linkage(
     X: pd.DataFrame | np.ndarray | list[float],
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Compute condensed distance correlation dissimilarity matrix for linkage clustering.
+    Compute condensed distance correlation dissimilarity matrix for average-linkage clustering.
 
     Parameters
     ----------
@@ -175,16 +175,19 @@ def distance_corr_dissimilarity_linkage(
         Condensed dissimilarity matrix suitable for linkage clustering algorithms.
 
     linkage : ndarray
-        Linkage matrix resulting from hierarchical clustering using Ward's method.
+        Linkage matrix resulting from hierarchical clustering using average linkage.
 
     Notes
     -----
     - Uses distance correlation dissimilarity metric
     - Returns condensed form for compatibility with scipy linkage functions
+    - Uses average linkage because Ward linkage is correctly defined only for
+      Euclidean distances, whereas distance-correlation dissimilarity is a
+      precomputed non-Euclidean dissimilarity in general.
     """
     dissim, _corr_matrix = distance_corr_dissimilarity(X)
     condensed = squareform(dissim)
-    linkage = hierarchy.ward(condensed)
+    linkage = hierarchy.average(condensed)
     return dissim, condensed, linkage
 
 

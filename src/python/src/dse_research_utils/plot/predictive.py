@@ -1,6 +1,7 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import inspect
 import os
 from typing import Any
 
@@ -75,12 +76,32 @@ def _plot_predictive_checks(
     kwargs: dict = {}
     if num_pp_samples is not None:
         kwargs["num_samples"] = num_pp_samples
+    seed_via_argument = False
+    if random_seed is not None:
+        try:
+            seed_via_argument = "random_seed" in inspect.signature(azp.plot_ppc_dist).parameters
+        except TypeError, ValueError:
+            seed_via_argument = False
+        if seed_via_argument:
+            kwargs["random_seed"] = random_seed
 
-    pc = azp.plot_ppc_dist(
-        data,
-        group=f"{group}_predictive",
-        **kwargs,
-    )
+    if random_seed is not None and not seed_via_argument:
+        rng_state = np.random.get_state()
+        np.random.seed(random_seed)
+        try:
+            pc = azp.plot_ppc_dist(
+                data,
+                group=f"{group}_predictive",
+                **kwargs,
+            )
+        finally:
+            np.random.set_state(rng_state)
+    else:
+        pc = azp.plot_ppc_dist(
+            data,
+            group=f"{group}_predictive",
+            **kwargs,
+        )
 
     if output_dir is not None and filename is not None:
         os.makedirs(output_dir, exist_ok=True)

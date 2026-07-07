@@ -88,7 +88,7 @@ def parse_blob_container_url(
         )
 
     path_parts = [part for part in parsed.path.split("/") if part]
-    if parsed.scheme not in {"http", "https"} or not parsed.netloc or len(path_parts) != 1:
+    if parsed.scheme != "https" or not parsed.netloc or len(path_parts) != 1:
         raise RuntimeError(
             f"{env_var} must be 'https://<account>.blob.core.windows.net/<container>' "
             f"with a single container path segment: {container_url!r}."

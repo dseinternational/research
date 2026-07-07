@@ -22,6 +22,7 @@ def test_parse_blob_container_url() -> None:
 @pytest.mark.parametrize(
     "url",
     [
+        "http://acct.blob.core.windows.net/reports",
         "https://acct.blob.core.windows.net/reports?sig=secret",
         "https://acct.blob.core.windows.net/reports#fragment",
         "https://acct.blob.core.windows.net/reports/extra",

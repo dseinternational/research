@@ -62,3 +62,40 @@ def odds_string(prob: float) -> str:
     p = min(max(float(prob), 1e-9), 1 - 1e-9)
     o = p / (1 - p)
     return f"{o:.0f}:1" if o >= 1 else f"1:{1 / o:.0f}"
+
+
+def favoured_direction(prob_positive: float) -> dict[str, float | str]:
+    """Evidence for the *favoured* direction of a signed effect.
+
+    :func:`evidence_label` expects a probability already oriented to a **named**
+    claim. For a sign claim the favoured direction is ``"positive"`` when
+    ``P(effect > 0) >= 0.5`` else ``"negative"``; the claim probability is
+    ``max(P>0, P<0)`` and the label qualifies the evidence for THAT direction — so a
+    clearly negative effect reads as strong evidence of a negative association rather
+    than the "inconclusive" that ``evidence_label(P>0)`` would return for the
+    *positive* claim. Report the raw ``P(effect > 0)`` separately for the benefit
+    claim; callers supply the direction words (benefit / harm for treatment effects,
+    positive / negative for associations).
+
+    Parameters
+    ----------
+    prob_positive : float
+        ``P(effect > 0)`` for the effect of interest, in [0, 1].
+
+    Returns
+    -------
+    dict
+        ``favoured_direction`` (``"positive"``/``"negative"``),
+        ``favoured_direction_prob`` (``max(P>0, P<0)``), and
+        ``favoured_direction_label`` (the :func:`evidence_label` for that
+        probability).
+    """
+    p_pos = float(prob_positive)
+    if not 0.0 <= p_pos <= 1.0:
+        raise ValueError(f"prob_positive must be a probability in [0, 1], got {prob_positive!r}")
+    prob = max(p_pos, 1.0 - p_pos)
+    return {
+        "favoured_direction": "positive" if p_pos >= 0.5 else "negative",
+        "favoured_direction_prob": prob,
+        "favoured_direction_label": evidence_label(prob),
+    }

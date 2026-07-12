@@ -6,9 +6,11 @@
 from __future__ import annotations
 
 import json
+import re
 from types import SimpleNamespace
 
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
 
@@ -18,6 +20,7 @@ from dse_research_utils.statistics.diagnostics import (
     RHAT_MAX,
     _bfmi_per_chain,
     convergence_banner_markdown,
+    style_diagnostics_table,
     write_diagnostics_summary,
 )
 
@@ -271,3 +274,54 @@ def test_convergence_banner_fail_renders_warning_and_note():
     assert "provisional" in md
     # dev_note can be suppressed.
     assert "provisional" not in convergence_banner_markdown(summary, dev_note=False)
+
+
+def _flagged_cells(styler) -> set[tuple[int, int]]:
+    """(row, col) positions the styler flags red, parsed from the rendered CSS.
+
+    ``Styler.to_html`` merges cells sharing a style into a single comma-separated
+    rule, so the red rule's selector list carries every flagged cell id.
+    """
+    html = styler.to_html()
+    match = re.search(r"([^{}]*)\{\s*color: #b00", html)
+    if not match:
+        return set()
+    return {(int(r), int(c)) for r, c in re.findall(r"row(\d+)_col(\d+)", match.group(1))}
+
+
+def _diagnostics_frame() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "r_hat": [1.001, 1.05],  # second row (col 0) fails > 1.01
+            "ess_bulk": [1200.0, 200.0],  # second row (col 1) fails < 400
+            "ess_tail": [1500.0, 1800.0],  # both pass
+        },
+        index=["mu", "sigma"],
+    )
+
+
+def test_style_diagnostics_table_flags_out_of_threshold_cells():
+    styler = style_diagnostics_table(_diagnostics_frame())
+    # Exactly the two failing cells: r_hat 1.05 (row1,col0) and ess_bulk 200 (row1,col1).
+    assert _flagged_cells(styler) == {(1, 0), (1, 1)}
+    assert "Reported convergence diagnostics" in styler.to_html()
+
+
+def test_style_diagnostics_table_clean_frame_has_no_flags():
+    clean = pd.DataFrame(
+        {"r_hat": [1.001, 1.004], "ess_bulk": [900.0, 1100.0], "ess_tail": [1000.0, 1200.0]},
+        index=["mu", "sigma"],
+    )
+    assert _flagged_cells(style_diagnostics_table(clean)) == set()
+
+
+def test_style_diagnostics_table_tolerates_missing_columns():
+    # A frame carrying only r_hat must not error on the absent ESS columns.
+    only_rhat = pd.DataFrame({"r_hat": [1.02, 1.005]}, index=["a", "b"])
+    assert _flagged_cells(style_diagnostics_table(only_rhat)) == {(0, 0)}
+
+
+def test_style_diagnostics_table_respects_custom_thresholds():
+    styler = style_diagnostics_table(_diagnostics_frame(), rhat_max=1.10, ess_threshold=100)
+    # With looser thresholds nothing is flagged.
+    assert _flagged_cells(styler) == set()

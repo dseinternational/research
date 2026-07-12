@@ -6,7 +6,7 @@ import math
 import numpy as np
 import pytest
 
-from dse_research_utils.statistics.intervals import eti_1d, hdi_1d
+from dse_research_utils.statistics.intervals import eti_1d, eti_bands, hdi_1d
 
 
 class TestHdi1d:
@@ -61,6 +61,13 @@ class TestHdi1d:
         with pytest.raises(ValueError, match="hdi_prob"):
             hdi_1d([1.0, 2.0, 3.0], hdi_prob=bad)
 
+    def test_default_coverage_is_0_89(self) -> None:
+        # The default matches ArviZ's rcParams["stats.ci_prob"] = 0.89.
+        rng = np.random.default_rng(8)
+        samples = rng.normal(size=10_000)
+        assert hdi_1d(samples) == hdi_1d(samples, hdi_prob=0.89)
+        assert hdi_1d(samples) != hdi_1d(samples, hdi_prob=0.90)
+
 
 class TestEti1d:
     def test_empty_input_returns_nan(self) -> None:
@@ -92,3 +99,52 @@ class TestEti1d:
     def test_rejects_invalid_probability(self, bad: float) -> None:
         with pytest.raises(ValueError, match="eti_prob"):
             eti_1d([1.0, 2.0, 3.0], eti_prob=bad)
+
+    def test_default_coverage_is_0_89(self) -> None:
+        # The default matches ArviZ's rcParams["stats.ci_prob"] = 0.89.
+        rng = np.random.default_rng(9)
+        samples = rng.normal(size=10_000)
+        assert eti_1d(samples) == eti_1d(samples, eti_prob=0.89)
+        assert eti_1d(samples) != eti_1d(samples, eti_prob=0.90)
+
+
+class TestEtiBands:
+    def test_default_bands_and_keys(self) -> None:
+        rng = np.random.default_rng(3)
+        samples = rng.normal(size=5000)
+        bands = eti_bands(samples)
+        assert set(bands) == {"lo50", "hi50", "lo90", "hi90", "lo95", "hi95"}
+
+    def test_bands_match_eti_1d(self) -> None:
+        rng = np.random.default_rng(4)
+        samples = rng.normal(size=5000)
+        bands = eti_bands(samples, probs=(0.9,))
+        lo, hi = eti_1d(samples, eti_prob=0.9)
+        assert bands["lo90"] == pytest.approx(lo)
+        assert bands["hi90"] == pytest.approx(hi)
+
+    def test_bands_are_nested(self) -> None:
+        rng = np.random.default_rng(5)
+        samples = rng.normal(size=5000)
+        bands = eti_bands(samples)
+        assert bands["lo50"] >= bands["lo90"] >= bands["lo95"]
+        assert bands["hi50"] <= bands["hi90"] <= bands["hi95"]
+
+    def test_percentage_rounding_in_keys(self) -> None:
+        bands = eti_bands([1.0, 2.0, 3.0, 4.0], probs=(0.945,))
+        assert set(bands) == {"lo94", "hi94"}
+
+    @pytest.mark.parametrize("bad", [0.0, -0.1, 1.1])
+    def test_rejects_invalid_probability(self, bad: float) -> None:
+        with pytest.raises(ValueError, match="probs"):
+            eti_bands([1.0, 2.0, 3.0], probs=(bad,))
+
+    def test_strips_non_finite(self) -> None:
+        finite = [1.0, 2.0, 3.0, 4.0, 5.0]
+        with_bad = [1.0, np.nan, 2.0, np.inf, 3.0, -np.inf, 4.0, 5.0]
+        assert eti_bands(with_bad) == eti_bands(finite)
+
+    def test_all_non_finite_returns_nan_bands(self) -> None:
+        bands = eti_bands([np.nan, np.inf, -np.inf])
+        assert set(bands) == {"lo50", "hi50", "lo90", "hi90", "lo95", "hi95"}
+        assert all(math.isnan(v) for v in bands.values())

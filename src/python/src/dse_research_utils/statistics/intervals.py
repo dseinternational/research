@@ -4,7 +4,7 @@
 import numpy as np
 
 
-def hdi_1d(x: list[float] | np.ndarray, hdi_prob: float = 0.90) -> tuple[float, float]:
+def hdi_1d(x: list[float] | np.ndarray, hdi_prob: float = 0.89) -> tuple[float, float]:
     """
     Compute the highest density interval (HDI) for a 1D array of samples.
 
@@ -18,7 +18,8 @@ def hdi_1d(x: list[float] | np.ndarray, hdi_prob: float = 0.90) -> tuple[float, 
     x : array-like
         Input samples.
     hdi_prob : float, optional
-        The probability mass to include in the HDI (default is 0.90).
+        The probability mass to include in the HDI (default is 0.89, matching
+        ArviZ's ``rcParams["stats.ci_prob"]``).
 
     Returns
     -------
@@ -59,7 +60,7 @@ def hdi_1d(x: list[float] | np.ndarray, hdi_prob: float = 0.90) -> tuple[float, 
     return float(low_ends[min_idx]), float(high_ends[min_idx])
 
 
-def eti_1d(x: list[float] | np.ndarray, eti_prob: float = 0.90) -> tuple[float, float]:
+def eti_1d(x: list[float] | np.ndarray, eti_prob: float = 0.89) -> tuple[float, float]:
     """
     Equal-Tailed Interval from 1D samples.
 
@@ -72,7 +73,8 @@ def eti_1d(x: list[float] | np.ndarray, eti_prob: float = 0.90) -> tuple[float, 
     x : array-like
         Input samples.
     eti_prob : float, optional
-        The probability mass to include in the ETI (default is 0.90).
+        The probability mass to include in the ETI (default is 0.89, matching
+        ArviZ's ``rcParams["stats.ci_prob"]``).
 
     Returns
     -------
@@ -96,3 +98,43 @@ def eti_1d(x: list[float] | np.ndarray, eti_prob: float = 0.90) -> tuple[float, 
     # We multiply by 100 because np.percentile expects 0-100 range
     lower, upper = np.percentile(x, [lower_tail * 100, upper_tail * 100])
     return float(lower), float(upper)
+
+
+def eti_bands(
+    draws: list[float] | np.ndarray, *, probs: tuple[float, ...] = (0.5, 0.9, 0.95)
+) -> dict[str, float]:
+    """Equal-tailed interval bounds at several coverages, keyed ``lo{pct}``/``hi{pct}``.
+
+    A convenience over :func:`eti_1d` for the fixed multi-band reporting convention:
+    the central 50% interval (a visual aid, not a decision threshold), an equal-tailed
+    sensitivity band, and an equal-tailed headline interval. Each coverage ``p`` in
+    ``probs`` contributes ``lo{pct}`` / ``hi{pct}`` keys where ``pct = round(p * 100)``
+    (e.g. ``lo50`` / ``hi50``).
+
+    Parameters
+    ----------
+    draws : array-like
+        1-D posterior samples. Non-finite values (NaN/inf) are dropped first, as in
+        :func:`hdi_1d` / :func:`eti_1d`; if nothing finite remains every band is NaN.
+    probs : tuple of float
+        Coverage probabilities to emit bands for; each must be in (0, 1].
+
+    Returns
+    -------
+    dict of str to float
+        Lower/upper equal-tailed bounds keyed by percentage coverage.
+    """
+    draws = np.asarray(draws, dtype=float)
+    draws = draws[np.isfinite(draws)]
+    out: dict[str, float] = {}
+    for p in probs:
+        if not 0.0 < p <= 1.0:
+            raise ValueError(f"each coverage in probs must be in (0, 1], got {p!r}")
+        pct = round(float(p) * 100)
+        if draws.size == 0:
+            out[f"lo{pct}"] = out[f"hi{pct}"] = float("nan")
+            continue
+        lo, hi = np.quantile(draws, [(1 - p) / 2, 1 - (1 - p) / 2])
+        out[f"lo{pct}"] = float(lo)
+        out[f"hi{pct}"] = float(hi)
+    return out

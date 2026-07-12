@@ -124,3 +124,13 @@ class TestEtiBands:
     def test_rejects_invalid_probability(self, bad: float) -> None:
         with pytest.raises(ValueError, match="probs"):
             eti_bands([1.0, 2.0, 3.0], probs=(bad,))
+
+    def test_strips_non_finite(self) -> None:
+        finite = [1.0, 2.0, 3.0, 4.0, 5.0]
+        with_bad = [1.0, np.nan, 2.0, np.inf, 3.0, -np.inf, 4.0, 5.0]
+        assert eti_bands(with_bad) == eti_bands(finite)
+
+    def test_all_non_finite_returns_nan_bands(self) -> None:
+        bands = eti_bands([np.nan, np.inf, -np.inf])
+        assert set(bands) == {"lo50", "hi50", "lo90", "hi90", "lo95", "hi95"}
+        assert all(math.isnan(v) for v in bands.values())

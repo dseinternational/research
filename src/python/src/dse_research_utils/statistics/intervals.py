@@ -112,7 +112,8 @@ def eti_bands(
     Parameters
     ----------
     draws : array-like
-        1-D posterior samples.
+        1-D posterior samples. Non-finite values (NaN/inf) are dropped first, as in
+        :func:`hdi_1d` / :func:`eti_1d`; if nothing finite remains every band is NaN.
     probs : tuple of float
         Coverage probabilities to emit bands for; each must be in (0, 1].
 
@@ -122,12 +123,16 @@ def eti_bands(
         Lower/upper equal-tailed bounds keyed by percentage coverage.
     """
     draws = np.asarray(draws, dtype=float)
+    draws = draws[np.isfinite(draws)]
     out: dict[str, float] = {}
     for p in probs:
         if not 0.0 < p <= 1.0:
             raise ValueError(f"each coverage in probs must be in (0, 1], got {p!r}")
-        lo, hi = np.quantile(draws, [(1 - p) / 2, 1 - (1 - p) / 2])
         pct = round(float(p) * 100)
+        if draws.size == 0:
+            out[f"lo{pct}"] = out[f"hi{pct}"] = float("nan")
+            continue
+        lo, hi = np.quantile(draws, [(1 - p) / 2, 1 - (1 - p) / 2])
         out[f"lo{pct}"] = float(lo)
         out[f"hi{pct}"] = float(hi)
     return out

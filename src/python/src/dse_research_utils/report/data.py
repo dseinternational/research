@@ -63,16 +63,21 @@ def show_or_pending(df: Any, what: str, *, hint: str = "its output artefacts are
     -------
     Any
         ``df`` unchanged when it is not ``None``; otherwise an
-        :class:`IPython.display.Markdown` placeholder callout.
+        :class:`IPython.display.Markdown` placeholder callout, or the placeholder as a
+        plain Markdown string when IPython is not installed (so a non-notebook build
+        degrades instead of raising).
     """
-    if df is None:
+    if df is not None:
+        return df
+    message = (
+        f"> **Pending fit** — {what} will appear here once the model has been "
+        f"fitted and {hint}."
+    )
+    try:
         from IPython.display import Markdown
-
-        return Markdown(
-            f"> **Pending fit** — {what} will appear here once the model has been "
-            f"fitted and {hint}."
-        )
-    return df
+    except ModuleNotFoundError:
+        return message
+    return Markdown(message)
 
 
 class ReportData:

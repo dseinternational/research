@@ -35,11 +35,13 @@ def test_show_or_pending_passes_through_present_value():
 
 
 def test_show_or_pending_none_renders_placeholder():
-    md = pytest.importorskip("IPython.display")
+    # Returns an IPython Markdown when available, else the raw markdown string; either
+    # way the placeholder text is present (a non-notebook build must not raise).
     out = show_or_pending(None, "the ITT table")
-    assert isinstance(out, md.Markdown)
-    assert "Pending fit" in out.data
-    assert "the ITT table" in out.data
+    text = getattr(out, "data", out)
+    assert isinstance(text, str)
+    assert "Pending fit" in text
+    assert "the ITT table" in text
 
 
 def test_model_dir_uses_default_config(tmp_path):

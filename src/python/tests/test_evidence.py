@@ -87,3 +87,11 @@ def test_favoured_direction_half_is_positive_by_convention():
     out = favoured_direction(0.5)
     assert out["favoured_direction"] == "positive"
     assert out["favoured_direction_prob"] == pytest.approx(0.5)
+
+
+@pytest.mark.parametrize("bad", [-0.01, 1.01, 2.0, -1.0])
+def test_favoured_direction_rejects_out_of_range(bad):
+    # The error must name the actual argument (prob_positive), not leak the internal
+    # evidence_label(prob) failure.
+    with pytest.raises(ValueError, match="prob_positive"):
+        favoured_direction(bad)

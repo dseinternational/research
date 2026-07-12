@@ -91,6 +91,8 @@ def favoured_direction(prob_positive: float) -> dict[str, float | str]:
         probability).
     """
     p_pos = float(prob_positive)
+    if not 0.0 <= p_pos <= 1.0:
+        raise ValueError(f"prob_positive must be a probability in [0, 1], got {prob_positive!r}")
     prob = max(p_pos, 1.0 - p_pos)
     return {
         "favoured_direction": "positive" if p_pos >= 0.5 else "negative",

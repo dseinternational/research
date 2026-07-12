@@ -18,11 +18,14 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import arviz as az
 import numpy as np
 from rich import print as rprint
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 # Convergence-gate thresholds.
 RHAT_MAX = 1.01
@@ -241,3 +244,56 @@ def convergence_banner_markdown(summary: dict | None, *, dev_note: bool = True) 
         ]
     lines += ["", ":::"]
     return "\n".join(lines)
+
+
+def style_diagnostics_table(
+    df: pd.DataFrame,
+    *,
+    rhat_max: float = RHAT_MAX,
+    ess_threshold: int = ESS_THRESHOLD,
+    precision: int = 3,
+) -> pd.io.formats.style.Styler:
+    """Style a per-parameter diagnostics table, flagging out-of-threshold cells red.
+
+    Centralises the reported convergence-diagnostics table so every DSE model page
+    highlights the same cells the same way: an ``r_hat`` above ``rhat_max`` and an
+    ``ess_bulk`` / ``ess_tail`` below ``ess_threshold`` are shown bold red. Columns not
+    present in ``df`` are skipped, so the same call works for tables that carry only a
+    subset of the diagnostic columns.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        A diagnostics table indexed by parameter, optionally carrying ``r_hat``,
+        ``ess_bulk`` and/or ``ess_tail`` columns.
+    rhat_max : float, default :data:`RHAT_MAX`
+        R-hat threshold; cells strictly above it are flagged.
+    ess_threshold : int, default :data:`ESS_THRESHOLD`
+        ESS threshold; cells strictly below it are flagged.
+    precision : int, default 3
+        Float display precision for the styled table.
+
+    Returns
+    -------
+    pandas.io.formats.style.Styler
+        A styler with the flagged cells and a caption describing the thresholds.
+    """
+
+    def _flag(value: float, threshold: float, *, above: bool) -> str:
+        try:
+            bad = value > threshold if above else value < threshold
+        except TypeError:
+            return ""
+        return "color: #b00; font-weight: bold;" if bad else ""
+
+    styler = df.style.format(precision=precision)
+    if "r_hat" in df.columns:
+        styler = styler.map(lambda v: _flag(v, rhat_max, above=True), subset=["r_hat"])
+    ess_cols = [c for c in ("ess_bulk", "ess_tail") if c in df.columns]
+    if ess_cols:
+        styler = styler.map(lambda v: _flag(v, ess_threshold, above=False), subset=ess_cols)
+    styler.set_caption(
+        f"Reported convergence diagnostics. Cells highlighted red flag "
+        f"r̂ > {rhat_max} or ESS < {ess_threshold}."
+    )
+    return styler

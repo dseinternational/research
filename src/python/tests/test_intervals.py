@@ -6,7 +6,7 @@ import math
 import numpy as np
 import pytest
 
-from dse_research_utils.statistics.intervals import eti_1d, hdi_1d
+from dse_research_utils.statistics.intervals import eti_1d, eti_bands, hdi_1d
 
 
 class TestHdi1d:
@@ -92,3 +92,35 @@ class TestEti1d:
     def test_rejects_invalid_probability(self, bad: float) -> None:
         with pytest.raises(ValueError, match="eti_prob"):
             eti_1d([1.0, 2.0, 3.0], eti_prob=bad)
+
+
+class TestEtiBands:
+    def test_default_bands_and_keys(self) -> None:
+        rng = np.random.default_rng(3)
+        samples = rng.normal(size=5000)
+        bands = eti_bands(samples)
+        assert set(bands) == {"lo50", "hi50", "lo90", "hi90", "lo95", "hi95"}
+
+    def test_bands_match_eti_1d(self) -> None:
+        rng = np.random.default_rng(4)
+        samples = rng.normal(size=5000)
+        bands = eti_bands(samples, probs=(0.9,))
+        lo, hi = eti_1d(samples, eti_prob=0.9)
+        assert bands["lo90"] == pytest.approx(lo)
+        assert bands["hi90"] == pytest.approx(hi)
+
+    def test_bands_are_nested(self) -> None:
+        rng = np.random.default_rng(5)
+        samples = rng.normal(size=5000)
+        bands = eti_bands(samples)
+        assert bands["lo50"] >= bands["lo90"] >= bands["lo95"]
+        assert bands["hi50"] <= bands["hi90"] <= bands["hi95"]
+
+    def test_percentage_rounding_in_keys(self) -> None:
+        bands = eti_bands([1.0, 2.0, 3.0, 4.0], probs=(0.945,))
+        assert set(bands) == {"lo94", "hi94"}
+
+    @pytest.mark.parametrize("bad", [0.0, -0.1, 1.1])
+    def test_rejects_invalid_probability(self, bad: float) -> None:
+        with pytest.raises(ValueError, match="probs"):
+            eti_bands([1.0, 2.0, 3.0], probs=(bad,))

@@ -96,3 +96,38 @@ def eti_1d(x: list[float] | np.ndarray, eti_prob: float = 0.90) -> tuple[float, 
     # We multiply by 100 because np.percentile expects 0-100 range
     lower, upper = np.percentile(x, [lower_tail * 100, upper_tail * 100])
     return float(lower), float(upper)
+
+
+def eti_bands(
+    draws: list[float] | np.ndarray, *, probs: tuple[float, ...] = (0.5, 0.9, 0.95)
+) -> dict[str, float]:
+    """Equal-tailed interval bounds at several coverages, keyed ``lo{pct}``/``hi{pct}``.
+
+    A convenience over :func:`eti_1d` for the fixed multi-band reporting convention:
+    the central 50% interval (a visual aid, not a decision threshold), an equal-tailed
+    sensitivity band, and an equal-tailed headline interval. Each coverage ``p`` in
+    ``probs`` contributes ``lo{pct}`` / ``hi{pct}`` keys where ``pct = round(p * 100)``
+    (e.g. ``lo50`` / ``hi50``).
+
+    Parameters
+    ----------
+    draws : array-like
+        1-D posterior samples.
+    probs : tuple of float
+        Coverage probabilities to emit bands for; each must be in (0, 1].
+
+    Returns
+    -------
+    dict of str to float
+        Lower/upper equal-tailed bounds keyed by percentage coverage.
+    """
+    draws = np.asarray(draws, dtype=float)
+    out: dict[str, float] = {}
+    for p in probs:
+        if not 0.0 < p <= 1.0:
+            raise ValueError(f"each coverage in probs must be in (0, 1], got {p!r}")
+        lo, hi = np.quantile(draws, [(1 - p) / 2, 1 - (1 - p) / 2])
+        pct = round(float(p) * 100)
+        out[f"lo{pct}"] = float(lo)
+        out[f"hi{pct}"] = float(hi)
+    return out

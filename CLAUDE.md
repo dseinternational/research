@@ -125,9 +125,12 @@ pytest path/to/test_file.py::test_function_name  # single test
 - **`metadata/`** — package version introspection
 - **`ml/`** — ML utilities (placeholder)
 - **`plot/`** — matplotlib/ArviZ plotting helpers; constants follow `FIGSIZE_XS`, `COLOUR_BLUE`, `DPI_NOTEBOOK` naming
-- **`statistics/`** — descriptive stats, credible/confidence intervals, PyMC models and sampling presets
+- **`report/`** — report data-access helpers (`ReportData`, `show_or_pending`) that read a fitted model's artefacts and degrade to a visible "pending fit" placeholder before a fit exists
+- **`statistics/`** — descriptive stats; credible/confidence intervals (`intervals.hdi_1d` / `eti_1d` / `eti_bands`); the shared evidence ladder (`evidence.py`: `evidence_label` / `odds_string` / `favoured_direction`); the ROPE report card (`rope.py`: `rope_card`); the MCMC convergence gate, banner, and styled diagnostics table (`diagnostics.py`); and PyMC models and sampling presets
 
 All `__init__.py` files are empty — no re-exports. Use fully-qualified absolute imports everywhere (e.g. `from dse_research_utils.math.constants import EPSILON`).
+
+`statistics/models/reporting.ReportingConfiguration` carries the reporting `ci_prob` (credible-interval coverage) and `interval_kind` (`"eti"` equal-tailed or `"hdi"` highest-density); reports read both back so tables, plots, and the diagnostics summary agree on the interval convention.
 
 Bayesian sampling presets in `statistics/models/sampling.py`, selected via `get_sampling_configuration(config)`:
 

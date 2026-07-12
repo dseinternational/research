@@ -5,7 +5,11 @@
 
 import pytest
 
-from dse_research_utils.statistics.evidence import evidence_label, odds_string
+from dse_research_utils.statistics.evidence import (
+    evidence_label,
+    favoured_direction,
+    odds_string,
+)
 
 
 @pytest.mark.parametrize(
@@ -59,3 +63,27 @@ def test_evidence_label_rejects_out_of_range(bad):
 @pytest.mark.parametrize("ok", [0.0, 1.0])
 def test_evidence_label_accepts_closed_interval_endpoints(ok):
     assert evidence_label(ok) in {"inconclusive", "very strong"}
+
+
+def test_favoured_direction_positive_orients_to_the_positive_claim():
+    out = favoured_direction(0.97)
+    assert out["favoured_direction"] == "positive"
+    assert out["favoured_direction_prob"] == pytest.approx(0.97)
+    assert out["favoured_direction_label"] == evidence_label(0.97)
+
+
+def test_favoured_direction_negative_orients_to_the_negative_claim():
+    # A clearly negative effect: P(>0) = 0.02 must read as strong evidence of a
+    # *negative* effect (claim prob 0.98), not the "inconclusive" that the raw
+    # positive-claim probability would give.
+    out = favoured_direction(0.02)
+    assert out["favoured_direction"] == "negative"
+    assert out["favoured_direction_prob"] == pytest.approx(0.98)
+    assert out["favoured_direction_label"] == evidence_label(0.98)
+    assert out["favoured_direction_label"] != evidence_label(0.02)
+
+
+def test_favoured_direction_half_is_positive_by_convention():
+    out = favoured_direction(0.5)
+    assert out["favoured_direction"] == "positive"
+    assert out["favoured_direction_prob"] == pytest.approx(0.5)

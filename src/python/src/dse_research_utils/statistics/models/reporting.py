@@ -3,6 +3,15 @@
 
 import os
 from dataclasses import dataclass
+from typing import Literal
+
+IntervalKind = Literal["eti", "hdi"]
+"""Which credible-interval convention a report summarises with.
+
+``"eti"`` — equal-tailed interval (the two central quantiles); ``"hdi"`` — highest
+density interval (the narrowest interval covering the mass). Both cover ``ci_prob``
+probability; they differ for skewed or bounded-scale posteriors.
+"""
 
 
 @dataclass
@@ -19,10 +28,24 @@ class ReportingConfiguration:
     """
     Root output directory.
     """
-    hdi: float = 0.89
+    ci_prob: float = 0.89
     """
-    High density interval width for reporting (e.g., 0.95 for 95% HDI).
+    Coverage probability of the reported credible interval (e.g. 0.95 for a 95%
+    interval). This is the interval *mass*; :attr:`interval_kind` selects whether it
+    is summarised as an equal-tailed or a highest-density interval.
     """
+    interval_kind: IntervalKind = "hdi"
+    """
+    Credible-interval convention used to summarise :attr:`ci_prob` mass — ``"eti"``
+    (equal-tailed) or ``"hdi"`` (highest density). Reports read this back to keep the
+    interval kind consistent between the tables, plots, and the diagnostics summary.
+    """
+
+    def __post_init__(self) -> None:
+        if not 0.0 < self.ci_prob <= 1.0:
+            raise ValueError(f"ci_prob must be in (0, 1], got {self.ci_prob!r}")
+        if self.interval_kind not in ("eti", "hdi"):
+            raise ValueError(f"interval_kind must be 'eti' or 'hdi', got {self.interval_kind!r}")
 
     @property
     def models_dir(self) -> str:

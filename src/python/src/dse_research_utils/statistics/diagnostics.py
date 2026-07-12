@@ -102,7 +102,13 @@ def write_diagnostics_summary(
         # Evaluate the gate on unrounded diagnostics; presentation rounding is
         # applied by convergence_banner_markdown, not here (else a borderline
         # R-hat such as 1.01004 would round to 1.0100 and slip through the gate).
-        s = az.summary(trace, var_names=var_names, round_to=None, ci_kind="eti")
+        # NB: ``round_to`` must be the *string* ``"none"``. In arviz-stats 1.2.0
+        # only ``"None"``/``"none"`` disable rounding; ``round_to=None`` (and
+        # ``"auto"``) fall through to ``rcParams["stats.round_to"]``, whose default
+        # ``"2g"`` rounds to 2 significant figures -- so ``None`` would silently gate
+        # on rounded values (R-hat 1.045 -> 1.0 passing <= 1.01; ESS 395 -> 400
+        # passing >= 400). See dseinternational/research#65.
+        s = az.summary(trace, var_names=var_names, round_to="none", ci_kind="eti")
         if "r_hat" in s:
             max_rhat = float(np.nanmax(s["r_hat"].values))
             rhat_failing = [str(i) for i in s.index[s["r_hat"] > RHAT_MAX]]

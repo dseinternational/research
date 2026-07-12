@@ -39,6 +39,20 @@ Drafted by a LLM-based AI tool (Claude Code/Opus 4.8).
 
 Quarto supports five callout types (`note`, `tip`, `warning`, `caution`, `important`); use `note` for attribution. Drop `appearance="simple"` for the default boxed style, or add `collapse="true"` to make it collapsible.
 
+## Markdown authoring
+
+When drafting Markdown — repository documents, pull request descriptions, issue descriptions, or comments on either — write each paragraph as a single unwrapped line and avoid superfluous line breaks. Do not hard-wrap prose at a fixed column or scatter extra blank lines; let the renderer wrap the text. Prettier runs with `proseWrap: "preserve"`, so any manual wrapping is kept verbatim and produces noisy diffs.
+
+## Commit messages
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for every commit — this applies to agents and humans alike.
+
+- Subject line: `<type>[optional scope]: <description>` (for example `feat(plot): add credible-interval helper` or `fix: guard against zero variance`).
+- Common types: `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
+- Keep the description in the imperative mood and concise, with no trailing period.
+- Flag breaking changes with a `!` before the colon (for example `feat!:`) or a `BREAKING CHANGE:` footer.
+- Add a body separated from the subject by a blank line when the change needs explanation.
+
 ## Repositories using these libraries
 
 Current projects using these libraries include:

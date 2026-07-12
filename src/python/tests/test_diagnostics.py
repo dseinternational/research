@@ -152,6 +152,85 @@ def test_write_diagnostics_summary_flags_divergences(tmp_path):
     assert payload["passed"] is False
 
 
+def _clean_sample_stats(shape: tuple[int, int], *, seed: int = 99) -> xr.Dataset:
+    """A healthy ``sample_stats`` group: no divergences, white-noise energy.
+
+    Lets a trace engineered to fail a *single* gate (R-hat or ESS) pass the other
+    checks, so the regression assertions below isolate the check under test.
+    """
+    rng = np.random.default_rng(seed)
+    return xr.Dataset(
+        {
+            "diverging": (("chain", "draw"), np.zeros(shape, dtype=bool)),
+            "energy": (("chain", "draw"), rng.normal(size=shape)),
+        },
+        coords={"chain": range(shape[0]), "draw": range(shape[1])},
+    )
+
+
+def _make_trace_high_rhat(seed: int = 0) -> xr.DataTree:
+    """A trace whose single parameter has a true max R-hat in (1.01, 1.05).
+
+    Half the chains are shifted by a fixed offset, inflating the between-chain
+    variance so split R-hat lands around 1.04 -- comfortably above the 1.01 gate
+    yet close enough that 2-significant-figure rounding collapses it to 1.0.
+    """
+    rng = np.random.default_rng(seed)
+    shape = (4, 800)
+    mu = rng.normal(0.0, 1.0, size=shape)
+    mu[0] += 0.5
+    mu[1] += 0.5
+    posterior = xr.Dataset(
+        {"mu": (("chain", "draw"), mu)},
+        coords={"chain": range(shape[0]), "draw": range(shape[1])},
+    )
+    return xr.DataTree.from_dict({"posterior": posterior, "sample_stats": _clean_sample_stats(shape)})
+
+
+def _make_trace_low_ess(seed: int = 0) -> xr.DataTree:
+    """A trace whose single parameter has a true min ESS just under 400.
+
+    A strongly autocorrelated (AR(1), rho=0.82) chain drives ESS to ~395 -- below
+    the 400 gate, but inside the 2-significant-figure band that rounds *up* to 400.
+    """
+    rng = np.random.default_rng(seed)
+    shape = (4, 1000)
+    rho = 0.82
+    scale = np.sqrt(1.0 - rho**2)
+    x = np.empty(shape)
+    x[:, 0] = rng.normal(size=shape[0])
+    for t in range(1, shape[1]):
+        x[:, t] = rho * x[:, t - 1] + scale * rng.normal(size=shape[0])
+    posterior = xr.Dataset(
+        {"mu": (("chain", "draw"), x)},
+        coords={"chain": range(shape[0]), "draw": range(shape[1])},
+    )
+    return xr.DataTree.from_dict({"posterior": posterior, "sample_stats": _clean_sample_stats(shape)})
+
+
+def test_gate_does_not_round_borderline_rhat_through(tmp_path):
+    # Regression for dseinternational/research#65: az.summary must be called with
+    # round_to="none" (the string). With the buggy round_to=None, arviz-stats
+    # rounds R-hat to 2 significant figures, so this ~1.04 R-hat would report as
+    # 1.0 and wrongly pass the <= 1.01 gate with an empty rhat_failing list.
+    payload = write_diagnostics_summary(_make_trace_high_rhat(), str(tmp_path))
+    assert payload["max_rhat"] > RHAT_MAX  # unrounded value survives, not 1.0
+    assert payload["checks"]["rhat"] is False
+    assert payload["rhat_failing"] == ["mu"]
+    assert payload["passed"] is False
+
+
+def test_gate_does_not_round_borderline_ess_through(tmp_path):
+    # Regression for dseinternational/research#65: a true min ESS of ~395 rounds
+    # up to 400 under 2-significant-figure rounding and would wrongly pass the
+    # >= 400 gate. With round_to="none" the unrounded value fails the gate.
+    payload = write_diagnostics_summary(_make_trace_low_ess(), str(tmp_path))
+    assert payload["min_ess"] < ESS_THRESHOLD  # unrounded value survives, not 400
+    assert payload["checks"] == {"rhat": True, "ess": False, "divergences": True, "bfmi": True}
+    assert payload["ess_failing"] == ["mu"]
+    assert payload["passed"] is False
+
+
 def test_convergence_banner_none_is_placeholder():
     md = convergence_banner_markdown(None)
     assert ".callout-note" in md

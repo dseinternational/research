@@ -61,6 +61,13 @@ class TestHdi1d:
         with pytest.raises(ValueError, match="hdi_prob"):
             hdi_1d([1.0, 2.0, 3.0], hdi_prob=bad)
 
+    def test_default_coverage_is_0_89(self) -> None:
+        # The default matches ArviZ's rcParams["stats.ci_prob"] = 0.89.
+        rng = np.random.default_rng(8)
+        samples = rng.normal(size=10_000)
+        assert hdi_1d(samples) == hdi_1d(samples, hdi_prob=0.89)
+        assert hdi_1d(samples) != hdi_1d(samples, hdi_prob=0.90)
+
 
 class TestEti1d:
     def test_empty_input_returns_nan(self) -> None:
@@ -92,6 +99,13 @@ class TestEti1d:
     def test_rejects_invalid_probability(self, bad: float) -> None:
         with pytest.raises(ValueError, match="eti_prob"):
             eti_1d([1.0, 2.0, 3.0], eti_prob=bad)
+
+    def test_default_coverage_is_0_89(self) -> None:
+        # The default matches ArviZ's rcParams["stats.ci_prob"] = 0.89.
+        rng = np.random.default_rng(9)
+        samples = rng.normal(size=10_000)
+        assert eti_1d(samples) == eti_1d(samples, eti_prob=0.89)
+        assert eti_1d(samples) != eti_1d(samples, eti_prob=0.90)
 
 
 class TestEtiBands:

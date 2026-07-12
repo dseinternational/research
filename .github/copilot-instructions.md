@@ -130,7 +130,7 @@ pytest path/to/test_file.py::test_function_name  # single test
 
 All `__init__.py` files are empty — no re-exports. Use fully-qualified absolute imports everywhere (e.g. `from dse_research_utils.math.constants import EPSILON`).
 
-`statistics/models/reporting.ReportingConfiguration` carries the reporting `ci_prob` (credible-interval coverage) and `interval_kind` (`"eti"` equal-tailed or `"hdi"` highest-density); reports read both back so tables, plots, and the diagnostics summary agree on the interval convention.
+`statistics/models/reporting.ReportingConfiguration` carries the reporting `ci_prob` (credible-interval coverage) and `interval_kind` (`"eti"` equal-tailed or `"hdi"` highest-density); reports read both back so tables, plots, and the diagnostics summary agree on the interval convention. Credible-interval coverage defaults to **0.89** across the shared helpers (`hdi_1d`, `eti_1d`, `rope_card`, `ReportingConfiguration.ci_prob`, …), matching ArviZ's `rcParams["stats.ci_prob"]`; a report that wants a different width passes it explicitly (e.g. `vocabulary-growth` uses 0.90, `language-reading-predictors` uses 0.95).
 
 Bayesian sampling presets in `statistics/models/sampling.py`, selected via `get_sampling_configuration(config)`:
 

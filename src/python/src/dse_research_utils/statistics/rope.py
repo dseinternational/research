@@ -28,7 +28,7 @@ def rope_card(
     items: np.ndarray,
     *,
     delta: float,
-    ci_prob: float = 0.95,
+    ci_prob: float = 0.89,
 ) -> dict[str, float | str]:
     """Assemble the ROPE report card from native-scale and items-scale effect draws.
 
@@ -57,8 +57,10 @@ def rope_card(
         Items-scale (interpretable) effect draws, shape ``(S,)``.
     delta : float
         ROPE half-width on the items scale (the minimally-important difference).
-    ci_prob : float, default 0.95
-        Coverage of the headline equal-tailed and HPDI intervals.
+    ci_prob : float, default 0.89
+        Coverage of the headline equal-tailed and HPDI intervals (the ArviZ 1.x
+        default, ``rcParams["stats.ci_prob"]``). Reports pass their own convention
+        explicitly (e.g. the ITT suite uses 0.95).
 
     Returns
     -------

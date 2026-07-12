@@ -128,3 +128,13 @@ def test_rope_card_drops_non_finite_pairs():
 def test_rope_card_all_non_finite_raises():
     with pytest.raises(ValueError, match="no finite"):
         rope_card([np.nan, np.inf], [1.0, 2.0], delta=0.5, ci_prob=0.9)
+
+
+def test_rope_card_default_ci_prob_is_0_89():
+    # The default coverage matches ArviZ's rcParams["stats.ci_prob"] = 0.89.
+    rng = np.random.default_rng(10)
+    effect = rng.normal(0.3, 1.0, size=8000)
+    items = rng.normal(1.0, 2.0, size=8000)
+    default = rope_card(effect, items, delta=0.5)
+    assert default == rope_card(effect, items, delta=0.5, ci_prob=0.89)
+    assert default["items_lo"] != rope_card(effect, items, delta=0.5, ci_prob=0.95)["items_lo"]

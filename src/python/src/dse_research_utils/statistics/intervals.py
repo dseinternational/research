@@ -4,7 +4,7 @@
 import numpy as np
 
 
-def hdi_1d(x: list[float] | np.ndarray, hdi_prob: float = 0.90) -> tuple[float, float]:
+def hdi_1d(x: list[float] | np.ndarray, hdi_prob: float = 0.89) -> tuple[float, float]:
     """
     Compute the highest density interval (HDI) for a 1D array of samples.
 
@@ -18,7 +18,8 @@ def hdi_1d(x: list[float] | np.ndarray, hdi_prob: float = 0.90) -> tuple[float, 
     x : array-like
         Input samples.
     hdi_prob : float, optional
-        The probability mass to include in the HDI (default is 0.90).
+        The probability mass to include in the HDI (default is 0.89, matching
+        ArviZ's ``rcParams["stats.ci_prob"]``).
 
     Returns
     -------
@@ -59,7 +60,7 @@ def hdi_1d(x: list[float] | np.ndarray, hdi_prob: float = 0.90) -> tuple[float, 
     return float(low_ends[min_idx]), float(high_ends[min_idx])
 
 
-def eti_1d(x: list[float] | np.ndarray, eti_prob: float = 0.90) -> tuple[float, float]:
+def eti_1d(x: list[float] | np.ndarray, eti_prob: float = 0.89) -> tuple[float, float]:
     """
     Equal-Tailed Interval from 1D samples.
 
@@ -72,7 +73,8 @@ def eti_1d(x: list[float] | np.ndarray, eti_prob: float = 0.90) -> tuple[float, 
     x : array-like
         Input samples.
     eti_prob : float, optional
-        The probability mass to include in the ETI (default is 0.90).
+        The probability mass to include in the ETI (default is 0.89, matching
+        ArviZ's ``rcParams["stats.ci_prob"]``).
 
     Returns
     -------

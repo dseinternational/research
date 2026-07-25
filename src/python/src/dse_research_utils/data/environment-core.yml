@@ -5,9 +5,9 @@
 # conda-forge, to identical specs so the compiled scientific stack cannot drift
 # across repos. The pure-Python tail and the shared library are installed in the
 # pip layer (dse-research-utils[...] extras); repo-specific compiled add-ons
-# (e.g. the gradient-boosting stack lightgbm/xgboost/shap, or the columnar-data
-# stack polars/pyarrow/duckdb/pyreadstat) are declared in each repo on top of
-# this core.
+# (e.g. the gradient-boosting stack lightgbm/xgboost/shap, or the rest of the
+# columnar-data stack polars/duckdb/pyreadstat) are declared in each repo on top
+# of this core.
 #
 # Verify a repo against this file with:  dse-check-env path/to/environment.yml
 #
@@ -23,6 +23,15 @@ dependencies:
   - numpy>=2.4.6,<2.5 # pymc>=6.1.0 -> pytensor 3.1.x -> numba<=0.65.1 -> numpy<2.5
   - scipy>=1.18.0
   - pandas>=3.0.3
+  # pandas 3.x's default `str` dtype is Arrow-backed, so PyArrow underpins every
+  # string column. Declared explicitly because pandas only *constrains* pyarrow
+  # (>=13.0.0) rather than depending on it — without this line its presence rests
+  # on nutpie's dependency graph (`nutpie -> pyarrow-core`), and a change there
+  # would silently drop every repo back to Python-backed strings. The full
+  # `pyarrow` metapackage, not `pyarrow-core`: repos on this core also read and
+  # write Parquet/Feather, so libparquet and friends belong in the shared core
+  # rather than being re-declared per repo.
+  - pyarrow>=25.0.0
   - numba>=0.58,<=0.65.1 # pytensor 3.x caps numba; this is what pymc>=6.1.0 commits us to
   - matplotlib>=3.11.0
   - scikit-learn>=1.9.0

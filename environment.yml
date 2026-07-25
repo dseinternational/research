@@ -7,15 +7,15 @@ dependencies:
   # These lines must match that spec exactly. Verify with:
   #   dse-check-env environment.yml
   - python=3.14.6
-  - numpy>=2.4.6,<2.5 # pymc>=6.1.0 -> pytensor 3.1.x -> numba<=0.65.1 -> numpy<2.5
+  - numpy>=2.4.6,<2.5 # pymc -> pytensor 3.x -> numba<=0.65.1 -> numpy<2.5
   - scipy>=1.18.0
   - pandas>=3.0.3
   - pyarrow>=24.0.0 # pandas 3.x's default `str` dtype is Arrow-backed; floor held at 24 by jaxlib's libabseil pin — see environment-core.yml
-  - numba>=0.58,<=0.65.1 # pytensor 3.x caps numba; this is what pymc>=6.1.0 commits us to
+  - numba>=0.58,<=0.65.1 # every pytensor 3.x caps numba here (verified 3.1.3, 3.2.1, 3.2.2); this is what pymc commits us to
   - matplotlib>=3.11.0
   - scikit-learn>=1.9.0
   - statsmodels>=0.14.6
-  - pymc>=6.1.0 # pulls pytensor + a C toolchain from conda-forge; forces pytensor >=3.1.2 -> numba <=0.65.1 -> numpy <2.5
+  - pymc>=6.1.0 # pulls pytensor + a C toolchain from conda-forge; each pymc 6.x pins one pytensor 3.x minor (6.1 -> 3.1, 6.2 -> 3.2), which caps numba <=0.65.1 -> numpy <2.5. Floor is the minimum supported, not what solves: 6.2.0/pytensor 3.2.2 is current
   - nutpie>=0.16.11
   - numpyro>=0.21.0
   - jax>=0.10.2 # CPU build; GPU acceleration via environment-gpu.yml

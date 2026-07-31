@@ -7,15 +7,15 @@ dependencies:
   # These lines must match that spec exactly. Verify with:
   #   dse-check-env environment.yml
   - python=3.14.6
-  - numpy>=2.4.6,<2.5 # pymc -> pytensor 3.x -> numba<=0.65.1 -> numpy<2.5
+  - numpy>=2.4.6,<2.5 # pymc -> pytensor 3.x -> numba -> numpy<2.5; numba 0.66.0 still pins <2.5, so lifting this needs a numba release that supports 2.5
   - scipy>=1.18.0
-  - pandas>=3.0.3
+  - pandas>=3.0.5
   - pyarrow>=24.0.0 # pandas 3.x's default `str` dtype is Arrow-backed; floor held at 24 by jaxlib's libabseil pin — see environment-core.yml
-  - numba>=0.58,<=0.65.1 # every pytensor 3.x caps numba here (verified 3.1.3, 3.2.1, 3.2.2); this is what pymc commits us to
-  - matplotlib>=3.11.0
+  - numba>=0.58,<=0.65.1 # every pytensor 3.x caps numba here (verified 3.1.3, 3.2.1, 3.2.2, 3.2.3); this is what pymc commits us to
+  - matplotlib>=3.11.1
   - scikit-learn>=1.9.0
   - statsmodels>=0.14.6
-  - pymc>=6.1.0 # pulls pytensor + a C toolchain from conda-forge; each pymc 6.x pins one pytensor 3.x minor (6.1 -> 3.1, 6.2 -> 3.2), which caps numba <=0.65.1 -> numpy <2.5. Floor is the minimum supported, not what solves: 6.2.0/pytensor 3.2.2 is current
+  - pymc>=6.2.0 # pulls pytensor + a C toolchain from conda-forge; each pymc 6.x admits one pytensor 3.x minor (6.1 -> 3.1, 6.2 -> >=3.2.2,<3.3), which caps numba <=0.65.1 -> numpy <2.5. Floor is the minimum supported, not what solves: 6.2.0/pytensor 3.2.3 is current
   - nutpie>=0.16.11
   - numpyro>=0.21.0
   - jax>=0.10.2 # CPU build; GPU acceleration via environment-gpu.yml
@@ -23,19 +23,19 @@ dependencies:
   - arviz-base>=1.2.0
   - arviz-stats>=1.2.0
   - arviz-plots>=1.2.0
-  - preliz>=0.27.0
-  - h5py>=3.12.0
-  - h5netcdf>=1.3.0
+  - preliz>=0.27.1
+  - h5py>=3.16.0
+  - h5netcdf>=1.8.1
   - graphviz>=14.1.2
-  - python-graphviz>=0.20
+  - python-graphviz>=0.21
   # ── research add-ons (compiled / columnar data / system binaries) ─────────
-  - lightgbm>=4.6.0
+  - lightgbm>=4.7.0
   - xgboost>=3.3.0
   - shap>=0.52.0
-  - polars>=1.42.1
-  - duckdb>=1.5.4
+  - polars>=1.43.1
+  - duckdb>=1.5.5
   - pyreadstat>=1.3.5
-  - xarray>=2026.4.0
+  - xarray>=2026.7.0
   - zarr
   - networkx
   - pandoc
@@ -58,5 +58,5 @@ dependencies:
       - hatch
       - build
       - pytest>=9.1.1
-      - ruff>=0.15.20
-      - setuptools>=82.0.1
+      - ruff>=0.16.1
+      - setuptools>=83.0.0

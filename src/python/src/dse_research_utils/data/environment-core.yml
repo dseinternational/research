@@ -20,9 +20,14 @@ channels:
 dependencies:
   - python=3.14.6
   # --- core numerics (compiled) ---
-  - numpy>=2.4.6,<2.5 # pymc -> pytensor 3.x -> numba<=0.65.1 -> numpy<2.5
+  # numpy 2.5 is released but unreachable: pymc -> pytensor 3.x -> numba, and
+  # every numba that pytensor accepts pins numpy <2.5. Note the cap does not
+  # move when the numba cap below does — numba 0.66.0 still pins numpy <2.5 —
+  # so lifting this needs a numba release that supports 2.5, not merely a
+  # pytensor release that accepts a newer numba.
+  - numpy>=2.4.6,<2.5
   - scipy>=1.18.0
-  - pandas>=3.0.3
+  - pandas>=3.0.5
   # pandas 3.x's default `str` dtype is Arrow-backed, so PyArrow underpins every
   # string column. Declared explicitly because pandas only *constrains* pyarrow
   # (>=13.0.0) rather than depending on it — without this line its presence rests
@@ -36,12 +41,19 @@ dependencies:
   # 0.10.2) still pins libabseil <20260108 — the two do not co-solve. Raise this
   # once jaxlib is rebuilt against the newer abseil.
   - pyarrow>=24.0.0
-  - numba>=0.58,<=0.65.1 # every pytensor 3.x caps numba here (verified 3.1.3, 3.2.1, 3.2.2); this is what pymc commits us to
-  - matplotlib>=3.11.0
+  # Cap holds even though numba 0.66.0 is released: every pytensor 3.x caps
+  # numba at 0.65.1 (verified 3.1.3, 3.2.1, 3.2.2, 3.2.3), and that is what pymc
+  # commits us to.
+  - numba>=0.58,<=0.65.1
+  - matplotlib>=3.11.1
   - scikit-learn>=1.9.0
   - statsmodels>=0.14.6
   # --- Bayesian modelling stack ---
-  - pymc>=6.1.0 # pulls pytensor + a C toolchain from conda-forge; each pymc 6.x pins one pytensor 3.x minor (6.1 -> 3.1, 6.2 -> 3.2), which caps numba <=0.65.1 -> numpy <2.5. Floor is the minimum supported, not what solves: 6.2.0/pytensor 3.2.2 is current
+  # pymc pulls pytensor + a C toolchain from conda-forge. Each pymc 6.x admits
+  # one pytensor 3.x minor (6.1 -> 3.1, 6.2 -> >=3.2.2,<3.3), which caps numba
+  # <=0.65.1 -> numpy <2.5. Floor is the minimum supported, not what solves:
+  # 6.2.0/pytensor 3.2.3 is current.
+  - pymc>=6.2.0
   - nutpie>=0.16.11
   - numpyro>=0.21.0
   - jax>=0.10.2 # CPU build; GPU acceleration via environment-gpu.yml
@@ -49,10 +61,10 @@ dependencies:
   - arviz-base>=1.2.0
   - arviz-stats>=1.2.0
   - arviz-plots>=1.2.0
-  - preliz>=0.27.0
+  - preliz>=0.27.1
   # --- serialization / storage (system libraries) ---
-  - h5py>=3.12.0
-  - h5netcdf>=1.3.0
+  - h5py>=3.16.0
+  - h5netcdf>=1.8.1
   # --- graph rendering (system Graphviz) ---
   - graphviz>=14.1.2
-  - python-graphviz>=0.20
+  - python-graphviz>=0.21

@@ -1,8 +1,10 @@
 version: 2
 
 updates:
+  # The only Python manifest is src/python/pyproject.toml — dependabot does not
+  # recurse, so pointing this at / scans nothing.
   - package-ecosystem: pip
-    directory: /
+    directory: /src/python
     schedule:
       interval: daily
       time: "05:00"
@@ -11,6 +13,16 @@ updates:
       python-dependencies:
         patterns:
           - "*"
+    ignore:
+      # numpy 2.5 is unreachable for anything depending on pymc: pytensor 3.2.x
+      # pins numba <=0.66.0, and numba 0.66.0 still pins numpy <2.5. The ceiling
+      # in pyproject.toml mirrors the canonical conda core
+      # (src/python/src/dse_research_utils/data/environment-core.yml); raising it
+      # only declares a range no resolver can use. This rule previously lived on
+      # the conda ecosystem and was dropped with it in f8d3c4f. Remove once numba
+      # supports numpy 2.5.
+      - dependency-name: "numpy"
+        versions: [">=2.5.0"]
     assignees:
       - frankbuckley
 

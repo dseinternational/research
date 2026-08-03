@@ -6,8 +6,8 @@
 # across repos. The pure-Python tail and the shared library are installed in the
 # pip layer (dse-research-utils[...] extras); repo-specific compiled add-ons
 # (e.g. the gradient-boosting stack lightgbm/xgboost/shap, or the rest of the
-# columnar-data stack polars/duckdb/pyreadstat) are declared in each repo on top
-# of this core.
+# columnar-data stack duckdb/pyreadstat) are declared in each repo on top of
+# this core.
 #
 # Verify a repo against this file with:  dse-check-env path/to/environment.yml
 #
@@ -50,6 +50,14 @@ dependencies:
   - matplotlib>=3.11.1
   - scikit-learn>=1.9.0
   - statsmodels>=0.14.6
+  # --- columnar dataframes ---
+  # Promoted from a repo-specific add-on so the Arrow-backed dataframe layer
+  # cannot drift across repos. polars ships its own Rust Arrow implementation
+  # and interoperates zero-copy with the pyarrow above, so the two want matched
+  # versions everywhere rather than per-repo floors. Repos that do not use
+  # polars still declare it: the core is a single lockstep spec, not an
+  # à-la-carte list.
+  - polars>=1.43.2
   # --- Bayesian modelling stack ---
   # pymc pulls pytensor + a C toolchain from conda-forge. Each pymc 6.x admits
   # one pytensor 3.x minor (6.1 -> 3.1, 6.2 -> >=3.2.2,<3.3), which caps numba

@@ -59,7 +59,7 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-dse-research-utils = { git = "https://github.com/dseinternational/research.git", tag = "v0.11.1", subdirectory = "src/python" }
+dse-research-utils = { git = "https://github.com/dseinternational/research.git", tag = "v0.11.2", subdirectory = "src/python" }
 ```
 
 Extras per repo, derived from what each repo actually imports on `main` rather than from what it currently declares. Each has a tracking issue with the full per-repo instructions:
@@ -87,6 +87,8 @@ Commit the resulting `uv.lock`.
 
 Replace the `mamba-org/setup-micromamba` step with `astral-sh/setup-uv`, drop the `dse-check-env` step and the `shell: bash -el {0}` default, and add `windows-latest` to the test matrix. See `.github/workflows/ci.yml` in this repo for the shape.
 
+The Windows job needs no `PYTHONUTF8: "1"`: from `v0.11.2` the shared console relaxes the error handler on a stdout that is not UTF-8, so characters the legacy code page lacks render as `?` instead of aborting the run ([#91](https://github.com/dseinternational/research/issues/91)). A repo that already sets it can drop it once it is on that tag.
+
 ### 4. Update dependabot
 
 Replace the `pip` ecosystem entry with `package-ecosystem: uv`. Keep the numpy `>=2.5.0` ignore rule: `pytensor` still pins `numba<=0.66.0`, and `numba` 0.66.0 still pins `numpy<2.5`, so numpy 2.5 remains unreachable. It lifts when a PyTensor release admits numba 0.67.
@@ -95,6 +97,6 @@ Replace the `pip` ecosystem entry with `package-ecosystem: uv`. Keep the numpy `
 
 Changes to the shared core follow the usual sequence, and this one is no different: **merge here, tag a release, then bump and re-run each consuming repo**. Consuming repos pin the library by git tag, so nothing downstream moves until its tag is bumped.
 
-The first two steps are done: **`v0.11.1` is tagged and is the version to migrate to.** It supersedes `v0.11.0`, which left `h5netcdf` in the `storage` extra and so could not write a trace without it ([#89](https://github.com/dseinternational/research/issues/89)). What remains is the three consuming repos, each tracked by the issue linked above.
+The first two steps are done: **`v0.11.2` is tagged and is the version to migrate to.** It supersedes `v0.11.0`, which left `h5netcdf` in the `storage` extra and so could not write a trace without it ([#89](https://github.com/dseinternational/research/issues/89)), and `v0.11.1`, whose console helpers raised on a legacy Windows code page ([#91](https://github.com/dseinternational/research/issues/91)). What remains is the three consuming repos, each tracked by the issue linked above.
 
 Until a repo has migrated, it keeps working unchanged: `environment-core.yml` and the `dse-check-env` console script are retained and deprecated, not deleted, and a parity test in this repo prevents the retained core from drifting away from `pyproject.toml`. Once all three repos are on uv, delete `environment-core.yml`, `dse-check-env`, `tests/test_environment_core_parity.py` and this guide.

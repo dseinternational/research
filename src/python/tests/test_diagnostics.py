@@ -148,6 +148,12 @@ def test_write_diagnostics_summary_passes_on_clean_trace(tmp_path):
     }
 
 
+def test_write_diagnostics_summary_reports_through_shared_console(tmp_path, captured_console):
+    """The gate verdict must not bypass the shared console (#91)."""
+    write_diagnostics_summary(_make_trace(), str(tmp_path))
+    assert "Convergence gate" in captured_console.export_text()
+
+
 def test_write_diagnostics_summary_flags_divergences(tmp_path):
     payload = write_diagnostics_summary(_make_trace(n_div=5), str(tmp_path))
     assert payload["divergences"] == 5

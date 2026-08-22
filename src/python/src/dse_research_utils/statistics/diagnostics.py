@@ -22,7 +22,8 @@ from typing import TYPE_CHECKING, Any
 
 import arviz as az
 import numpy as np
-from rich import print as rprint
+
+from dse_research_utils.console.console import get_console
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -121,7 +122,7 @@ def write_diagnostics_summary(
             min_ess = float(np.nanmin(ess_min_row.values))
             ess_failing = [str(i) for i in s.index[ess_min_row < ESS_THRESHOLD]]
     except Exception as exc:  # pragma: no cover - defensive
-        rprint(f"[yellow]R-hat/ESS summary for the gate failed: {exc}[/yellow]")
+        get_console().print(f"[yellow]R-hat/ESS summary for the gate failed: {exc}[/yellow]")
 
     bfmi = _bfmi_per_chain(trace)
     # Order-independent and NaN-safe. A degenerate chain (zero energy variance ->
@@ -166,7 +167,7 @@ def write_diagnostics_summary(
     if tables is not None:
         tables["diagnostics_summary"] = payload
     verdict = "[green]PASS[/green]" if passed else "[red]REVIEW[/red]"
-    rprint(
+    get_console().print(
         f"  Convergence gate: {verdict} "
         f"(divergences={n_div}, max R-hat={max_rhat}, min ESS={min_ess})"
     )

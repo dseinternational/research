@@ -20,26 +20,28 @@ The compiled core is no longer a YAML block copied into every repo's `environmen
 
 Everything the core used to pin is now either a base dependency or an extra:
 
-| Former conda core / add-on                                                          | Now comes from                                    |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------- |
-| python, numpy, scipy, pandas, pyarrow, numba, matplotlib, scikit-learn, statsmodels | base `dependencies`                               |
-| pymc, pytensor, nutpie, arviz\*, preliz, xarray                                     | base `dependencies`                               |
-| jax, numpyro                                                                        | `jax` extra                                       |
-| lightgbm, xgboost, shap                                                             | `boosting` extra                                  |
-| polars, duckdb, pyreadstat                                                          | `columnar` extra                                  |
-| h5py, h5netcdf, zarr                                                                | `storage` extra                                   |
-| graphviz (bindings), networkx                                                       | `graphs` extra — **plus** the system `dot` binary |
-| seaborn                                                                             | `viz` extra                                       |
-| jupyter, jupytext                                                                   | `notebook` extra                                  |
-| dcor                                                                                | `dependence` extra                                |
-| optuna, optuna-integration                                                          | `tuning` extra                                    |
-| orjson, tabulate                                                                    | `io` extra                                        |
+| Former conda core / add-on                                                          | Now comes from                                     |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------- |
+| python, numpy, scipy, pandas, pyarrow, numba, matplotlib, scikit-learn, statsmodels | base `dependencies`                                |
+| pymc, pytensor, nutpie, arviz\*, preliz, xarray                                     | base `dependencies`                                |
+| h5py, h5netcdf                                                                      | base `dependencies` — the engine `to_netcdf` needs |
+| jax, numpyro                                                                        | `jax` extra                                        |
+| lightgbm, xgboost, shap                                                             | `boosting` extra                                   |
+| polars, duckdb, pyreadstat                                                          | `columnar` extra                                   |
+| zarr                                                                                | `storage` extra                                    |
+| graphviz (bindings), networkx                                                       | `graphs` extra — **plus** the system `dot` binary  |
+| seaborn                                                                             | `viz` extra                                        |
+| jupyter, jupytext                                                                   | `notebook` extra                                   |
+| dcor                                                                                | `dependence` extra                                 |
+| optuna, optuna-integration                                                          | `tuning` extra                                     |
+| orjson, tabulate                                                                    | `io` extra                                         |
 
-Three changes to watch for:
+Four changes to watch for:
 
 1. **`nutpie` must not be dropped.** PyMC 6 declares it as `pymc[nutpie]`, not a base dependency, and auto-selects it as the default NUTS sampler when present. It is in `dse-research-utils`' base dependencies so every repo keeps the same sampler, but do not "tidy it away".
 2. **`jax` and `numpyro` are now opt-in.** The old core installed them everywhere. If your repo samples via NumPyro or JAX, add the `jax` extra explicitly.
-3. **Extras are grouped, not à la carte.** Taking `columnar` for `pyreadstat` also brings `polars` and `duckdb`. That is deliberate — the groups keep the Arrow-backed data layer moving in lockstep — but it means a repo may install a package it does not import.
+3. **`storage` no longer covers writing a trace.** `h5netcdf` and `h5py` are base dependencies, because `DataTree.to_netcdf` — which is what `InferenceData.to_netcdf` calls — accepts no other engine. The extra now carries `zarr` alone, so take it only for a zarr-backed store.
+4. **Extras are grouped, not à la carte.** Taking `columnar` for `pyreadstat` also brings `polars` and `duckdb`. That is deliberate — the groups keep the Arrow-backed data layer moving in lockstep — but it means a repo may install a package it does not import.
 
 ## Per-repository steps
 
@@ -57,14 +59,14 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-dse-research-utils = { git = "https://github.com/dseinternational/research.git", tag = "v0.11.0", subdirectory = "src/python" }
+dse-research-utils = { git = "https://github.com/dseinternational/research.git", tag = "v0.11.1", subdirectory = "src/python" }
 ```
 
 Extras per repo, derived from what each repo actually imports on `main` rather than from what it currently declares. Each has a tracking issue with the full per-repo instructions:
 
 - **language-reading-predictors** ([#573](https://github.com/dseinternational/language-reading-predictors/issues/573)) — `boosting`, `columnar` (for `pyreadstat`), `dependence`, `graphs`, `io`, `notebook`, `tuning`, `viz`. **No `jax`**: it hardcodes `nuts_sampler="nutpie"` at every call site and imports neither jax nor numpyro, so the JAX backend the old shared core installed everywhere is genuinely unused here.
 - **vocabulary-growth** ([#230](https://github.com/dseinternational/vocabulary-growth/issues/230)) — `columnar` (for `duckdb`), `io`, `jax`, `notebook`, `viz`. `jax` is required, not optional: it imports `jax`, `jax.numpy` and `jax.scipy.special` directly.
-- **us-birth-certificates** ([#100](https://github.com/dspopulations/us-birth-certificates/issues/100)) — `boosting`, `columnar`, `dependence`, `graphs`, `io`, `jax`, `notebook`, `storage`, `tuning`; `fastparquet` belongs in the repo's own dependencies, as no extra carries it. `jax` is kept because `nuts_sampler` is read from run config (`cfg.get("nuts_sampler")`), so numpyro can be selected at runtime even though nothing imports it — drop it only after confirming no run config selects it.
+- **us-birth-certificates** ([#100](https://github.com/dspopulations/us-birth-certificates/issues/100)) — `boosting`, `columnar`, `dependence`, `graphs`, `io`, `jax`, `notebook`, `tuning`; no `storage`, since the netCDF engine it writes traces with is in the core and nothing there imports `zarr`; `fastparquet` belongs in the repo's own dependencies, as no extra carries it. `jax` is kept because `nuts_sampler` is read from run config (`cfg.get("nuts_sampler")`), so numpyro can be selected at runtime even though nothing imports it — drop it only after confirming no run config selects it.
 
 Two package-level pins in the consuming repos should be deleted rather than carried over. The `jaxlib` entries in `vocabulary-growth` and `us-birth-certificates` exist with comments describing a conda-specific failure — pip trying to take ownership of a conda-installed package and failing with "no RECORD file" — which cannot occur once there is no conda layer. And `us-birth-certificates`' `numba>=0.65.1,<=0.66.0` pin is now inherited: `dse-research-utils` declares the floor and PyTensor owns the ceiling, so a local copy only means editing it in two places when PyTensor moves.
 
@@ -93,6 +95,6 @@ Replace the `pip` ecosystem entry with `package-ecosystem: uv`. Keep the numpy `
 
 Changes to the shared core follow the usual sequence, and this one is no different: **merge here, tag a release, then bump and re-run each consuming repo**. Consuming repos pin the library by git tag, so nothing downstream moves until its tag is bumped.
 
-The first two steps are done: **`v0.11.0` is tagged and is the version to migrate to.** What remains is the three consuming repos, each tracked by the issue linked above.
+The first two steps are done: **`v0.11.1` is tagged and is the version to migrate to.** It supersedes `v0.11.0`, which left `h5netcdf` in the `storage` extra and so could not write a trace without it ([#89](https://github.com/dseinternational/research/issues/89)). What remains is the three consuming repos, each tracked by the issue linked above.
 
 Until a repo has migrated, it keeps working unchanged: `environment-core.yml` and the `dse-check-env` console script are retained and deprecated, not deleted, and a parity test in this repo prevents the retained core from drifting away from `pyproject.toml`. Once all three repos are on uv, delete `environment-core.yml`, `dse-check-env`, `tests/test_environment_core_parity.py` and this guide.

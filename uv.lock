@@ -671,6 +671,8 @@ dependencies = [
     { name = "arviz-stats" },
     { name = "azure-identity" },
     { name = "azure-storage-blob" },
+    { name = "h5netcdf" },
+    { name = "h5py" },
     { name = "matplotlib" },
     { name = "numba" },
     { name = "numpy" },
@@ -694,8 +696,6 @@ all = [
     { name = "dcor" },
     { name = "duckdb" },
     { name = "graphviz" },
-    { name = "h5netcdf" },
-    { name = "h5py" },
     { name = "jax" },
     { name = "jupyter" },
     { name = "jupytext" },
@@ -743,8 +743,6 @@ notebook = [
     { name = "jupytext" },
 ]
 storage = [
-    { name = "h5netcdf" },
-    { name = "h5py" },
     { name = "zarr" },
 ]
 tuning = [
@@ -769,10 +767,8 @@ requires-dist = [
     { name = "duckdb", marker = "extra == 'columnar'", specifier = ">=1.5.5" },
     { name = "graphviz", marker = "extra == 'all'", specifier = ">=0.21" },
     { name = "graphviz", marker = "extra == 'graphs'", specifier = ">=0.21" },
-    { name = "h5netcdf", marker = "extra == 'all'", specifier = ">=1.8.1" },
-    { name = "h5netcdf", marker = "extra == 'storage'", specifier = ">=1.8.1" },
-    { name = "h5py", marker = "extra == 'all'", specifier = ">=3.16.0" },
-    { name = "h5py", marker = "extra == 'storage'", specifier = ">=3.16.0" },
+    { name = "h5netcdf", specifier = ">=1.8.1" },
+    { name = "h5py", specifier = ">=3.16.0" },
     { name = "jax", marker = "extra == 'all'", specifier = ">=0.10.2" },
     { name = "jax", marker = "extra == 'jax'", specifier = ">=0.10.2" },
     { name = "jupyter", marker = "extra == 'all'", specifier = ">=1.1.1" },

@@ -7,10 +7,10 @@ This package's `pyproject.toml` is the canonical source of the dependency floors
 ## Install
 
 ```bash
-uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.11.0#subdirectory=src/python"
+uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.11.1#subdirectory=src/python"
 ```
 
-The base install carries the modelling stack (PyMC, PyTensor, nutpie, ArviZ, PreliZ) and the numerics core. Optional layers are extras:
+The base install carries the modelling stack (PyMC, PyTensor, nutpie, ArviZ, PreliZ), the numerics core, and the netCDF engine (h5netcdf, h5py) that `InferenceData.to_netcdf` requires. Optional layers are extras:
 
 | Extra        | Adds                       | For                                                |
 | ------------ | -------------------------- | -------------------------------------------------- |
@@ -23,7 +23,7 @@ The base install carries the modelling stack (PyMC, PyTensor, nutpie, ArviZ, Pre
 | `jax`        | jax, numpyro               | JAX/NumPyro sampler backends                       |
 | `boosting`   | lightgbm, xgboost, shap    | gradient boosting and explanation                  |
 | `columnar`   | duckdb, polars, pyreadstat | columnar and statistical data formats              |
-| `storage`    | h5py, h5netcdf, zarr       | InferenceData on disk                              |
+| `storage`    | zarr                       | zarr as an alternative to the netCDF core          |
 | `all`        | every extra above          | development environments                           |
 
 Helpers that need an extra lazy-import it and raise a clear error when it is absent.

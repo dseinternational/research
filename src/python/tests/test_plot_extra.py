@@ -55,6 +55,15 @@ def test_save_figure_writes_to_output_dir(tmp_path):
     assert (tmp_path / "fig.png").exists()
 
 
+def test_save_figure_reports_through_shared_console(tmp_path, captured_console):
+    """The save message must not bypass the shared console (#91)."""
+    fig = plt.figure()
+    plt.plot([0, 1], [0, 1])
+    save_figure("fig.png", tmp_path)
+    plt.close(fig)
+    assert "saving figure to" in captured_console.export_text()
+
+
 def test_plot_histograms_optional_seaborn(tmp_path):
     pytest.importorskip("seaborn")
     from dse_research_utils.plot.grids import plot_histograms

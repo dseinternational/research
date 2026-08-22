@@ -10,7 +10,8 @@ from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
-from rich import print as rprint
+
+from dse_research_utils.console.console import get_console
 
 
 def save_figure(
@@ -25,7 +26,7 @@ def save_figure(
     out = Path(output_dir)
     out.mkdir(exist_ok=True, parents=True)
     figure_path = out / filename
-    rprint(f"saving figure to {figure_path}")
+    get_console().print(f"saving figure to {figure_path}")
     plt.savefig(figure_path, format=format, dpi=dpi, bbox_inches=bbox_inches)
 
 

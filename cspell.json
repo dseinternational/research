@@ -42,6 +42,7 @@
     "Pyro",
     "pytensor",
     "pytest",
+    "PYTHONUTF",
     "pyxlsb",
     "scikit",
     "scipy",

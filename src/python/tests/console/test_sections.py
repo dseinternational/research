@@ -1,8 +1,11 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+import io
+import sys
 import time
 
+from dse_research_utils.console.console import get_console, set_console
 from dse_research_utils.console.sections import (
     banner,
     section_header,
@@ -58,3 +61,19 @@ def test_timed_section_prints_completion(captured_console):
     output = captured_console.export_text()
     assert "finish" in output
     assert "✓" in output
+
+
+def test_timed_section_completes_on_legacy_stdout(monkeypatch):
+    """Regression (#91): the closing checkmark aborted the run on a cp1252 console."""
+    stream = io.TextIOWrapper(io.BytesIO(), encoding="cp1252", newline="")
+    monkeypatch.setattr(sys, "stdout", stream)
+    set_console(None)
+    try:
+        get_console()
+        with timed_section("load data"):
+            pass
+        stream.flush()
+    finally:
+        set_console(None)
+    written = stream.buffer.getvalue().decode("cp1252")
+    assert "load data" in written

@@ -165,7 +165,7 @@ Bayesian sampling presets in `statistics/models/sampling.py`, selected via `get_
 - **Type hints**: always on function signatures
 - **Type unions**: `X | Y` syntax (not `Union[X, Y]`)
 - **Docstrings**: NumPy-style (`Parameters`, `Returns`, `---` separators); dataclass fields use attribute docstrings (bare string literals after the field declaration)
-- **`print`**: import `from rich import print` to override built-in
+- **`print`**: library code prints through the shared console — `from dse_research_utils.console.console import get_console`, then `get_console().print(...)`. It is the one place that relaxes the error handler on a stdout that is not UTF-8, so a legacy Windows code page degrades the output instead of raising `UnicodeEncodeError`. In notebooks and scripts, import `from rich import print` to override the built-in.
 - **Imports**: fully-qualified absolute imports only — no relative imports, no `__init__.py` re-exports. The package root `__init__.py` is the one exception: it stores `__version__` for Hatch.
 - **Dataclasses**: stdlib `@dataclass`; use `__post_init__` for validation
 - **Plot functions**: create figure → render → optionally save to `output_dir` as `.png` (300 DPI) and `.svg` → `return plt.gcf()`

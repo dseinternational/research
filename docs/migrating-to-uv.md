@@ -57,7 +57,7 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-dse-research-utils = { git = "https://github.com/dseinternational/research.git", tag = "vX.Y.Z", subdirectory = "src/python" }
+dse-research-utils = { git = "https://github.com/dseinternational/research.git", tag = "v0.11.0", subdirectory = "src/python" }
 ```
 
 Suggested extras per repo, based on what each currently declares:

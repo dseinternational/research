@@ -7,7 +7,7 @@ This package's `pyproject.toml` is the canonical source of the dependency floors
 ## Install
 
 ```bash
-uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@vX.Y.Z#subdirectory=src/python"
+uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.11.0#subdirectory=src/python"
 ```
 
 The base install carries the modelling stack (PyMC, PyTensor, nutpie, ArviZ, PreliZ) and the numerics core. Optional layers are extras:

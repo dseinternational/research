@@ -34,47 +34,41 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
 
-
-      - name: Setup Python
-        uses: actions/setup-python@v7.0.0
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v10.0.1
         with:
-          python-version: "3.14"
-
-      - name: Install build tooling
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install build
+          enable-cache: true
 
       - name: Build wheel
-        working-directory: src/python
-        run: |
-          python -m build
+        run: uv build --package dse-research-utils
 
   test-python:
     strategy:
       fail-fast: false
       matrix:
-        # Native Windows is intentionally omitted: jax/jaxlib have no conda-forge
-        # win-64 build, so the compiled stack cannot solve there. Windows users work
-        # in Ubuntu on WSL (linux-64), which the ubuntu runner covers.
-        os: [ubuntu-26.04, macos-latest]
+        # Native Windows is now covered. It was previously omitted because
+        # jax/jaxlib have no conda-forge win-64 build, which forced Windows
+        # contributors onto WSL; on PyPI jaxlib publishes cp314 win_amd64
+        # wheels, so the whole stack installs natively.
+        #
+        # Intel macOS is absent because upstream has dropped it: numba ships no
+        # macosx x86_64 wheels at all. See `tool.uv.environments` in
+        # pyproject.toml.
+        os: [ubuntu-26.04, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash -el {0}
     steps:
       - uses: actions/checkout@v7.0.1
 
-      - name: Setup conda environment
-        uses: mamba-org/setup-micromamba@v3.2.1
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v10.0.1
         with:
-          environment-file: environment.yml
-          cache-environment: true
-          cache-downloads: true
+          enable-cache: true
 
-      - name: Verify environment core matches the canonical spec
-        run: dse-check-env environment.yml
+      # --locked fails the build if uv.lock is stale rather than silently
+      # resolving something different from what was reviewed. uv provisions the
+      # interpreter itself from .python-version, so there is no setup-python step.
+      - name: Install the locked environment
+        run: uv sync --locked
 
       - name: Run pytest
-        working-directory: src/python
-        run: pytest
+        run: uv run --no-sync pytest

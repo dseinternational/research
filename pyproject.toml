@@ -1,0 +1,72 @@
+# Development workspace for the DSE research shared libraries.
+#
+# This replaces the former conda `environment.yml`. It is a uv workspace root: it
+# is never packaged or published, it just assembles the environment contributors
+# work in. The publishable library — and the canonical dependency floors every
+# consuming repo inherits — live in the workspace member, src/python.
+#
+#   uv sync            # create/refresh .venv (Python, library, extras, tooling)
+#   uv run pytest      # run the test suite
+#   uv build --package dse-research-utils   # build the wheel
+[project]
+name = "dse-research"
+version = "0"
+description = "Development workspace for the DSE research shared libraries."
+requires-python = ">=3.14"
+# `all` pulls every optional layer (viz, notebook, graphs, jax, boosting,
+# columnar, storage, …) so a contributor's environment can run anything in the
+# repo. Consuming repos pick the narrower set of extras they actually need.
+dependencies = ["dse-research-utils[all]"]
+
+[dependency-groups]
+# Build, lint and test tooling. Dependency groups are development-only by
+# design: they are never written into published package metadata, so nothing
+# here reaches consumers of dse-research-utils.
+dev = [
+    "build>=1.3.0",
+    "hatch>=1.14.0",
+    "pandas-stubs",
+    "pytest>=9.1.1",
+    "ruff>=0.16.1",
+    "scipy-stubs"
+]
+# Pure-Python tail used by research work in this repo (notebooks, scratch
+# analyses) but not by the library itself, so it stays out of the package.
+research = [
+    "formulaic>=1.2.2",
+    "mpmath>=1.4.1",
+    "pingouin>=0.6.1",
+    "plotly>=6.9.0",
+    "pyxlsb>=1.0.10"
+]
+
+[tool.uv]
+package = false
+default-groups = ["dev", "research"]
+# Platforms the lockfile is resolved for. Intel macOS is deliberately absent:
+# numba publishes no macosx x86_64 wheels at all, and shap pins numba<0.63
+# there, so the stack cannot solve on that platform — upstream has dropped it,
+# not us. Everything else the repos actually run on is covered, including native
+# win-amd64, which the conda-forge stack could not serve (no win-64 jaxlib).
+environments = [
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "sys_platform == 'linux' and platform_machine == 'aarch64'",
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "sys_platform == 'win32' and platform_machine == 'AMD64'"
+]
+
+[tool.uv.workspace]
+members = ["src/python"]
+
+[tool.uv.sources]
+dse-research-utils = { workspace = true }
+
+[tool.pytest.ini_options]
+# Lives at the workspace root so `uv run pytest` works from the repo root; the
+# library is installed editable into .venv, so no pythonpath entry is needed.
+testpaths = ["src/python/tests"]
+addopts = "-ra"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]

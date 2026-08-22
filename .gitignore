@@ -13,9 +13,9 @@ __pycache__/
 venv/
 env/
 ENV/
-.conda/
-.condarc
-.python-version
+
+# uv pins the interpreter for the whole repo, so .python-version is committed
+!.python-version
 
 # Packaging / build
 build/

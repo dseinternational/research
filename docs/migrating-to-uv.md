@@ -60,11 +60,13 @@ dependencies = [
 dse-research-utils = { git = "https://github.com/dseinternational/research.git", tag = "v0.11.0", subdirectory = "src/python" }
 ```
 
-Suggested extras per repo, based on what each currently declares:
+Extras per repo, derived from what each repo actually imports on `main` rather than from what it currently declares. Each has a tracking issue with the full per-repo instructions:
 
-- **language-reading-predictors** — `boosting`, `columnar` (for `pyreadstat`), `dependence`, `graphs`, `io`, `notebook`, `tuning`, `viz`, and `jax` if NumPyro sampling is used
-- **vocabulary-growth** — `columnar` (for `duckdb`), `io`, `notebook`, `viz`, and `jax` if NumPyro sampling is used
-- **us-birth-certificates** — `boosting`, `columnar`, `dependence`, `graphs`, `io`, `notebook`, `storage`, `tuning`, and `jax` if NumPyro sampling is used; `fastparquet` belongs in the repo's own dependencies, as no extra carries it
+- **language-reading-predictors** ([#573](https://github.com/dseinternational/language-reading-predictors/issues/573)) — `boosting`, `columnar` (for `pyreadstat`), `dependence`, `graphs`, `io`, `notebook`, `tuning`, `viz`. **No `jax`**: it hardcodes `nuts_sampler="nutpie"` at every call site and imports neither jax nor numpyro, so the JAX backend the old shared core installed everywhere is genuinely unused here.
+- **vocabulary-growth** ([#230](https://github.com/dseinternational/vocabulary-growth/issues/230)) — `columnar` (for `duckdb`), `io`, `jax`, `notebook`, `viz`. `jax` is required, not optional: it imports `jax`, `jax.numpy` and `jax.scipy.special` directly.
+- **us-birth-certificates** ([#100](https://github.com/dspopulations/us-birth-certificates/issues/100)) — `boosting`, `columnar`, `dependence`, `graphs`, `io`, `jax`, `notebook`, `storage`, `tuning`; `fastparquet` belongs in the repo's own dependencies, as no extra carries it. `jax` is kept because `nuts_sampler` is read from run config (`cfg.get("nuts_sampler")`), so numpyro can be selected at runtime even though nothing imports it — drop it only after confirming no run config selects it.
+
+Two package-level pins in the consuming repos should be deleted rather than carried over. The `jaxlib` entries in `vocabulary-growth` and `us-birth-certificates` exist with comments describing a conda-specific failure — pip trying to take ownership of a conda-installed package and failing with "no RECORD file" — which cannot occur once there is no conda layer. And `us-birth-certificates`' `numba>=0.65.1,<=0.66.0` pin is now inherited: `dse-research-utils` declares the floor and PyTensor owns the ceiling, so a local copy only means editing it in two places when PyTensor moves.
 
 Repo-only pure-Python packages (`formulaic`, `mpmath`, `pingouin`, `plotly`, `pyxlsb`, …) and dev tooling (`pytest`, `ruff`, `mypy`, `hatch`, `build`, stubs) go into `[dependency-groups]` in the repo's `pyproject.toml`, not into the package dependencies. Dependency groups are never published in package metadata.
 
@@ -90,5 +92,7 @@ Replace the `pip` ecosystem entry with `package-ecosystem: uv`. Keep the numpy `
 ## Ordering
 
 Changes to the shared core follow the usual sequence, and this one is no different: **merge here, tag a release, then bump and re-run each consuming repo**. Consuming repos pin the library by git tag, so nothing downstream moves until its tag is bumped.
+
+The first two steps are done: **`v0.11.0` is tagged and is the version to migrate to.** What remains is the three consuming repos, each tracked by the issue linked above.
 
 Until a repo has migrated, it keeps working unchanged: `environment-core.yml` and the `dse-check-env` console script are retained and deprecated, not deleted, and a parity test in this repo prevents the retained core from drifting away from `pyproject.toml`. Once all three repos are on uv, delete `environment-core.yml`, `dse-check-env`, `tests/test_environment_core_parity.py` and this guide.

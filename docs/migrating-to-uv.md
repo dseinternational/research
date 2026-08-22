@@ -20,20 +20,20 @@ The compiled core is no longer a YAML block copied into every repo's `environmen
 
 Everything the core used to pin is now either a base dependency or an extra:
 
-| Former conda core / add-on               | Now comes from                                    |
-| ---------------------------------------- | ------------------------------------------------- |
-| python, numpy, scipy, pandas, pyarrow, numba, matplotlib, scikit-learn, statsmodels | base `dependencies` |
-| pymc, pytensor, nutpie, arviz\*, preliz, xarray | base `dependencies` |
-| jax, numpyro                             | `jax` extra                                       |
-| lightgbm, xgboost, shap                  | `boosting` extra                                  |
-| polars, duckdb, pyreadstat               | `columnar` extra                                  |
-| h5py, h5netcdf, zarr                     | `storage` extra                                   |
-| graphviz (bindings), networkx            | `graphs` extra — **plus** the system `dot` binary |
-| seaborn                                  | `viz` extra                                       |
-| jupyter, jupytext                        | `notebook` extra                                  |
-| dcor                                     | `dependence` extra                                |
-| optuna, optuna-integration               | `tuning` extra                                    |
-| orjson, tabulate                         | `io` extra                                        |
+| Former conda core / add-on                                                          | Now comes from                                    |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------- |
+| python, numpy, scipy, pandas, pyarrow, numba, matplotlib, scikit-learn, statsmodels | base `dependencies`                               |
+| pymc, pytensor, nutpie, arviz\*, preliz, xarray                                     | base `dependencies`                               |
+| jax, numpyro                                                                        | `jax` extra                                       |
+| lightgbm, xgboost, shap                                                             | `boosting` extra                                  |
+| polars, duckdb, pyreadstat                                                          | `columnar` extra                                  |
+| h5py, h5netcdf, zarr                                                                | `storage` extra                                   |
+| graphviz (bindings), networkx                                                       | `graphs` extra — **plus** the system `dot` binary |
+| seaborn                                                                             | `viz` extra                                       |
+| jupyter, jupytext                                                                   | `notebook` extra                                  |
+| dcor                                                                                | `dependence` extra                                |
+| optuna, optuna-integration                                                          | `tuning` extra                                    |
+| orjson, tabulate                                                                    | `io` extra                                        |
 
 Three changes to watch for:
 

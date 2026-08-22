@@ -87,40 +87,53 @@ Uses Prettier with `proseWrap: "preserve"` so existing prose line breaks are kep
 
 ### Python — environment
 
+Requires [uv](https://docs.astral.sh/uv/) (`brew install uv`, `winget install astral-sh.uv`, or the installer from the uv docs). uv provisions CPython 3.14 itself from `.python-version`, so there is no separate Python install step. Conda is no longer used — see `docs/migrating-to-uv.md`.
+
 ```bash
-conda env create -f environment.yml   # create (Python 3.14, conda required — not pip/venv)
-conda activate dse-research
+uv sync                 # create/refresh .venv from uv.lock (interpreter, library, extras, tooling)
+uv sync --locked        # CI-style: fail rather than re-resolve when uv.lock is stale
 ```
+
+Run anything inside the environment with `uv run <command>`, or activate `.venv` as usual.
+
+`dse_research_utils.plot.graphs` additionally needs the system Graphviz `dot` binary, which is not a Python package: `brew install graphviz`, `apt install graphviz`, or `winget install Graphviz.Graphviz`.
+
+### Python — dependencies
+
+`src/python/pyproject.toml` is the single source of truth for the shared compiled core — the dependency floors every consuming repo inherits transitively by depending on `dse-research-utils`. Declare dependencies there, never by re-listing packages in a consuming repo:
+
+- base `dependencies` — everything the library imports unconditionally, including the PyMC/PyTensor/nutpie stack
+- extras — optional layers: `viz`, `graphs`, `notebook`, `dependence`, `tuning`, `io`, `jax`, `boosting`, `columnar`, `storage`, and `all` (every layer at once)
+
+The root `pyproject.toml` is a uv workspace root that is never packaged or published; repo-only tooling and research packages live in its `dev` and `research` dependency groups. After changing any dependency run `uv lock` and commit the updated `uv.lock`.
 
 ### Python — build
 
 ```bash
-cd src/python
-python -m build         # builds wheel via hatchling
+uv build --package dse-research-utils   # builds wheel + sdist via hatchling
 ```
 
 ### Python — lint and format
 
 ```bash
-cd src/python
-ruff check .            # lint
-ruff check . --fix      # lint with auto-fix
-ruff format .           # format
+uv run ruff check src/python            # lint
+uv run ruff check src/python --fix      # lint with auto-fix
+uv run ruff format src/python           # format
 ```
 
 ### Python — tests
 
 ```bash
-pytest                                           # full suite
-pytest path/to/test_file.py                      # single file
-pytest path/to/test_file.py::test_function_name  # single test
+uv run pytest                                           # full suite
+uv run pytest path/to/test_file.py                      # single file
+uv run pytest path/to/test_file.py::test_function_name  # single test
 ```
 
 ## Architecture
 
 `src/python/src/dse_research_utils/` is structured by domain:
 
-- **`environment/`** — system info, execution context; `init_workbook()` / `init_script()` for notebook/script setup
+- **`environment/`** — system info, execution context; `init_workbook()` / `init_script()` for notebook/script setup; `check.py` (the `dse-check-env` console script) is **deprecated**, retained only while consuming repos migrate off conda
 - **`math/`** — constants (`EPSILON`, etc.)
 - **`metadata/`** — package version introspection
 - **`ml/`** — ML utilities (placeholder)

@@ -1,3 +1,16 @@
+# DEPRECATED — retained only while consuming repos migrate off conda.
+#
+# The canonical compiled core now lives in this package's own metadata:
+# src/python/pyproject.toml (base `dependencies` plus the extras). Repos on uv
+# inherit those floors transitively by depending on dse-research-utils and need
+# nothing from this file. It is kept, unchanged in meaning, so that repos still
+# running `dse-check-env environment.yml` in CI keep working until they migrate;
+# a parity test (tests/test_environment_core_parity.py) fails if the floors here
+# and in pyproject.toml drift apart. Delete this file, the `dse-check-env`
+# console script and that test once every consuming repo is on uv.
+#
+# Former description follows.
+#
 # Canonical conda-forge "compiled core" for DSE data-science repositories.
 #
 # This is the single source of truth for the *binary* layer of the hybrid

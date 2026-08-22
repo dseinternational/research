@@ -1,7 +1,16 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Drift check for the shared conda-forge "compiled core" of DSE data-science envs.
+"""DEPRECATED drift check for the shared conda-forge "compiled core".
+
+The compiled core is now declared in this package's own ``pyproject.toml``, and
+repos on uv inherit it transitively by depending on ``dse-research-utils`` — no
+drift check is needed because there is nothing to copy. This module is retained
+only so that consuming repos still running conda keep a working
+``dse-check-env`` until they migrate; see ``docs/migrating-to-uv.md``.
+
+Original description follows.
+
 
 Every repo's ``environment.yml`` must pin the canonical core packages (shipped
 with this package as ``data/environment-core.yml``) to identical specs, so the
@@ -98,6 +107,10 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  - {problem}")
         return 1
     print(f"{args.env_file}: conda-forge core matches the canonical spec")
+    print(
+        "note: dse-check-env is deprecated — the compiled core now lives in "
+        "dse-research-utils' own dependencies and extras. See docs/migrating-to-uv.md."
+    )
     return 0
 
 

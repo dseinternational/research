@@ -8,37 +8,61 @@ dynamic = ["version"]
 description = "Shared library for DSE research projects."
 readme = "readme.md"
 requires-python = ">=3.14"
+# This block is the canonical "compiled core" for DSE data-science repositories:
+# the single source of truth the consuming repos inherit transitively, rather
+# than copying a spec into each repo's environment.yml. Everything here ships as
+# a wheel on PyPI for CPython 3.14 on linux-x86_64, macOS-arm64 and win-amd64 —
+# PyMC 6 compiles with the Numba backend by default, so no C toolchain or BLAS
+# is needed and the old conda-forge binary layer is redundant.
 dependencies = [
+    "arviz-base>=1.3.0",
     "arviz-plots>=1.3.0",
     "arviz-stats>=1.3.0",
     "arviz>=1.3.0",
     "azure-identity",
     "azure-storage-blob",
     "matplotlib>=3.11.1",
-    "numpy>=2.4.6,<2.5",  # numba requires numpy <2.5 (still true of 0.66.0); lift cap when numba supports 2.5
+    "numba>=0.58",  # PyMC's default compile backend; its ceiling is owned by pytensor
+    "numpy>=2.4.6,<2.5",  # pymc -> pytensor 3.3.0 -> numba <=0.66.0 -> numpy <2.5; lift when pytensor admits numba 0.67
+    "nutpie>=0.16.11",  # auto-selected as PyMC's default NUTS sampler when installed
     "pandas>=3.0.5",
     "preliz>=0.27.1",
     "psutil>=7.2.2",
-    "pyarrow>=24.0.0",  # pandas 3.x's default `str` dtype is Arrow-backed; matches the conda core floor
+    "pyarrow>=24.0.0",  # pandas 3.x's default `str` dtype is Arrow-backed
+    "pymc>=6.3.1",  # imported by dse_research_utils.statistics.models.*
+    "pytensor>=3.2.2,<3.4",  # imported directly by statistics.models.*; owns the numba ceiling
     "pyyaml>=6.0.3",  # dse_research_utils.environment.check (dse-check-env console script)
     "rich>=15.0.0",
     "scikit-learn>=1.9.0",
     "scipy>=1.18.0",
-    "statsmodels>=0.14.6"
+    "statsmodels>=0.14.6",
+    "xarray>=2026.7.0"
 ]
 
 [project.optional-dependencies]
-# Heavyweight / system-binary plotting backends, kept out of the base install so
-# every consumer is not forced to carry them. The helpers that need them lazy-import
-# and raise a clear error when the extra is absent.
+# Optional layers on top of the core. Helpers that need one lazy-import it and
+# raise a clear error when the extra is absent. Consuming repos compose the
+# extras they need instead of re-declaring package specs, so the floors above
+# and here cannot drift between repositories.
 viz = ["seaborn>=0.13"]            # dse_research_utils.plot.grids (histogram grids)
-graphs = ["graphviz", "networkx"]  # dse_research_utils.plot.graphs (needs system Graphviz)
+graphs = ["graphviz>=0.21", "networkx>=3.6"]  # dse_research_utils.plot.graphs — ALSO needs the system Graphviz `dot` binary
 notebook = ["jupyter>=1.1.1", "jupytext>=1.19.5"]  # notebook/Jupyter stack (ipython drives plot.io.display_image)
 dependence = ["dcor"]              # dse_research_utils.ml.feature_dependence.distance_corr_matrix
-# Shared pure-Python tail for consuming projects (the pip layer of the hybrid env
-# model); the compiled scientific core lives in conda-forge (data/environment-core.yml).
 tuning = ["optuna>=4.9.0", "optuna-integration>=4.9.0"]
 io = ["orjson>=3.11.9", "tabulate>=0.10.0"]
+# Alternative sampler backends. PyMC samples with nutpie out of the box (core);
+# these add the JAX/NumPyro path for repos that use it.
+jax = ["jax>=0.10.2", "numpyro>=0.21.0"]  # CPU builds; GPU acceleration is an opt-in overlay
+# Gradient boosting + explanation, previously declared per repo.
+boosting = ["lightgbm>=4.7.0", "shap>=0.52.0", "xgboost>=3.3.0"]
+# Columnar / statistical data formats. polars ships its own Rust Arrow and
+# interoperates zero-copy with the pyarrow in the core, so they move together.
+columnar = ["duckdb>=1.5.5", "polars>=1.43.2", "pyreadstat>=1.3.5"]
+# Array/trace serialisation (InferenceData on disk).
+storage = ["h5netcdf>=1.8.1", "h5py>=3.16.0", "zarr>=3.3.0"]
+all = [
+    "dse-research-utils[boosting,columnar,dependence,graphs,io,jax,notebook,storage,tuning,viz]"
+]
 
 [project.scripts]
 dse-check-env = "dse_research_utils.environment.check:main"
@@ -78,11 +102,3 @@ ignore = [
 [tool.ruff.lint.isort]
 known-first-party = ["dse_research_utils"]
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-pythonpath = ["src"]
-addopts = "-ra"
-filterwarnings = [
-    "ignore::DeprecationWarning",
-    "ignore::PendingDeprecationWarning",
-]

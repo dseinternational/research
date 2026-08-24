@@ -18,15 +18,14 @@ from __future__ import annotations
 
 import json
 import os
-from typing import TYPE_CHECKING, Any
+import tempfile
+from typing import Any
 
 import arviz as az
 import numpy as np
+import pandas as pd
 
 from dse_research_utils.console.console import get_console
-
-if TYPE_CHECKING:
-    import pandas as pd
 
 # Convergence-gate thresholds.
 RHAT_MAX = 1.01
@@ -102,6 +101,7 @@ def write_diagnostics_summary(
     min_ess: float | None = None
     rhat_failing: list[str] = []
     ess_failing: list[str] = []
+    unassessable: list[str] = []
     try:
         # Evaluate the gate on unrounded diagnostics; presentation rounding is
         # applied by convergence_banner_markdown, not here (else a borderline
@@ -121,6 +121,16 @@ def write_diagnostics_summary(
             ess_min_row = s[ess_cols].min(axis=1)
             min_ess = float(np.nanmin(ess_min_row.values))
             ess_failing = [str(i) for i in s.index[ess_min_row < ESS_THRESHOLD]]
+        # The reductions above skip NaN, and a NaN also compares False against the
+        # thresholds, so a variable ArviZ could not assess (constant or unsampled)
+        # leaves no trace in the extrema or the failing lists — mixed with one
+        # healthy parameter the gate would pass (2026-08-22 ITT audit, finding 1).
+        # "We measured this and it failed" and "we could not measure this" are
+        # different verdicts, so record the latter as its own check.
+        diagnostic_columns = [c for c in ("r_hat", *ess_cols) if c in s]
+        if diagnostic_columns:
+            finite = np.isfinite(s[diagnostic_columns].apply(pd.to_numeric, errors="coerce"))
+            unassessable = [str(i) for i in s.index[~finite.all(axis=1)]]
     except Exception as exc:  # pragma: no cover - defensive
         get_console().print(f"[yellow]R-hat/ESS summary for the gate failed: {exc}[/yellow]")
 
@@ -144,6 +154,7 @@ def write_diagnostics_summary(
         "ess": bool(min_ess is not None and min_ess >= ESS_THRESHOLD),
         "divergences": bool(n_div == 0),
         "bfmi": bfmi_ok,
+        "diagnostics_assessable": not unassessable,
     }
     passed = all(checks.values())
 
@@ -156,14 +167,14 @@ def write_diagnostics_summary(
         "bfmi_per_chain": bfmi_json,
         "rhat_failing": rhat_failing,
         "ess_failing": ess_failing,
+        "unassessable_parameters": unassessable,
         "thresholds": {
             "rhat_max": RHAT_MAX,
             "ess_threshold": ESS_THRESHOLD,
             "bfmi_threshold": BFMI_THRESHOLD,
         },
     }
-    with open(os.path.join(output_dir, "diagnostics_summary.json"), "w") as f:
-        json.dump(payload, f, indent=2, default=str)
+    _write_json_atomic(os.path.join(output_dir, "diagnostics_summary.json"), payload)
     if tables is not None:
         tables["diagnostics_summary"] = payload
     verdict = "[green]PASS[/green]" if passed else "[red]REVIEW[/red]"
@@ -171,6 +182,83 @@ def write_diagnostics_summary(
         f"  Convergence gate: {verdict} "
         f"(divergences={n_div}, max R-hat={max_rhat}, min ESS={min_ess})"
     )
+    if unassessable:
+        shown = ", ".join(unassessable[:6])
+        if len(unassessable) > 6:
+            shown += f", ... ({len(unassessable)} in total)"
+        get_console().print(f"[red]  R-hat / ESS could not be assessed for {shown}[/red]")
+    return payload
+
+
+def _write_json_atomic(path: str, payload: dict[str, Any]) -> None:
+    """Write ``payload`` to ``path`` as JSON via a temp file and ``os.replace``.
+
+    Keeps a reader from ever seeing a half-written summary when a gate amends the
+    file after the fit wrote it.
+    """
+    directory = os.path.dirname(path) or "."
+    fd, tmp_path = tempfile.mkstemp(dir=directory, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2, default=str)
+        os.replace(tmp_path, path)
+    except BaseException:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        raise
+
+
+def amend_diagnostics_summary(
+    output_dir: str,
+    updates: dict[str, Any],
+    *,
+    tables: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Read-modify-rewrite ``diagnostics_summary.json`` atomically.
+
+    A convergence gate that post-processes the written summary (recording an
+    accepted exception, extending the checks) needs to amend the same file the
+    fit wrote; hand-rolling the read-modify-rewrite in each consumer risks
+    non-atomic writes and drift between the file and any cached copy.
+
+    Parameters
+    ----------
+    output_dir : str
+        Directory holding ``diagnostics_summary.json``.
+    updates : dict
+        Top-level keys to set on the payload. A ``checks`` entry is merged into
+        the existing ``checks`` dict rather than replacing it, and ``passed`` is
+        recomputed from the merged checks unless ``updates`` sets it explicitly.
+    tables : dict, optional
+        When given, the amended payload is also stored under
+        ``tables["diagnostics_summary"]`` (mirrors a fit context's table cache).
+
+    Returns
+    -------
+    dict
+        The amended payload.
+
+    Raises
+    ------
+    FileNotFoundError
+        If ``diagnostics_summary.json`` does not exist in ``output_dir``.
+    """
+    path = os.path.join(output_dir, "diagnostics_summary.json")
+    with open(path, encoding="utf-8") as handle:
+        payload: dict[str, Any] = json.load(handle)
+    updates = dict(updates)
+    checks_update = updates.pop("checks", None)
+    explicit_passed = updates.pop("passed", None)
+    if checks_update:
+        payload.setdefault("checks", {}).update(checks_update)
+    payload.update(updates)
+    if explicit_passed is not None:
+        payload["passed"] = bool(explicit_passed)
+    elif checks_update:
+        payload["passed"] = all(payload["checks"].values())
+    _write_json_atomic(path, payload)
+    if tables is not None:
+        tables["diagnostics_summary"] = payload
     return payload
 
 
@@ -234,6 +322,8 @@ def convergence_banner_markdown(summary: dict | None, *, dev_note: bool = True) 
         fails.append("R-hat — " + ", ".join(summary["rhat_failing"]))
     if summary.get("ess_failing"):
         fails.append("ESS — " + ", ".join(summary["ess_failing"]))
+    if summary.get("unassessable_parameters"):
+        fails.append("unassessable (R-hat/ESS non-finite) — " + ", ".join(summary["unassessable_parameters"]))
     if fails:
         lines += ["", "**Parameters needing attention:** " + "; ".join(fails)]
     if not passed and dev_note:

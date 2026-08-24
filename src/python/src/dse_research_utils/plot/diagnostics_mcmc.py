@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 
-import os
 from typing import Any
 
 import arviz_plots as azp
 from arviz_plots import PlotCollection
+
+import dse_research_utils.plot.io as plot_io
 
 
 def plot_kde_pair(
@@ -31,8 +32,7 @@ def plot_kde_pair(
     )
 
     if output_dir is not None and filename is not None:
-        os.makedirs(output_dir, exist_ok=True)
-        pc.savefig(os.path.join(output_dir, f"{filename}.png"), dpi=300)
-        pc.savefig(os.path.join(output_dir, f"{filename}.svg"))
+        # close=False keeps the returned collection displayable in notebooks.
+        plot_io.save_plotcollection(pc, output_dir, filename, close=False)
 
     return pc

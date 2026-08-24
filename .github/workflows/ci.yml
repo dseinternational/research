@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   spellcheck:
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-26.04-arm
     steps:
       - uses: actions/checkout@v7.0.1
 
@@ -30,7 +30,7 @@ jobs:
         run: npm run format:check
 
   build-python:
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-26.04-arm
     steps:
       - uses: actions/checkout@v7.0.1
 
@@ -46,15 +46,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Native Windows is now covered. It was previously omitted because
-        # jax/jaxlib have no conda-forge win-64 build, which forced Windows
-        # contributors onto WSL; on PyPI jaxlib publishes cp314 win_amd64
-        # wheels, so the whole stack installs natively.
-        #
-        # Intel macOS is absent because upstream has dropped it: numba ships no
-        # macosx x86_64 wheels at all. See `tool.uv.environments` in
-        # pyproject.toml.
-        os: [ubuntu-26.04, macos-latest, windows-latest]
+        os: [ubuntu-26.04-arm]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7.0.1
@@ -64,9 +56,6 @@ jobs:
         with:
           enable-cache: true
 
-      # --locked fails the build if uv.lock is stale rather than silently
-      # resolving something different from what was reviewed. uv provisions the
-      # interpreter itself from .python-version, so there is no setup-python step.
       - name: Install the locked environment
         run: uv sync --locked
 

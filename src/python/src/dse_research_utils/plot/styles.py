@@ -103,3 +103,19 @@ DEFAULT_STYLE_DICT = {
 def set_matplotlib_default_style() -> None:
     """Applies the default custom matplotlib style dictionary."""
     plt.style.use(DEFAULT_STYLE_DICT)
+
+
+def categorical_palette(n: int, palette: str | None = None) -> list:
+    """Return ``n`` distinct colours for qualitative (categorical) series.
+
+    The default palette is ``tab10``, auto-widening to ``tab20`` when ``n``
+    exceeds 10 so nearby categories stay distinguishable. A named *continuous*
+    colormap passed as ``palette`` is sampled evenly rather than cycled, so it
+    still yields distinct qualitative colours (the two consuming repositories
+    each solved half of this: one had the auto-widen, the other the
+    continuous-colormap sampling).
+    """
+    cmap = plt.get_cmap(palette or ("tab20" if n > 10 else "tab10"))
+    if cmap.N >= 256:  # continuous colormap used as qualitative
+        return [cmap(i / max(n - 1, 1)) for i in range(n)]
+    return [cmap(i % cmap.N) for i in range(n)]

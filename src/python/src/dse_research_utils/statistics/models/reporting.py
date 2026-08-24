@@ -3,15 +3,8 @@
 
 import os
 from dataclasses import dataclass
-from typing import Literal
 
-IntervalKind = Literal["eti", "hdi"]
-"""Which credible-interval convention a report summarises with.
-
-``"eti"`` — equal-tailed interval (the two central quantiles); ``"hdi"`` — highest
-density interval (the narrowest interval covering the mass). Both cover ``ci_prob``
-probability; they differ for skewed or bounded-scale posteriors.
-"""
+from dse_research_utils.statistics.intervals import IntervalKind
 
 
 @dataclass

@@ -137,7 +137,13 @@ def test_write_diagnostics_summary_passes_on_clean_trace(tmp_path):
 
     assert payload["passed"] is True
     assert payload["divergences"] == 0
-    assert payload["checks"] == {"rhat": True, "ess": True, "divergences": True, "bfmi": True}
+    assert payload["checks"] == {
+        "rhat": True,
+        "ess": True,
+        "divergences": True,
+        "bfmi": True,
+        "diagnostics_assessable": True,
+    }
     assert payload["max_rhat"] <= RHAT_MAX
     assert payload["min_ess"] >= ESS_THRESHOLD
     assert min(payload["bfmi_per_chain"]) >= BFMI_THRESHOLD
@@ -235,9 +241,111 @@ def test_gate_does_not_round_borderline_ess_through(tmp_path):
     # >= 400 gate. With round_to="none" the unrounded value fails the gate.
     payload = write_diagnostics_summary(_make_trace_low_ess(), str(tmp_path))
     assert payload["min_ess"] < ESS_THRESHOLD  # unrounded value survives, not 400
-    assert payload["checks"] == {"rhat": True, "ess": False, "divergences": True, "bfmi": True}
+    assert payload["checks"] == {
+        "rhat": True,
+        "ess": False,
+        "divergences": True,
+        "bfmi": True,
+        "diagnostics_assessable": True,
+    }
     assert payload["ess_failing"] == ["mu"]
     assert payload["passed"] is False
+
+
+def _make_trace_with_constant_parameter(seed: int = 0) -> xr.DataTree:
+    """A healthy parameter plus a constant one whose R-hat/ESS are non-finite."""
+    rng = np.random.default_rng(seed)
+    shape = (2, 800)
+    posterior = xr.Dataset(
+        {
+            "mu": (("chain", "draw"), rng.normal(0.0, 1.0, size=shape)),
+            "frozen": (("chain", "draw"), np.full(shape, 3.0)),
+        },
+        coords={"chain": range(shape[0]), "draw": range(shape[1])},
+    )
+    return xr.DataTree.from_dict({"posterior": posterior, "sample_stats": _clean_sample_stats(shape)})
+
+
+def test_gate_fails_closed_on_unassessable_parameters(tmp_path):
+    # NaN-skipping reductions hide a constant/unsampled parameter: mixed with one
+    # healthy parameter the extrema stay finite and the failing lists empty, so
+    # the gate used to pass (2026-08-22 ITT audit, finding 1). It must fail closed
+    # with the offending names recorded.
+    payload = write_diagnostics_summary(_make_trace_with_constant_parameter(), str(tmp_path))
+    assert payload["checks"]["diagnostics_assessable"] is False
+    assert payload["unassessable_parameters"] == ["frozen"]
+    assert payload["passed"] is False
+    # The healthy parameter's extrema are still reported.
+    assert np.isfinite(payload["max_rhat"])
+    assert np.isfinite(payload["min_ess"])
+    # ...and the banner names the unassessable parameter.
+    assert "frozen" in convergence_banner_markdown(payload)
+
+
+def test_amend_diagnostics_summary_merges_checks_and_recomputes_passed(tmp_path):
+    from dse_research_utils.statistics.diagnostics import amend_diagnostics_summary
+
+    write_diagnostics_summary(_make_trace(), str(tmp_path))
+    tables: dict = {}
+    payload = amend_diagnostics_summary(
+        str(tmp_path),
+        {"checks": {"extra_gate": False}, "extra_detail": ["x"]},
+        tables=tables,
+    )
+    assert payload["checks"]["extra_gate"] is False
+    assert payload["checks"]["rhat"] is True  # existing checks retained
+    assert payload["passed"] is False  # recomputed from the merged checks
+    assert payload["extra_detail"] == ["x"]
+    written = json.loads((tmp_path / "diagnostics_summary.json").read_text())
+    assert written == payload
+    assert tables["diagnostics_summary"] == payload
+
+
+def test_amend_diagnostics_summary_top_level_only_keeps_passed(tmp_path):
+    from dse_research_utils.statistics.diagnostics import amend_diagnostics_summary
+
+    write_diagnostics_summary(_make_trace(), str(tmp_path))
+    payload = amend_diagnostics_summary(str(tmp_path), {"accepted_exception": "vg11"})
+    # No checks update and no explicit passed -> the verdict is untouched.
+    assert payload["passed"] is True
+    assert payload["accepted_exception"] == "vg11"
+
+
+def test_amend_diagnostics_summary_explicit_passed_wins(tmp_path):
+    from dse_research_utils.statistics.diagnostics import amend_diagnostics_summary
+
+    write_diagnostics_summary(_make_trace(), str(tmp_path))
+    payload = amend_diagnostics_summary(str(tmp_path), {"passed": False, "reason": "manual hold"})
+    assert payload["passed"] is False
+
+
+def test_amend_diagnostics_summary_missing_file_raises(tmp_path):
+    from dse_research_utils.statistics.diagnostics import amend_diagnostics_summary
+
+    with pytest.raises(FileNotFoundError):
+        amend_diagnostics_summary(str(tmp_path), {"x": 1})
+
+
+def test_sampling_quality_reads_unrounded_signals():
+    from dse_research_utils.statistics.sampling_quality import sampling_quality
+
+    quality = sampling_quality(_make_trace_high_rhat())
+    # The borderline ~1.04 R-hat must survive unrounded (research#65).
+    assert quality.max_rhat > RHAT_MAX
+    assert quality.n_divergences == 0
+    assert quality.min_bfmi is not None and quality.min_bfmi > 0
+    assert quality.unassessable == ()
+    assert "max R-hat" in quality.summary_line()
+
+
+def test_sampling_quality_names_unassessable_parameters():
+    from dse_research_utils.statistics.sampling_quality import sampling_quality
+
+    quality = sampling_quality(_make_trace_with_constant_parameter())
+    assert quality.unassessable == ("frozen",)
+    # Extraction stays NaN-skipping: the healthy parameter's extrema are finite.
+    assert np.isfinite(quality.max_rhat)
+    assert np.isfinite(quality.min_ess)
 
 
 def test_convergence_banner_none_is_placeholder():

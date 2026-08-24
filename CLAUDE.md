@@ -133,13 +133,13 @@ uv run pytest path/to/test_file.py::test_function_name  # single test
 
 `src/python/src/dse_research_utils/` is structured by domain:
 
-- **`environment/`** — system info, execution context; `init_workbook()` / `init_script()` for notebook/script setup; `check.py` (the `dse-check-env` console script) is **deprecated**, retained only while consuming repos migrate off conda
+- **`environment/`** — system info, execution context; `init_workbook()` / `init_script()` for notebook/script setup; the configurable output-root resolver (`paths.OutputRoot`: CLI override > env var > repo default) and disk preflight (`disk.free_space_gb` / `preflight_disk`); `check.py` (the `dse-check-env` console script) is **deprecated**, retained only while consuming repos migrate off conda
 - **`math/`** — constants (`EPSILON`, etc.)
 - **`metadata/`** — package version introspection
 - **`ml/`** — ML utilities (placeholder)
-- **`plot/`** — matplotlib/ArviZ plotting helpers; constants follow `FIGSIZE_XS`, `COLOUR_BLUE`, `DPI_NOTEBOOK` naming
+- **`plot/`** — matplotlib/ArviZ plotting helpers; the styled figure-save layer (`io.save_styled_figure` / `save_plot_data` / `save_plotcollection`: PNG + optional size-capped SVG sibling + optional data CSV); ArviZ subplot budgeting (`diagnostics_mcmc.capped_plot_var_names`); constants follow `FIGSIZE_XS`, `COLOUR_BLUE`, `DPI_NOTEBOOK` naming, plus `styles.categorical_palette`
 - **`report/`** — report data-access helpers (`ReportData`, `show_or_pending`) that read a fitted model's artefacts and degrade to a visible "pending fit" placeholder before a fit exists
-- **`statistics/`** — descriptive stats; credible/confidence intervals (`intervals.hdi_1d` / `eti_1d` / `eti_bands`); the shared evidence ladder (`evidence.py`: `evidence_label` / `odds_string` / `favoured_direction`); the ROPE report card (`rope.py`: `rope_card`); the MCMC convergence gate, banner, and styled diagnostics table (`diagnostics.py`); and PyMC models and sampling presets
+- **`statistics/`** — descriptive stats; credible/confidence intervals (`intervals.hdi_1d` / `eti_1d` / `eti_bands`, the `interval_1d` kind dispatcher, per-grid `bands`, and the tidy two-band `summarise_bands`); the shared evidence ladder (`evidence.py`: `evidence_label` / `odds_string` / `favoured_direction`); the ROPE report card (`rope.py`: `rope_card`); the MCMC convergence gate, banner, and styled diagnostics table (`diagnostics.py`, including the `diagnostics_assessable` check and `amend_diagnostics_summary`); unrounded sampling-quality signal extraction (`sampling_quality.py`); PSIS-LOO/ELPD helpers (`loo.py`: reff pinning, Pareto-k reductions, the canonical LOO summary row, and the `elpd_verdict` convention); and PyMC models and sampling presets
 
 All `__init__.py` files are empty — no re-exports. Use fully-qualified absolute imports everywhere (e.g. `from dse_research_utils.math.constants import EPSILON`).
 

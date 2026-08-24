@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import inspect
-import os
 from typing import Any
 
 import arviz_plots as azp
@@ -12,6 +11,7 @@ import pandas as pd
 from arviz_plots import PlotCollection
 from matplotlib.figure import Figure
 
+import dse_research_utils.plot.io as plot_io
 import dse_research_utils.plot.styles as plot_styles
 
 
@@ -54,12 +54,11 @@ def plot_prior_samples_binomial(
     plt.ylabel(y_label)
 
     if filename is not None and output_dir is not None:
-        os.makedirs(output_dir, exist_ok=True)
-        plt.savefig(os.path.join(output_dir, f"{filename}.png"), dpi=300)
-        plt.savefig(os.path.join(output_dir, f"{filename}.svg"))
+        # bbox_inches=None and close=False keep the historical cropping and the
+        # returned-figure contract of this function.
+        plot_io.save_styled_figure(output_dir, filename, bbox_inches=None, close=False)
         if report_figs_dir is not None:
-            os.makedirs(report_figs_dir, exist_ok=True)
-            plt.savefig(os.path.join(report_figs_dir, f"{filename}.png"), dpi=300)
+            plot_io.save_styled_figure(report_figs_dir, filename, bbox_inches=None, close=False, svg=False)
 
     return plt.gcf()
 
@@ -104,9 +103,8 @@ def _plot_predictive_checks(
         )
 
     if output_dir is not None and filename is not None:
-        os.makedirs(output_dir, exist_ok=True)
-        pc.savefig(os.path.join(output_dir, f"{filename}.png"), dpi=300)
-        pc.savefig(os.path.join(output_dir, f"{filename}.svg"))
+        # close=False keeps the returned collection displayable in notebooks.
+        plot_io.save_plotcollection(pc, output_dir, filename, close=False)
 
     return pc
 

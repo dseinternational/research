@@ -1,7 +1,33 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+from typing import Literal
+
 import numpy as np
+import pandas as pd
+
+IntervalKind = Literal["eti", "hdi"]
+"""Which credible-interval convention a summary uses.
+
+``"eti"`` — equal-tailed interval (the two central quantiles); ``"hdi"`` — highest
+density interval (the narrowest interval covering the mass). Both cover the same
+probability; they differ for skewed or bounded-scale posteriors.
+"""
+
+DEFAULT_CI_PROB: float = 0.89
+"""Outer credible-interval mass shared across the reporting helpers.
+
+Matches ArviZ's ``rcParams["stats.ci_prob"]`` and
+:attr:`dse_research_utils.statistics.models.reporting.ReportingConfiguration.ci_prob`;
+a report that wants a different width passes it explicitly.
+"""
+
+INNER_CI_PROB: float = 0.50
+"""Inner credible-interval mass for two-band summaries.
+
+The central 50% interval is a visual aid alongside the outer
+:data:`DEFAULT_CI_PROB` band, not a decision threshold.
+"""
 
 
 def hdi_1d(x: list[float] | np.ndarray, hdi_prob: float = 0.89) -> tuple[float, float]:
@@ -138,3 +164,149 @@ def eti_bands(
         out[f"lo{pct}"] = float(lo)
         out[f"hi{pct}"] = float(hi)
     return out
+
+
+def interval_1d(
+    x: list[float] | np.ndarray,
+    prob: float = DEFAULT_CI_PROB,
+    kind: IntervalKind = "eti",
+) -> tuple[float, float]:
+    """
+    Credible interval of a 1-D sample array, dispatching on the interval kind.
+
+    A convenience over :func:`hdi_1d` / :func:`eti_1d` for callers that carry the
+    interval convention as data (e.g. from
+    :attr:`~dse_research_utils.statistics.models.reporting.ReportingConfiguration.interval_kind`)
+    rather than choosing a function at the call site. Non-finite values are dropped
+    by the primitives; an empty input returns ``(nan, nan)``.
+
+    Parameters
+    ----------
+    x : array-like
+        Input samples.
+    prob : float, optional
+        The probability mass to include in the interval (default
+        :data:`DEFAULT_CI_PROB`).
+    kind : IntervalKind, optional
+        ``"eti"`` for the equal-tailed interval (default), ``"hdi"`` for the
+        highest-density interval.
+
+    Returns
+    -------
+    tuple
+        A tuple containing the lower and upper bounds of the interval.
+    """
+    if kind == "hdi":
+        return hdi_1d(x, hdi_prob=prob)
+    if kind == "eti":
+        return eti_1d(x, eti_prob=prob)
+    raise ValueError(f"kind must be 'eti' or 'hdi', got {kind!r}")
+
+
+def bands(
+    samples: np.ndarray,
+    prob: float = DEFAULT_CI_PROB,
+    kind: IntervalKind = "eti",
+    *,
+    sample_axis: int = 1,
+) -> np.ndarray:
+    """
+    Per-grid credible interval of a 2-D sample array.
+
+    Use for trajectory / query-grid bands where the interval is computed
+    independently at each grid point.
+
+    Parameters
+    ----------
+    samples : ndarray
+        2-D array with one axis of draws (``sample_axis``) and one grid axis.
+    prob : float, optional
+        The probability mass to include in each interval (default
+        :data:`DEFAULT_CI_PROB`).
+    kind : IntervalKind, optional
+        ``"eti"`` (default) or ``"hdi"``; see :func:`interval_1d`.
+    sample_axis : int, optional
+        Which axis of ``samples`` holds the draws — ``0`` or ``1`` (default ``1``).
+
+    Returns
+    -------
+    ndarray
+        Array of shape ``(n_grid, 2)`` holding ``(lo, hi)`` per grid point,
+        NaN-aware.
+    """
+    arr = np.asarray(samples, dtype=float)
+    if arr.ndim != 2:
+        raise ValueError(f"bands expects a 2-D array, got shape {arr.shape}")
+    if sample_axis not in (0, 1):
+        raise ValueError(f"sample_axis must be 0 or 1, got {sample_axis!r}")
+    grid_axis = 1 - sample_axis
+    n_grid = arr.shape[grid_axis]
+    out = np.empty((n_grid, 2), dtype=float)
+    for i in range(n_grid):
+        draws = arr[:, i] if sample_axis == 0 else arr[i, :]
+        out[i, 0], out[i, 1] = interval_1d(draws, prob, kind)
+    return out
+
+
+def summarise_bands(
+    samples: np.ndarray,
+    grid: np.ndarray,
+    *,
+    kind: IntervalKind = "eti",
+    outer: float = DEFAULT_CI_PROB,
+    inner: float = INNER_CI_PROB,
+    sample_axis: int = 1,
+    grid_name: str = "grid",
+) -> pd.DataFrame:
+    """
+    Median + inner + outer credible interval per grid point, as a tidy frame.
+
+    The two-band shape is the shared reporting convention: a central
+    :data:`INNER_CI_PROB` band as a visual aid inside the headline ``outer``
+    interval. The inner band's columns are named ``ci50_lo``/``ci50_hi`` after the
+    convention's 50% inner mass; a caller that passes a different ``inner`` keeps
+    those column names.
+
+    Parameters
+    ----------
+    samples : ndarray
+        2-D array of draws (or 1-D, treated as a single grid point); see
+        :func:`bands`.
+    grid : ndarray
+        Grid values, one per grid point, emitted as the ``grid_name`` column.
+    kind : IntervalKind, optional
+        ``"eti"`` (default) or ``"hdi"``; recorded in the ``interval_kind`` column.
+    outer : float, optional
+        Outer interval mass (default :data:`DEFAULT_CI_PROB`), emitted as
+        ``ci_lo``/``ci_hi``.
+    inner : float, optional
+        Inner interval mass (default :data:`INNER_CI_PROB`), emitted as
+        ``ci50_lo``/``ci50_hi``.
+    sample_axis : int, optional
+        Which axis of ``samples`` holds the draws — ``0`` or ``1`` (default ``1``).
+    grid_name : str, optional
+        Name of the grid column (default ``"grid"``).
+
+    Returns
+    -------
+    DataFrame
+        Columns: ``grid_name``, ``median``, ``ci50_lo``, ``ci50_hi``, ``ci_lo``,
+        ``ci_hi``, ``interval_kind``.
+    """
+    arr = np.asarray(samples, dtype=float)
+    if arr.ndim == 1:
+        arr = arr[:, None] if sample_axis == 0 else arr[None, :]
+    inner_band = bands(arr, inner, kind, sample_axis=sample_axis)
+    outer_band = bands(arr, outer, kind, sample_axis=sample_axis)
+    median = np.nanmedian(arr, axis=sample_axis)
+    return pd.DataFrame(
+        {
+            grid_name: np.asarray(grid, dtype=float),
+            "median": median,
+            "ci50_lo": inner_band[:, 0],
+            "ci50_hi": inner_band[:, 1],
+            "ci_lo": outer_band[:, 0],
+            "ci_hi": outer_band[:, 1],
+            "interval_kind": kind,
+        }
+    )

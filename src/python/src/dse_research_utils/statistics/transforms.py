@@ -10,6 +10,8 @@ These are deliberately distinct from the PyMC-graph ``logit`` in
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
 import pandas as pd
 
@@ -23,6 +25,53 @@ def standardize(x: np.ndarray) -> np.ndarray:
     if std_x < EPSILON:
         return x - mean_x
     return (x - mean_x) / std_x
+
+
+@dataclass
+class Standardiser:
+    """A fitted standardisation, invertible for exact refits and back-transforms.
+
+    Persist the instance (its ``mean``/``sd``) alongside a fitted model so a
+    later refit or a natural-scale readout applies exactly the same scaling.
+    """
+
+    mean: float
+    """Mean of the fitted values."""
+    sd: float
+    """Sample standard deviation (``ddof=1``) of the fitted values."""
+
+    def __call__(self, x: np.ndarray | pd.Series) -> np.ndarray:
+        return (np.asarray(x, dtype=float) - self.mean) / self.sd
+
+    def inverse(self, z: np.ndarray | pd.Series) -> np.ndarray:
+        return np.asarray(z, dtype=float) * self.sd + self.mean
+
+
+def standardise(x: np.ndarray | pd.Series) -> tuple[np.ndarray, Standardiser]:
+    """Standardise ``x`` (NaN-aware, ``ddof=1``), returning the fitted transform.
+
+    Unlike :func:`standardize`, this raises on a degenerate SD (a constant
+    predictor is a modelling error, not something to silently centre) and
+    returns the :class:`Standardiser` so the exact scaling can be persisted
+    and inverted.
+    """
+    arr = np.asarray(x, dtype=float)
+    mu = float(np.nanmean(arr))
+    sd = float(np.nanstd(arr, ddof=1))
+    if not np.isfinite(sd) or sd <= 0:
+        raise ValueError("Standard deviation of x must be positive.")
+    return (arr - mu) / sd, Standardiser(mean=mu, sd=sd)
+
+
+def haldane_logit(y: np.ndarray | pd.Series, n: int | np.ndarray) -> np.ndarray:
+    """Haldane-Anscombe corrected empirical logit: ``log((y + 0.5) / (n - y + 0.5))``.
+
+    Finite at ``y = 0`` and ``y = n``, which the raw :func:`logit` of ``y / n``
+    is not; NaN counts pass through as NaN. Both consuming repositories derived
+    this correction independently (three spellings in one repo alone).
+    """
+    y = np.asarray(y, dtype=float)
+    return np.log((y + 0.5) / (np.asarray(n, dtype=float) - y + 0.5))
 
 
 def logit(p: float | np.ndarray) -> float | np.ndarray:

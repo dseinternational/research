@@ -92,3 +92,20 @@ def test_preflight_disk_omits_output_line_for_subdirectories(tmp_path, captured_
 
 def test_preflight_accepts_path_objects(tmp_path):
     assert preflight_disk(0.001, Path(tmp_path)) > 0
+
+
+def test_resolve_symlinks_false_preserves_the_link_path(tmp_path, monkeypatch):
+    target = tmp_path / "real"
+    target.mkdir()
+    link = tmp_path / "link"
+    try:
+        link.symlink_to(target, target_is_directory=True)
+    except OSError, NotImplementedError:  # pragma: no cover - needs privilege
+        pytest.skip("symlink creation not permitted in this environment")
+
+    resolving = OutputRoot(ENV_VAR, tmp_path / "output")
+    preserving = OutputRoot(ENV_VAR, tmp_path / "output", resolve_symlinks=False)
+    monkeypatch.setenv(ENV_VAR, str(link))
+
+    assert resolving.resolve() == target.resolve()
+    assert preserving.resolve() == link

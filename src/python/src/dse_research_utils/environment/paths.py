@@ -24,7 +24,7 @@ class OutputRoot:
 
     Precedence: an explicit override set via :meth:`set` (typically the parsed
     ``--output-dir``) > the configured environment variable > the repo-local
-    default. Paths are resolved with ``Path.expanduser().resolve()``.
+    default.
 
     Parameters
     ----------
@@ -35,12 +35,32 @@ class OutputRoot:
         The repo-local default root (e.g. ``<repo>/output``), used when neither
         an override nor the environment variable is set. Not normalised, so the
         default's exact spelling is preserved for path comparisons.
+    resolve_symlinks : bool, optional
+        How a configured path is normalised. ``True`` (default) uses
+        ``Path.expanduser().resolve()``, so a symlinked path is recorded as its
+        target. ``False`` uses ``expanduser`` + ``abspath``, preserving the
+        symlink in the recorded path — which matters where the output root is
+        itself a symlink to a scratch volume and the link path is the stable
+        name that appears in manifests and upload prefixes.
     """
 
-    def __init__(self, env_var: str, default: str | os.PathLike[str]) -> None:
+    def __init__(
+        self,
+        env_var: str,
+        default: str | os.PathLike[str],
+        *,
+        resolve_symlinks: bool = True,
+    ) -> None:
         self.env_var = env_var
         self.default = Path(default)
+        self.resolve_symlinks = resolve_symlinks
         self._override: Path | None = None
+
+    def _normalise(self, path: str | os.PathLike[str]) -> Path:
+        expanded = Path(path).expanduser()
+        if self.resolve_symlinks:
+            return expanded.resolve()
+        return Path(os.path.abspath(expanded))
 
     def set(self, path: str | os.PathLike[str] | None) -> Path:
         """Set (or clear) the process-wide override — highest precedence.
@@ -50,7 +70,7 @@ class OutputRoot:
         the resolved output root. Call once, early in a command, before any
         output path is resolved.
         """
-        self._override = Path(path).expanduser().resolve() if path else None
+        self._override = self._normalise(path) if path else None
         return self.resolve()
 
     def resolve(self) -> Path:
@@ -59,7 +79,7 @@ class OutputRoot:
             return self._override
         env_value = os.environ.get(self.env_var)
         if env_value:
-            return Path(env_value).expanduser().resolve()
+            return self._normalise(env_value)
         return self.default
 
     def is_overridden(self) -> bool:

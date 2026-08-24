@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Any
 
 import arviz as az
 import pandas as pd
-import psutil
 import pymc as pm
 import pytensor.tensor as pt
 from pytensor.tensor.variable import TensorVariable
@@ -24,22 +23,6 @@ if TYPE_CHECKING:
 def logit(p: Any, eps: float = EPSILON) -> Any:
     p = pm.math.clip(p, eps, 1 - eps)
     return pm.math.log(p) - pt.log1p(-p)
-
-
-def get_available_cores() -> int:
-    """
-    Get the number of available cores to use for PyMC sampling.
-
-    Returns
-    -------
-    int
-        The number of CPU cores to use, which is the maximum of 4 and
-        the total number of physical CPUs minus one.
-    """
-    n_cpus = psutil.cpu_count(logical=False)
-    if n_cpus is None:
-        n_cpus = psutil.cpu_count(logical=True) or 2
-    return max(4, n_cpus - 1)
 
 
 def report_model_summary(model: pm.Model) -> None:
@@ -67,7 +50,7 @@ def report_model_summary(model: pm.Model) -> None:
         console.print(f"  {rv.name} [{rv.type}]")
 
 
-def model_to_graphviz(model: pm.Model) -> Digraph:
+def model_to_graphviz(model: pm.Model, *, dpi: int | None = None) -> Digraph:
     """
     Export the PyMC model to a Graphviz dot file.
 
@@ -75,6 +58,10 @@ def model_to_graphviz(model: pm.Model) -> Digraph:
     ----------
     model : pm.Model
         The PyMC model to export.
+    dpi : int, optional
+        Raster resolution recorded on the graph (e.g. 150 for a publication
+        PNG); ``None`` leaves Graphviz's default.
+
     Returns
     -------
     Digraph
@@ -92,6 +79,8 @@ def model_to_graphviz(model: pm.Model) -> Digraph:
     dg.graph_attr["fontname"] = "Helvetica"
     dg.node_attr["fontname"] = "Helvetica"
     dg.edge_attr["fontname"] = "Helvetica"
+    if dpi is not None:
+        dg.graph_attr["dpi"] = str(dpi)
     return dg
 
 

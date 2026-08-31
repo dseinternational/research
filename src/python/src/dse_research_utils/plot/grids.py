@@ -57,8 +57,7 @@ def plot_histograms(
         import seaborn as sns
     except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
         raise ModuleNotFoundError(
-            "plot_histograms requires seaborn; install the 'viz' extra "
-            "(pip install dse-research-utils[viz])."
+            "plot_histograms requires seaborn; install the 'viz' extra (pip install dse-research-utils[viz])."
         ) from exc
 
     df = data.select_dtypes(include=["number"])

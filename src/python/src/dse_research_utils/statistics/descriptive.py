@@ -156,8 +156,6 @@ def describe_all(df: pd.DataFrame, alpha: float) -> pd.DataFrame:
     return df[numeric_cols].apply(lambda col: describe(col, alpha))
 
 
-def describe_all_grouped(
-    df: pd.core.groupby.DataFrameGroupBy, alpha: float
-) -> pd.DataFrame:
+def describe_all_grouped(df: pd.core.groupby.DataFrameGroupBy, alpha: float) -> pd.DataFrame:
     """Apply :func:`describe_all` within each group of a ``groupby`` object."""
     return df.apply(lambda group: describe_all(group, alpha), include_groups=False)

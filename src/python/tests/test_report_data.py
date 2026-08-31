@@ -92,9 +92,7 @@ def test_value_at_nearest_key(tmp_path):
     report = _make_report(tmp_path, default_config="reporting")
     d = tmp_path / "vg01-reporting"
     d.mkdir()
-    pd.DataFrame({"age_months": [12, 24, 36], "Ey_median": [5, 40, 120]}).to_csv(
-        d / "summary.csv", index=False
-    )
+    pd.DataFrame({"age_months": [12, 24, 36], "Ey_median": [5, 40, 120]}).to_csv(d / "summary.csv", index=False)
     # 25 is nearest to 24.
     assert report.value_at("vg01", "summary", "Ey_median", at=25) == 40
     # Missing key column degrades to None.

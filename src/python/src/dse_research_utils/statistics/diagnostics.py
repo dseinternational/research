@@ -143,11 +143,7 @@ def write_diagnostics_summary(
     bfmi_ok = bool(bfmi) and all(np.isfinite(b) and b >= BFMI_THRESHOLD for b in bfmi)
     # Non-finite BFMI does not serialise as valid JSON (json emits a bare ``NaN``
     # token); store ``None`` for those chains instead.
-    bfmi_json = (
-        [None if (b is None or not np.isfinite(b)) else float(b) for b in bfmi]
-        if bfmi is not None
-        else None
-    )
+    bfmi_json = [None if (b is None or not np.isfinite(b)) else float(b) for b in bfmi] if bfmi is not None else None
 
     checks = {
         "rhat": bool(max_rhat is not None and max_rhat <= RHAT_MAX),
@@ -178,10 +174,7 @@ def write_diagnostics_summary(
     if tables is not None:
         tables["diagnostics_summary"] = payload
     verdict = "[green]PASS[/green]" if passed else "[red]REVIEW[/red]"
-    get_console().print(
-        f"  Convergence gate: {verdict} "
-        f"(divergences={n_div}, max R-hat={max_rhat}, min ESS={min_ess})"
-    )
+    get_console().print(f"  Convergence gate: {verdict} (divergences={n_div}, max R-hat={max_rhat}, min ESS={min_ess})")
     if unassessable:
         shown = ", ".join(unassessable[:6])
         if len(unassessable) > 6:
@@ -286,11 +279,7 @@ def convergence_banner_markdown(summary: dict | None, *, dev_note: bool = True) 
         Markdown for a Quarto callout block.
     """
     if not summary:
-        return (
-            ":::{.callout-note}\n"
-            "No `diagnostics_summary.json` was found for this fit.\n"
-            ":::"
-        )
+        return ":::{.callout-note}\nNo `diagnostics_summary.json` was found for this fit.\n:::"
     passed = summary.get("passed")
     thr = summary.get("thresholds", {})
     box = "callout-tip" if passed else "callout-warning"
@@ -301,20 +290,14 @@ def convergence_banner_markdown(summary: dict | None, *, dev_note: bool = True) 
     )
     mr, me = summary.get("max_rhat"), summary.get("min_ess")
     bf = summary.get("bfmi_per_chain")
-    bf_s = (
-        ", ".join("n/a" if x is None else f"{x:.2f}" for x in bf) if bf else "n/a"
-    )
+    bf_s = ", ".join("n/a" if x is None else f"{x:.2f}" for x in bf) if bf else "n/a"
     lines = [f'::: {{.{box} title="{head}"}}', ""]
     lines.append(f"- **Divergences:** {summary.get('divergences')} (target 0)")
     lines.append(
-        f"- **Max R-hat:** {mr:.4f} (target ≤ {thr.get('rhat_max')})"
-        if mr is not None
-        else "- **Max R-hat:** n/a"
+        f"- **Max R-hat:** {mr:.4f} (target ≤ {thr.get('rhat_max')})" if mr is not None else "- **Max R-hat:** n/a"
     )
     lines.append(
-        f"- **Min ESS:** {me:.0f} (target ≥ {thr.get('ess_threshold')})"
-        if me is not None
-        else "- **Min ESS:** n/a"
+        f"- **Min ESS:** {me:.0f} (target ≥ {thr.get('ess_threshold')})" if me is not None else "- **Min ESS:** n/a"
     )
     lines.append(f"- **BFMI per chain:** {bf_s} (target ≥ {thr.get('bfmi_threshold')})")
     fails = []
@@ -384,7 +367,6 @@ def style_diagnostics_table(
     if ess_cols:
         styler = styler.map(lambda v: _flag(v, ess_threshold, above=False), subset=ess_cols)
     styler.set_caption(
-        f"Reported convergence diagnostics. Cells highlighted red flag "
-        f"r̂ > {rhat_max} or ESS < {ess_threshold}."
+        f"Reported convergence diagnostics. Cells highlighted red flag r̂ > {rhat_max} or ESS < {ess_threshold}."
     )
     return styler

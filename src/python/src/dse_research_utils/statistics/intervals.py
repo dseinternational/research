@@ -126,9 +126,7 @@ def eti_1d(x: list[float] | np.ndarray, eti_prob: float = 0.89) -> tuple[float, 
     return float(lower), float(upper)
 
 
-def eti_bands(
-    draws: list[float] | np.ndarray, *, probs: tuple[float, ...] = (0.5, 0.9, 0.95)
-) -> dict[str, float]:
+def eti_bands(draws: list[float] | np.ndarray, *, probs: tuple[float, ...] = (0.5, 0.9, 0.95)) -> dict[str, float]:
     """Equal-tailed interval bounds at several coverages, keyed ``lo{pct}``/``hi{pct}``.
 
     A convenience over :func:`eti_1d` for the fixed multi-band reporting convention:

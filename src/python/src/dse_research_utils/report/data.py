@@ -69,10 +69,7 @@ def show_or_pending(df: Any, what: str, *, hint: str = "its output artefacts are
     """
     if df is not None:
         return df
-    message = (
-        f"> **Pending fit** — {what} will appear here once the model has been "
-        f"fitted and {hint}."
-    )
+    message = f"> **Pending fit** — {what} will appear here once the model has been fitted and {hint}."
     try:
         from IPython.display import Markdown
     except ModuleNotFoundError:
@@ -121,9 +118,7 @@ class ReportData:
         """Path to a figure produced for a model, as a string (for embedding)."""
         return str(self.model_dir(model_id, config) / filename)
 
-    def summary_value(
-        self, model_id: str, name: str, column: str, config: str | None = None
-    ) -> Any | None:
+    def summary_value(self, model_id: str, name: str, column: str, config: str | None = None) -> Any | None:
         """The first-row value of ``column`` in a summary, or ``None`` if unavailable."""
         df = self.load_summary(model_id, name, config)
         if df is None or df.empty or column not in df.columns:

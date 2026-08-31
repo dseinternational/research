@@ -61,16 +61,11 @@ def plot_graph(graph: Any, **graph_kwargs: Any) -> Any:
         import networkx as nx
     except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
         raise ModuleNotFoundError(
-            "plot_graph requires networkx; install the 'graphs' extra "
-            "(pip install dse-research-utils[graphs])."
+            "plot_graph requires networkx; install the 'graphs' extra (pip install dse-research-utils[graphs])."
         ) from exc
 
     # convert to networkx.DiGraph, if needed
-    G = (
-        nx.from_numpy_array(graph, create_using=nx.DiGraph)
-        if isinstance(graph, np.ndarray)
-        else graph
-    )
+    G = nx.from_numpy_array(graph, create_using=nx.DiGraph) if isinstance(graph, np.ndarray) else graph
 
     # Some layout functions (e.g. networkx's spring_layout) consume the global
     # numpy RNG. Snapshot it so we can seed deterministically for the layout call

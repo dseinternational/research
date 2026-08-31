@@ -59,8 +59,7 @@ def display_image(filename: str, output_dir: str | os.PathLike, width: int = 600
         from IPython.display import Image, display
     except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
         raise ModuleNotFoundError(
-            "display_image requires IPython; install the 'notebook' extra "
-            "(pip install dse-research-utils[notebook])."
+            "display_image requires IPython; install the 'notebook' extra (pip install dse-research-utils[notebook])."
         ) from exc
 
     return display(Image(filename=str(Path(output_dir) / filename), width=width))

@@ -103,7 +103,7 @@ Run anything inside the environment with `uv run <command>`, or activate `.venv`
 `src/python/pyproject.toml` is the single source of truth for the shared compiled core — the dependency floors every consuming repo inherits transitively by depending on `dse-research-utils`. Declare dependencies there, never by re-listing packages in a consuming repo:
 
 - base `dependencies` — everything the library imports unconditionally, including the PyMC/PyTensor/nutpie stack
-- extras — optional layers: `viz`, `graphs`, `notebook`, `dependence`, `tuning`, `io`, `jax`, `boosting`, `columnar`, `storage`, and `all` (every layer at once)
+- extras — optional layers: `viz`, `graphs`, `notebook`, `dependence`, `tuning`, `io`, `jax`, `boosting`, `boosting-cpu`, `columnar`, `storage`, and `all` (every layer at once). `boosting-cpu` is the CPU-only variant of `boosting` for repos that do no GPU training — it swaps `xgboost` for `xgboost-cpu` off macOS, avoiding the CUDA payload the default Linux wheel carries. The two are mutually exclusive, so `all` takes `boosting`.
 
 The root `pyproject.toml` is a uv workspace root that is never packaged or published; repo-only tooling and research packages live in its `dev` and `research` dependency groups. After changing any dependency run `uv lock` and commit the updated `uv.lock`.
 

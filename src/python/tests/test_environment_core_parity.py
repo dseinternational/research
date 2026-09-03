@@ -32,6 +32,10 @@ _CONDA_TO_PYPI = {"python-graphviz": "graphviz"}
 
 def _floor(spec: str) -> str | None:
     """Return the '>=' lower bound of a requirement spec, or None if unbounded."""
+    # Drop any environment marker first: the `boosting-cpu` extra splits xgboost
+    # on `sys_platform`, and without this the marker would be read as part of the
+    # version (">=3.3.0; sys_platform == 'darwin'").
+    spec = spec.split(";", 1)[0]
     for clause in spec.split(","):
         clause = clause.strip()
         if clause.startswith(">="):

@@ -54,7 +54,7 @@ On POSIX, the temporary file starts with owner-only read/write permissions. The 
 
 An existing destination symlink is replaced as a directory entry; its target is unchanged. A callback must leave a regular file, not a symlink or directory. Created parent directories are retained after failure.
 
-This operation does not coordinate competing writers. The last successful replacement wins, and a read-modify-write operation can still lose another writer's update. It does not commit several files as one transaction or guarantee durability after a power loss. Directory promotion remains a separate planned change.
+This operation does not coordinate competing writers. The last successful replacement wins, and a read-modify-write operation can still lose another writer's update. It does not commit several files as one transaction or guarantee durability after a power loss. The [directory promotion helper](consolidation-migration.md#promote-a-completed-directory) accepts an explicit lock and retains a backup for completed directory trees.
 
 ## Collect provenance facts
 

@@ -26,6 +26,8 @@ import pymc as pm
 import pytensor.tensor as pt
 from preliz.distributions.distributions import Continuous
 
+from dse_research_utils.statistics.models.hsgp_design import calibrate_hsgp_1d
+
 
 def _default_amplitude_prior() -> Continuous:
     """Generic HSGP amplitude prior ``HalfNormal(0.3)`` (deliberately tight)."""
@@ -48,32 +50,8 @@ def _approx_hsgp_params(
     increases the basis size to retain the recommended frequency coverage.
     The half-range matches PyMC's centring of inputs at their midpoint.
     """
-    x = np.asarray(x, dtype=float)
-    x_min, x_max = float(x.min()), float(x.max())
-    try:
-        lengths = np.asarray(ls_range, dtype=float)
-    except (TypeError, ValueError) as exc:
-        raise ValueError("ls_range must contain two finite, positive, increasing lengthscales.") from exc
-    if lengths.shape != (2,) or not np.all(np.isfinite(lengths)) or not 0 < lengths[0] < lengths[1]:
-        raise ValueError("ls_range must contain two finite, positive, increasing lengthscales.")
-    m, c = pm.gp.hsgp_approx.approx_hsgp_hyperparams(
-        x_range=[x_min, x_max],
-        lengthscale_range=lengths.tolist(),
-        cov_func="expquad",
-    )
-    if c_floor is not None:
-        new_c = max(float(c), float(c_floor))
-        if new_c > c:
-            # Reuse PyMC's formula before integer truncation. Scaling its
-            # already-rounded m can understate the required frequency coverage.
-            m, _ = pm.gp.hsgp_approx.approx_hsgp_hyperparams(
-                x_range=[x_min, x_max],
-                lengthscale_range=[float(lengths[0] * c / new_c), float(lengths[1])],
-                cov_func="expquad",
-            )
-        c = new_c
-    S = (x_max - x_min) / 2.0
-    return [int(m)], [float(S * c)]
+    design = calibrate_hsgp_1d(x, ls_range=ls_range, c_floor=c_floor)
+    return [design.m], [design.L]
 
 
 def build_hsgp_1d(

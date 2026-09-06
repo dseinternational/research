@@ -138,3 +138,9 @@ def test_rope_card_default_ci_prob_is_0_89():
     default = rope_card(effect, items, delta=0.5)
     assert default == rope_card(effect, items, delta=0.5, ci_prob=0.89)
     assert default["items_lo"] != rope_card(effect, items, delta=0.5, ci_prob=0.95)["items_lo"]
+
+
+def test_rope_rejects_nonfinite_half_width():
+    for delta in (np.nan, np.inf):
+        with pytest.raises(ValueError, match="delta"):
+            rope_card(np.array([1.0, 2.0]), np.array([1.0, 2.0]), delta=delta)

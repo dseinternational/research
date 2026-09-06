@@ -74,6 +74,98 @@ def test_bfmi_per_chain_handles_missing_energy():
     assert _bfmi_per_chain(trace) is None
 
 
+def test_bfmi_respects_named_dimensions():
+    trace = _make_trace()
+    transposed = trace.copy()
+    transposed["sample_stats"] = trace.sample_stats.to_dataset().transpose("draw", "chain")
+    np.testing.assert_allclose(_bfmi_per_chain(transposed), _bfmi_per_chain(trace))
+
+
+@pytest.mark.parametrize("missing", ["r_hat", "ess_bulk", "ess_tail"])
+def test_gate_requires_every_diagnostic_column(tmp_path, monkeypatch, missing):
+    summary = pd.DataFrame({"r_hat": [1.0], "ess_bulk": [1000.0], "ess_tail": [1000.0]}, index=["mu"])
+    monkeypatch.setattr("arviz.summary", lambda *args, **kwargs: summary.drop(columns=missing))
+    payload = write_diagnostics_summary(_make_trace(), str(tmp_path))
+    assert not payload["passed"]
+    assert not payload["checks"]["diagnostics_assessable"]
+    assert payload["unassessable_parameters"] == ["mu"]
+
+
+def test_unavailable_diagnostics_are_null_in_json(tmp_path, monkeypatch):
+    summary = pd.DataFrame({"r_hat": [np.nan], "ess_bulk": [np.nan], "ess_tail": [np.nan]}, index=["mu"])
+    monkeypatch.setattr("arviz.summary", lambda *args, **kwargs: summary)
+    payload = write_diagnostics_summary(_make_trace(), str(tmp_path))
+    assert payload["max_rhat"] is None
+    assert payload["min_ess"] is None
+    assert "NaN" not in (tmp_path / "diagnostics_summary.json").read_text()
+    assert "Max R-hat:** n/a" in convergence_banner_markdown(payload)
+
+
+@pytest.mark.parametrize("drop_column", [False, True])
+def test_sampling_quality_keeps_finite_ess_when_other_column_is_missing(monkeypatch, drop_column):
+    from dse_research_utils.statistics.sampling_quality import sampling_quality
+
+    summary = pd.DataFrame({"r_hat": [1.0], "ess_bulk": [np.nan], "ess_tail": [600.0]}, index=["mu"])
+    if drop_column:
+        summary = summary.drop(columns="ess_bulk")
+    monkeypatch.setattr("arviz.summary", lambda *args, **kwargs: summary)
+    quality = sampling_quality(_make_trace())
+    assert quality.min_ess == 600.0
+    assert quality.unassessable == ("mu",)
+
+
+@pytest.mark.parametrize(
+    "bfmi,expected", [(np.array([0.2, 0.8]), 0.2), (np.array([]), None), ([], None), (np.array([0.2, np.nan]), None)]
+)
+def test_sampling_quality_accepts_bfmi_arrays(monkeypatch, bfmi, expected):
+    from dse_research_utils.statistics.sampling_quality import sampling_quality
+
+    monkeypatch.setattr("dse_research_utils.statistics.sampling_quality._bfmi_per_chain", lambda trace: bfmi)
+    assert sampling_quality(_make_trace()).min_bfmi == expected
+
+
+def test_scan_completed_distinguishes_unassessable_from_failed_scan(tmp_path, monkeypatch):
+    missing = pd.DataFrame({"r_hat": [np.nan], "ess_bulk": [np.nan], "ess_tail": [np.nan]}, index=["c"])
+    monkeypatch.setattr("arviz.summary", lambda *args, **kwargs: missing)
+    result = write_diagnostics_summary(_make_trace(), str(tmp_path))
+    assert result["scan_completed"] is True
+    assert result["unassessable_parameters"] == ["c"]
+    assert result["passed"] is False
+
+    def fail(*args, **kwargs):
+        raise RuntimeError("scan failed")
+
+    monkeypatch.setattr("arviz.summary", fail)
+    result = write_diagnostics_summary(_make_trace(), str(tmp_path))
+    assert result["scan_completed"] is False
+    assert result["passed"] is False
+
+
+def test_empty_diagnostic_summary_cannot_be_used(tmp_path, monkeypatch):
+    from dse_research_utils.statistics.sampling_quality import sampling_quality
+
+    monkeypatch.setattr("arviz.summary", lambda *args, **kwargs: pd.DataFrame())
+    assert not write_diagnostics_summary(_make_trace(), str(tmp_path))["passed"]
+    with pytest.raises(ValueError, match="No parameters"):
+        sampling_quality(_make_trace())
+
+
+def test_amended_json_sanitises_nested_nonfinite_values_and_cache(tmp_path):
+    from dse_research_utils.statistics.diagnostics import amend_diagnostics_summary
+
+    write_diagnostics_summary(_make_trace(), str(tmp_path))
+    tables = {}
+    updates = {"extra": {"values": [np.nan, np.float64(np.inf), {"nested": -np.inf}], "array": np.array([1, np.nan])}}
+    result = amend_diagnostics_summary(str(tmp_path), updates, tables=tables)
+    expected = {"values": [None, None, {"nested": None}], "array": [1.0, None]}
+    assert result["extra"] == expected
+    assert tables["diagnostics_summary"] == result
+    text = (tmp_path / "diagnostics_summary.json").read_text()
+    assert "NaN" not in text and "Infinity" not in text
+    assert json.loads(text) == result
+    assert np.isnan(updates["extra"]["values"][0])
+
+
 def test_bfmi_per_chain_nan_for_degenerate_chain():
     # A chain with constant (zero-variance) energy has an undefined BFMI: the
     # denominator Sum((E - mean)^2) is 0, so the helper returns NaN for it.
@@ -427,6 +519,11 @@ def test_style_diagnostics_table_clean_frame_has_no_flags():
         index=["mu", "sigma"],
     )
     assert _flagged_cells(style_diagnostics_table(clean)) == set()
+
+
+def test_style_diagnostics_table_flags_unassessable_cells():
+    frame = pd.DataFrame({"r_hat": [np.nan], "ess_bulk": [np.inf], "ess_tail": [pd.NA]})
+    assert _flagged_cells(style_diagnostics_table(frame)) == {(0, 0), (0, 1), (0, 2)}
 
 
 def test_style_diagnostics_table_tolerates_missing_columns():

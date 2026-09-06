@@ -246,6 +246,15 @@ class TestBands:
 
 
 class TestSummariseBands:
+    @pytest.mark.parametrize("sample_axis", [0, 1])
+    def test_median_and_bands_use_the_same_finite_draws(self, sample_axis):
+        samples = np.array([[0.0, 1.0, np.inf, np.inf]])
+        if sample_axis == 0:
+            samples = samples.T
+        result = summarise_bands(samples, np.array([1.0]), sample_axis=sample_axis)
+        assert result.loc[0, "median"] == 0.5
+        assert result.loc[0, "ci_lo"] <= result.loc[0, "median"] <= result.loc[0, "ci_hi"]
+
     def test_columns_and_grid(self) -> None:
         rng = np.random.default_rng(17)
         samples = rng.normal(size=(3, 4000))

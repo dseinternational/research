@@ -34,9 +34,8 @@ from typing import Any
 
 import arviz as az
 import numpy as np
-import pandas as pd
 
-from dse_research_utils.statistics.diagnostics import _bfmi_per_chain
+from dse_research_utils.statistics.diagnostics import _bfmi_per_chain, _diagnostic_extrema, _diagnostic_frame
 
 
 @dataclass(frozen=True)
@@ -90,19 +89,13 @@ def sampling_quality(trace: Any, *, var_names: list[str] | None = None) -> Sampl
         uncheckable fit means for them.
     """
     # ``round_to="none"`` must be the string — see the module docstring.
-    summ = az.summary(trace, var_names=var_names, round_to="none", kind="diagnostics")
+    summ = _diagnostic_frame(az.summary(trace, var_names=var_names, round_to="none", kind="diagnostics"))
     # pandas ``.max()`` / ``.min()`` skip NaN by default, so a constant or unsampled
     # variable does not poison the reduction. That is the right *extraction*
     # behaviour — one unassessable nuisance term should not make ``max_rhat``
     # meaningless — but it is not a verdict: the skipped rows are reported
     # separately through ``unassessable`` so a gate can fail closed on them.
-    max_rhat = float(summ["r_hat"].max())
-    min_ess = float(min(summ["ess_bulk"].min(), summ["ess_tail"].min()))
-    diagnostic_columns = [c for c in ("r_hat", "ess_bulk", "ess_tail") if c in summ]
-    unassessable = tuple(
-        str(name)
-        for name in summ.index[~np.isfinite(summ[diagnostic_columns].apply(pd.to_numeric, errors="coerce")).all(axis=1)]
-    )
+    max_rhat, min_ess, unassessable = _diagnostic_extrema(summ)
 
     n_div: int | None = None
     sample_stats = getattr(trace, "sample_stats", None)
@@ -110,7 +103,7 @@ def sampling_quality(trace: Any, *, var_names: list[str] | None = None) -> Sampl
         n_div = int(np.asarray(sample_stats["diverging"].values).sum())
 
     bfmi = _bfmi_per_chain(trace)
-    min_bfmi = float(np.min(bfmi)) if bfmi is not None and np.all(np.isfinite(bfmi)) else None
+    min_bfmi = float(np.min(bfmi)) if bfmi is not None and len(bfmi) > 0 and np.all(np.isfinite(bfmi)) else None
 
     return SamplingQuality(
         max_rhat=max_rhat,

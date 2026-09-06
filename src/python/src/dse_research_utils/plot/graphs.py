@@ -73,8 +73,11 @@ def plot_graph(graph: Any, **graph_kwargs: Any) -> Any:
     rng_state = np.random.get_state()
     try:
         np.random.seed(123)  # legacy global RNG, needed by networkx layout
-        if "layout" in graph_kwargs:
-            graph_kwargs["pos"] = graph_kwargs["layout"](G)
+        layout = graph_kwargs.pop("layout", None)
+        if layout is not None:
+            graph_kwargs["pos"] = layout(G)
+        elif "pos" not in graph_kwargs:
+            graph_kwargs["pos"] = nx.kamada_kawai_layout(G)
 
         default_graph_kwargs = {
             "node_color": "C0",
@@ -83,7 +86,6 @@ def plot_graph(graph: Any, **graph_kwargs: Any) -> Any:
             "width": 3,
             "alpha": 0.7,
             "connectionstyle": "arc3,rad=0.1",
-            "pos": nx.kamada_kawai_layout(G),
         }
         for k, v in default_graph_kwargs.items():
             if k not in graph_kwargs:

@@ -39,8 +39,10 @@ def rope_card(
     ``delta`` is the ROPE half-width (the minimally-important difference) on the items
     scale.
 
-    The point estimate on each scale is the posterior **median** because it is
-    transformation-invariant across the native and items scales. The ``tau_logit_*``
+    The point estimate is the posterior **median**, computed separately on each
+    scale. Population medians are preserved under a fixed monotone transformation,
+    but a marginal effect can also depend on other parameters. Its median need
+    not be a transform of the native-scale median. The ``tau_logit_*``
     keys are named for the ITT ``tau`` estimand that first used this schema and are kept
     verbatim across effect families so one CSV layout serves a whole suite.
 
@@ -81,8 +83,8 @@ def rope_card(
         )
     if not 0.0 < ci_prob <= 1.0:
         raise ValueError(f"ci_prob must be in (0, 1], got {ci_prob!r}")
-    if delta < 0:
-        raise ValueError(f"delta (a ROPE half-width) must be non-negative, got {delta!r}")
+    if not np.isfinite(delta) or delta < 0:
+        raise ValueError(f"delta (a ROPE half-width) must be finite and non-negative, got {delta!r}")
     # Drop draws that are non-finite on either scale, keeping the two arrays paired
     # (matching the non-finite handling in the interval helpers). NaNs would otherwise
     # count as "not > 0" for pd and propagate through np.quantile.

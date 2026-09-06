@@ -30,6 +30,8 @@ from typing import Any
 import numpy as np
 import xarray as xr
 
+from dse_research_utils.console.console import get_console
+
 ELPD_DIFF_INCONCLUSIVE = 4.0
 """House convention: an absolute ELPD difference below this is inconclusive.
 
@@ -37,6 +39,10 @@ Below it, two models are treated as predictively indistinguishable rather than
 ranked; see Sivula, Magnusson & Vehtari (2020) on the unreliability of small
 ELPD differences.
 """
+
+
+class SampledParametersUnavailableError(LookupError):
+    """The trace has no sampled-parameter record and the caller supplied none."""
 
 
 def as_dataset(node: Any) -> xr.Dataset:
@@ -61,6 +67,8 @@ def group_names(idata: Any) -> set[str]:
     groups = getattr(idata, "groups", None)
     if groups is None:
         return set()
+    if callable(groups):
+        groups = groups()
     return {str(g).rstrip("/").rsplit("/", 1)[-1] for g in groups if str(g) not in ("", "/")}
 
 
@@ -79,7 +87,7 @@ def sampled_parameter_names(
 
     ``attr_reader`` is a repo-supplied callable that reads the recorded
     sampled-parameter names off the trace (the repositories record them as a
-    trace attribute at sampling time). Raises ``LookupError`` when neither is
+    trace attribute at sampling time). Raises ``SampledParametersUnavailableError`` when neither is
     available — a trace from before the attribute existed, read without a model
     to name the parameters.
     """
@@ -87,7 +95,7 @@ def sampled_parameter_names(
         return list(names)
     recorded = attr_reader(trace) if attr_reader is not None else None
     if recorded is None:
-        raise LookupError(
+        raise SampledParametersUnavailableError(
             "The trace does not record its sampled parameters and none were "
             "supplied; pass names=[rv.name for rv in model.free_RVs] from a "
             "rebuilt model, or accept ArviZ's default."
@@ -113,6 +121,8 @@ def sampled_parameter_reff(
 
     posterior = as_dataset(trace if isinstance(trace, xr.Dataset) else trace["posterior"])
     wanted = sampled_parameter_names(trace, names=names, attr_reader=attr_reader)
+    if not wanted:
+        raise ValueError("Select at least one sampled parameter to compute reff.")
     missing = [name for name in wanted if name not in posterior.data_vars]
     if missing:
         raise KeyError(f"Sampled parameters absent from the posterior: {missing}")
@@ -130,24 +140,31 @@ def reff_or_default(
     names: Sequence[str] | None = None,
     attr_reader: Callable[[Any], list[str] | None] | None = None,
     label: str = "",
-    warn: Callable[[str], Any] = print,
+    warn: Callable[[str], Any] | None = None,
 ) -> float | None:
-    """``sampled_parameter_reff`` where it can be pinned, else ``None`` and a notice.
+    """Pin relative efficiency, falling back only when parameter names are unavailable.
 
     ``None`` hands ``az.loo`` its default — the posterior-wide average — which is
     the only option for a trace that neither records its sampled parameters nor
     comes with a model to name them. The notice is printed rather than swallowed
     because a comparison that mixes the two conventions should say so.
+    Missing named posterior variables, empty selections and errors from the
+    attribute reader or efficiency calculation propagate to the caller.
     """
     try:
-        return sampled_parameter_reff(trace, names=names, attr_reader=attr_reader)
-    except LookupError:
-        warn(
+        wanted = sampled_parameter_names(trace, names=names, attr_reader=attr_reader)
+    except SampledParametersUnavailableError:
+        message = (
             f"  {label + ': ' if label else ''}reff left at ArviZ's posterior-wide "
             "default — the trace predates the sampled-parameters record and no "
             "model was supplied to pin it."
         )
+        if warn is None:
+            get_console().print(message, markup=False)
+        else:
+            warn(message)
         return None
+    return sampled_parameter_reff(trace, names=wanted)
 
 
 def pareto_k_values(loo: Any) -> np.ndarray:
@@ -173,7 +190,9 @@ def pareto_k_reliability(pareto_k: np.ndarray | Sequence[float], good_k: float) 
     dict
         ``max`` (largest k), ``n_above`` (count above ``good_k``),
         ``share_above`` (their share of the observations), ``reliable``
-        (no k above ``good_k``), and ``good_k`` (the threshold used).
+        (nonempty, all k finite and no k above a finite ``good_k``), and
+        ``good_k`` (the threshold used). Non-finite values are not usable evidence
+        of reliability; ``n_above`` remains a literal threshold-exceedance count.
     """
     values = np.asarray(pareto_k, dtype=float)
     n_above = int((values > good_k).sum())
@@ -181,7 +200,7 @@ def pareto_k_reliability(pareto_k: np.ndarray | Sequence[float], good_k: float) 
         "max": float(np.max(values)) if values.size else float("nan"),
         "n_above": n_above,
         "share_above": (n_above / values.size) if values.size else float("nan"),
-        "reliable": bool(values.size) and n_above == 0,
+        "reliable": bool(values.size and np.isfinite(good_k) and np.all(np.isfinite(values)) and n_above == 0),
         "good_k": float(good_k),
     }
 
@@ -225,7 +244,7 @@ def loo_summary_row(
         pass e.g. ``"n_subjects"`` for a subject-level LOO).
     k_threshold : float, optional
         Pareto-k threshold for the ``pareto_k_above`` count. ``None`` (default)
-        uses the fit's own ``loo.good_k`` when present, else 0.7.
+        uses the fit's own ``loo.good_k`` when present, else 0.7. Must be finite.
     include_looic : bool, optional
         Also emit ``looic`` / ``looic_se`` (the deviance-scale view).
 
@@ -233,23 +252,32 @@ def loo_summary_row(
     -------
     dict
         ``label``, ``elpd_loo``, ``se``, ``p_loo``, ``reff``,
-        ``pareto_k_above``, ``k_threshold``, the ``unit_name`` count, and
-        optionally ``looic`` / ``looic_se``.
+        ``pareto_k_above``, ``pareto_k_nonfinite``, ``pareto_k_unusable``,
+        ``k_threshold``, the ``unit_name`` count, and optionally ``looic`` /
+        ``looic_se``. ``pareto_k_unusable`` counts the union of non-finite
+        values and threshold exceedances, without double-counting infinity.
     """
     k = pareto_k_values(loo)
     if k_threshold is None:
-        k_threshold = float(getattr(loo, "good_k", 0.7) or 0.7)
+        good_k = getattr(loo, "good_k", None)
+        k_threshold = 0.7 if good_k is None else float(good_k)
+    if not np.isfinite(k_threshold):
+        raise ValueError("k_threshold must be finite.")
+    elpd = float(loo.elpd if hasattr(loo, "elpd") else loo.elpd_loo)
+    p_loo = float(loo.p if hasattr(loo, "p") else loo.p_loo)
     row: dict[str, Any] = {
         "label": label,
-        "elpd_loo": float(loo.elpd),
+        "elpd_loo": elpd,
         "se": float(loo.se),
-        "p_loo": float(loo.p),
+        "p_loo": p_loo,
         "reff": None if reff is None else float(reff),
     }
     if include_looic:
-        row["looic"] = float(-2.0 * loo.elpd)
+        row["looic"] = -2.0 * elpd
         row["looic_se"] = float(2.0 * loo.se)
     row["pareto_k_above"] = int((k > k_threshold).sum())
+    row["pareto_k_nonfinite"] = int((~np.isfinite(k)).sum())
+    row["pareto_k_unusable"] = int(((k > k_threshold) | ~np.isfinite(k)).sum())
     row["k_threshold"] = float(k_threshold)
     row[unit_name] = int(k.size)
     return row

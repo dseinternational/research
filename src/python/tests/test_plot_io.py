@@ -9,7 +9,10 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+import pytest
+import xarray as xr
 
 from dse_research_utils.plot.io import (
     SVG_MAX_BYTES,
@@ -125,3 +128,35 @@ def test_save_plotcollection_close_opt_out(tmp_path):
     save_plotcollection(pc, str(tmp_path), "kept_pc", close=False)
     assert fig.number in plt.get_fignums()
     plt.close(fig)
+
+
+def test_save_plotcollection_leaves_unrelated_figure_open(tmp_path):
+    fig = _tiny_fig()
+    unrelated = _tiny_fig()
+    try:
+        save_plotcollection(_FakePlotCollection(fig), tmp_path, "only_this", svg=False)
+        assert fig.number not in plt.get_fignums()
+        assert unrelated.number in plt.get_fignums()
+    finally:
+        plt.close(fig)
+        plt.close(unrelated)
+
+
+def test_save_real_plotcollection_titles_and_closes_only_owned_figures(tmp_path):
+    azp = pytest.importorskip("arviz_plots")
+    unrelated = _tiny_fig()
+    data = xr.Dataset({"theta": (("chain", "draw"), np.random.default_rng(0).normal(size=(2, 100)))})
+    pc = azp.plot_dist(data, backend="matplotlib")
+    try:
+        figures = np.asarray(pc.get_viz("figure"), dtype=object).ravel()
+        assert figures.size
+        save_plotcollection(pc, tmp_path, "real", suptitle="Posterior", svg=False)
+        assert (tmp_path / "real.png").exists()
+        for fig in figures:
+            assert fig.get_suptitle() == "Posterior"
+            assert fig.number not in plt.get_fignums()
+        assert unrelated.number in plt.get_fignums()
+    finally:
+        plt.close(unrelated)
+        for fig in np.asarray(pc.get_viz("figure"), dtype=object).ravel():
+            plt.close(fig)

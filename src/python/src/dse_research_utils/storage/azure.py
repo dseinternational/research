@@ -13,7 +13,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 DEFAULT_CONTAINER_URL_ENV_VAR = "DSERESEARCH_BLOB_CONTAINER_URL"
 
@@ -57,6 +57,9 @@ class BlobUploadResult:
     elapsed_seconds: float = 0.0
     """Upload wall time in seconds."""
 
+    relative_paths: list[str] = field(default_factory=list)
+    """Raw POSIX paths of uploaded files, aligned with ``urls`` and excluding skipped files."""
+
 
 def container_url_from_environment(env_var: str = DEFAULT_CONTAINER_URL_ENV_VAR) -> str:
     """Read an Azure Blob container URL from an environment variable."""
@@ -83,9 +86,8 @@ def parse_blob_container_url(
     """
     parsed = urlparse(container_url.rstrip("/"))
     if parsed.query or parsed.fragment:
-        raise RuntimeError(
-            f"{env_var} must be a plain container URL with no query string or fragment: {container_url!r}."
-        )
+        # Query strings may contain credentials. Do not copy them into logs.
+        raise RuntimeError(f"{env_var} must be a plain container URL with no query string or fragment.")
 
     path_parts = [part for part in parsed.path.split("/") if part]
     if parsed.scheme != "https" or not parsed.netloc or len(path_parts) != 1:
@@ -158,15 +160,18 @@ def upload_directory_to_blob_storage(
         run_id = str(uuid.uuid7())
 
     blob_prefix = f"projects/{project}/output/{run_id}/{model_label}"
+    prefix_url = f"{target.base_url}/{quote(blob_prefix, safe='/')}/"
     credential = credential or DefaultAzureCredential()
     container_client = BlobServiceClient(target.account_url, credential=credential).get_container_client(
         target.container_name
     )
 
     urls: list[str] = []
+    relative_paths: list[str] = []
     uploaded = 0
     skipped = 0
     bytes_sent = 0
+    report_url: str | None = None
     started = time.perf_counter()
 
     for local_path, relative_path in _iter_upload_candidates(root):
@@ -189,13 +194,17 @@ def upload_directory_to_blob_storage(
                 overwrite=True,
                 content_settings=ContentSettings(content_type=content_type),
             )
-        urls.append(f"{target.base_url}/{blob_name}")
+        url = prefix_url + quote(relative_path, safe="/")
+        urls.append(url)
+        relative_paths.append(relative_path)
+        if relative_path == "index.html":
+            report_url = url
         uploaded += 1
 
-    report_url = next((url for url in urls if url.endswith("/index.html")), None)
     return BlobUploadResult(
         urls=urls,
-        prefix_url=f"{target.base_url}/{blob_prefix}/",
+        relative_paths=relative_paths,
+        prefix_url=prefix_url,
         report_url=report_url,
         uploaded_files=uploaded,
         skipped_files=skipped,

@@ -47,6 +47,10 @@ def _tree(posterior: xr.Dataset) -> xr.DataTree:
 
 
 class TestContainerShims:
+    def test_group_names_from_legacy_method(self):
+        trace = SimpleNamespace(groups=lambda: ["posterior", "sample_stats"])
+        assert group_names(trace) == {"posterior", "sample_stats"}
+
     def test_as_dataset_passthrough(self):
         ds = _posterior_dataset()
         assert as_dataset(ds) is ds
@@ -69,6 +73,33 @@ class TestContainerShims:
 
 
 class TestSampledParameterReff:
+    def test_unavailable_parameter_exception_is_public(self):
+        from dse_research_utils.statistics.loo import SampledParametersUnavailableError
+
+        with pytest.raises(SampledParametersUnavailableError):
+            sampled_parameter_names(object())
+
+    @pytest.mark.parametrize("label", ["model[arm A]", "VG15[itt]", "m[/bold]x"])
+    def test_default_notice_prints_labels_literally(self, captured_console, label):
+        assert reff_or_default(_tree(_posterior_dataset()), label=label) is None
+        assert label in captured_console.export_text()
+
+    def test_attr_reader_errors_do_not_trigger_fallback(self):
+        def read(trace):
+            raise KeyError("broken metadata")
+
+        with pytest.raises(KeyError, match="broken metadata"):
+            reff_or_default(_tree(_posterior_dataset()), attr_reader=read)
+
+    def test_reff_or_default_does_not_hide_missing_parameters(self):
+        with pytest.raises(KeyError, match="absent"):
+            reff_or_default(_tree(_posterior_dataset()), names=["missing"])
+
+    @pytest.mark.parametrize("n_chains", [1, 2])
+    def test_empty_parameter_selection_is_rejected(self, n_chains):
+        with pytest.raises(ValueError, match="at least one"):
+            sampled_parameter_reff(_tree(_posterior_dataset(n_chains=n_chains)), names=[])
+
     def test_names_argument_wins(self):
         assert sampled_parameter_names(object(), names=["a", "b"]) == ["a", "b"]
 
@@ -131,6 +162,14 @@ def _fake_elpd(
 
 
 class TestParetoK:
+    @pytest.mark.parametrize("bad", [np.nan, np.inf, -np.inf])
+    def test_nonfinite_diagnostic_is_not_reliable(self, bad):
+        assert not pareto_k_reliability([0.1, bad], good_k=0.7)["reliable"]
+
+    @pytest.mark.parametrize("bad", [np.nan, np.inf, -np.inf])
+    def test_nonfinite_threshold_is_not_reliable(self, bad):
+        assert not pareto_k_reliability([0.1], good_k=bad)["reliable"]
+
     def test_pareto_k_values_both_attribute_conventions(self):
         np.testing.assert_allclose(pareto_k_values(_fake_elpd(one_x_style=True)), [0.1, 0.4, 0.8])
         np.testing.assert_allclose(pareto_k_values(_fake_elpd(one_x_style=False)), [0.1, 0.4, 0.8])
@@ -150,6 +189,37 @@ class TestParetoK:
 
 
 class TestLooSummaryRow:
+    @pytest.mark.parametrize("threshold", [np.nan, np.inf, -np.inf])
+    @pytest.mark.parametrize("explicit", [False, True])
+    def test_nonfinite_threshold_is_rejected(self, threshold, explicit):
+        kwargs = {"k_threshold": threshold} if explicit else {}
+        with pytest.raises(ValueError, match="threshold"):
+            loo_summary_row(_fake_elpd(good_k=threshold), label="m", **kwargs)
+
+    def test_nonfinite_diagnostics_are_counted_separately(self):
+        row = loo_summary_row(_fake_elpd(k=(0.1, 0.8, np.nan, np.inf, -np.inf)), label="m")
+        assert row["pareto_k_above"] == 2
+        assert row["pareto_k_nonfinite"] == 3
+        assert row["pareto_k_unusable"] == 4
+
+    def test_zero_good_k_is_preserved(self):
+        row = loo_summary_row(_fake_elpd(k=(-0.1, 0.1), good_k=0.0), label="small")
+        assert row["k_threshold"] == 0.0
+        assert row["pareto_k_above"] == 1
+
+    def test_legacy_elpd_attribute_names(self):
+        loo = SimpleNamespace(
+            elpd_loo=-10.0,
+            se=2.0,
+            p_loo=1.0,
+            good_k=0.7,
+            pareto_k=xr.DataArray([0.2, 0.8]),
+        )
+        row = loo_summary_row(loo, label="legacy", include_looic=True)
+        assert row["elpd_loo"] == -10.0
+        assert row["p_loo"] == 1.0
+        assert row["looic"] == 20.0
+
     def test_default_threshold_is_the_fits_good_k(self):
         row = loo_summary_row(_fake_elpd(k=(0.1, 0.65, 0.8), good_k=0.6), label="m1")
         assert row["label"] == "m1"

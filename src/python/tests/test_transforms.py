@@ -1,6 +1,7 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -73,3 +74,8 @@ def test_haldane_logit_finite_at_bounds_and_nan_passthrough():
     assert np.isnan(out[3])
     # Matches the log((y+.5)/(n-y+.5)) definition.
     assert out[0] == pytest.approx(np.log(0.5 / 10.5))
+
+
+def test_invlogit_extreme_values_do_not_overflow():
+    with np.errstate(over="raise"):
+        np.testing.assert_allclose(invlogit(np.array([-1000.0, 0.0, 1000.0])), [0.0, 0.5, 1.0])

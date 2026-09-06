@@ -22,7 +22,9 @@ from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+from matplotlib.figure import Figure
 
 from dse_research_utils.console.console import get_console
 from dse_research_utils.plot.styles import DPI_FILE
@@ -171,15 +173,17 @@ def save_styled_figure(
     return png
 
 
-def _pc_figure(pc: Any) -> Any:
-    """Best-effort matplotlib ``Figure`` behind an ``arviz_plots`` collection."""
+def _pc_figures(pc: Any) -> list[Figure]:
+    """Matplotlib figures owned by a collection, without consulting pyplot state."""
     try:
-        return pc.viz["figure"].item()
+        if hasattr(pc, "get_viz"):
+            figures = pc.get_viz("figure")
+            values = figures.values if hasattr(figures, "values") else figures
+        else:
+            values = [pc.viz["figure"].item()]
+        return list(dict.fromkeys(fig for fig in np.asarray(values, dtype=object).flat if isinstance(fig, Figure)))
     except Exception:  # pragma: no cover - defensive
-        try:
-            return plt.gcf()
-        except Exception:
-            return None
+        return []
 
 
 def save_plotcollection(
@@ -198,14 +202,15 @@ def save_plotcollection(
 
     Optionally adds a figure-level ``suptitle`` (ArviZ plots render untitled) and
     emits the SVG through ``pc.savefig`` so the collection lays out correctly.
-    With ``close=True`` (the default) every open pyplot figure is closed after
-    saving; pass ``close=False`` when the caller returns ``pc`` for display.
+    With ``close=True`` (the default) the collection's matplotlib figures are
+    closed after saving. Other figures remain open. Pass ``close=False`` when
+    the caller returns ``pc`` for display.
     """
     os.makedirs(output_dir, exist_ok=True)
     base = os.path.join(output_dir, _stem(name))
+    figures = _pc_figures(pc)
     if suptitle:
-        fig = _pc_figure(pc)
-        if fig is not None:
+        for fig in figures:
             with contextlib.suppress(Exception):  # pragma: no cover - defensive
                 fig.suptitle(suptitle)
     pc.savefig(base + ".png", dpi=dpi)
@@ -214,4 +219,5 @@ def save_plotcollection(
     if data is not None:
         save_plot_data(output_dir, name, data)
     if close:
-        plt.close("all")
+        for fig in figures:
+            plt.close(fig)

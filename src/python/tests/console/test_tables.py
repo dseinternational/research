@@ -100,6 +100,17 @@ def test_dataframe_table_rank_column(captured_console):
     assert "3" in output
 
 
+def test_dataframe_table_truncation_preserves_original_ranks():
+    df = pd.DataFrame({"feature": [f"feature_{i}" for i in range(100)]}, index=["duplicate"] * 100)
+    table = dataframe_table(df, rank_column="#", max_rows=4)
+    assert list(table.columns[0].cells) == ["1", "2", "99", "100"]
+
+
+def test_dataframe_table_zero_rows_displays_no_data():
+    table = dataframe_table(pd.DataFrame({"x": range(10)}), max_rows=0)
+    assert table.row_count == 0
+
+
 def test_dataframe_table_invalid_truncation_raises():
     df = pd.DataFrame({"a": [1, 2, 3]})
     with pytest.raises(ValueError, match="truncation must be"):

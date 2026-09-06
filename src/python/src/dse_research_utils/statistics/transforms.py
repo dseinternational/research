@@ -14,6 +14,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
+from scipy.special import expit
 
 from dse_research_utils.math.constants import EPSILON
 
@@ -80,8 +81,11 @@ def logit(p: float | np.ndarray) -> float | np.ndarray:
 
 
 def invlogit(x: float | np.ndarray) -> float | np.ndarray:
-    """NumPy inverse logit (logistic sigmoid): ``1 / (1 + exp(-x))``. Vectorised."""
-    return 1 / (1 + np.exp(-x))
+    """NumPy logistic sigmoid without overflow for large scalars or arrays.
+
+    For symbolic PyMC model expressions, use ``pm.math.sigmoid`` instead.
+    """
+    return expit(x)
 
 
 def convert_to_categorical(

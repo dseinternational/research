@@ -36,12 +36,16 @@ BFMI_THRESHOLD = 0.3
 def _bfmi_per_chain(trace: Any) -> list[float] | None:
     """Per-chain BFMI from the sampler energy (Betancourt 2016).
 
-    ``arviz.bfmi`` was removed in the 1.x split, so compute it directly:
+    Compute it directly to return a plain list across ArviZ container versions:
     ``BFMI = sum((E_t - E_{t-1})**2) / sum((E_t - mean(E))**2)`` per chain. Returns
-    ``None`` if the energy trace is unavailable.
+    ``None`` if the energy trace is unavailable. Named dimensions determine the
+    draw order, regardless of the array's storage order.
     """
     try:
-        energy = np.atleast_2d(np.asarray(trace.sample_stats["energy"].values))
+        energy_array = trace.sample_stats["energy"]
+        if "chain" not in energy_array.dims:
+            energy_array = energy_array.expand_dims(chain=[0])
+        energy = np.asarray(energy_array.transpose("chain", "draw").values, dtype=float)
         out: list[float] = []
         for e in energy:
             num = float(np.sum(np.diff(e) ** 2))
@@ -85,7 +89,9 @@ def write_diagnostics_summary(
     dict
         The payload written to JSON: ``passed``, the per-check booleans, the raw
         ``divergences`` / ``max_rhat`` / ``min_ess`` / ``bfmi_per_chain`` values, the
-        failing-parameter lists, and the ``thresholds`` used.
+        failing-parameter lists, and the ``thresholds`` used. ``scan_completed``
+        distinguishes a completed R-hat/ESS scan with unassessable parameters
+        from an empty or failed scan. Non-finite numbers are stored as null.
     """
     os.makedirs(output_dir, exist_ok=True)
 
@@ -102,6 +108,8 @@ def write_diagnostics_summary(
     rhat_failing: list[str] = []
     ess_failing: list[str] = []
     unassessable: list[str] = []
+    assessable = False
+    scan_completed = False
     try:
         # Evaluate the gate on unrounded diagnostics; presentation rounding is
         # applied by convergence_banner_markdown, not here (else a borderline
@@ -112,27 +120,26 @@ def write_diagnostics_summary(
         # ``"2g"`` rounds to 2 significant figures -- so ``None`` would silently gate
         # on rounded values (R-hat 1.045 -> 1.0 passing <= 1.01; ESS 395 -> 400
         # passing >= 400). See dseinternational/research#65.
-        s = az.summary(trace, var_names=var_names, round_to="none", ci_kind="eti")
-        if "r_hat" in s:
-            max_rhat = float(np.nanmax(s["r_hat"].values))
-            rhat_failing = [str(i) for i in s.index[s["r_hat"] > RHAT_MAX]]
-        ess_cols = [c for c in ("ess_bulk", "ess_tail") if c in s]
-        if ess_cols:
-            ess_min_row = s[ess_cols].min(axis=1)
-            min_ess = float(np.nanmin(ess_min_row.values))
-            ess_failing = [str(i) for i in s.index[ess_min_row < ESS_THRESHOLD]]
+        s = _diagnostic_frame(az.summary(trace, var_names=var_names, round_to="none", kind="diagnostics"))
+        max_rhat, min_ess, unassessable_names = _diagnostic_extrema(s)
+        rhat_failing = [str(i) for i in s.index[s["r_hat"] > RHAT_MAX]]
+        ess_min_row = s[["ess_bulk", "ess_tail"]].min(axis=1)
+        ess_failing = [str(i) for i in s.index[ess_min_row < ESS_THRESHOLD]]
         # The reductions above skip NaN, and a NaN also compares False against the
         # thresholds, so a variable ArviZ could not assess (constant or unsampled)
         # leaves no trace in the extrema or the failing lists — mixed with one
         # healthy parameter the gate would pass (2026-08-22 ITT audit, finding 1).
         # "We measured this and it failed" and "we could not measure this" are
         # different verdicts, so record the latter as its own check.
-        diagnostic_columns = [c for c in ("r_hat", *ess_cols) if c in s]
-        if diagnostic_columns:
-            finite = np.isfinite(s[diagnostic_columns].apply(pd.to_numeric, errors="coerce"))
-            unassessable = [str(i) for i in s.index[~finite.all(axis=1)]]
+        unassessable = list(unassessable_names)
+        assessable = not unassessable
+        scan_completed = True
     except Exception as exc:  # pragma: no cover - defensive
         get_console().print(f"[yellow]R-hat/ESS summary for the gate failed: {exc}[/yellow]")
+
+    # Use JSON null for unavailable extrema, as for unavailable per-chain BFMI.
+    max_rhat = max_rhat if max_rhat is not None and np.isfinite(max_rhat) else None
+    min_ess = min_ess if min_ess is not None and np.isfinite(min_ess) else None
 
     bfmi = _bfmi_per_chain(trace)
     # Order-independent and NaN-safe. A degenerate chain (zero energy variance ->
@@ -140,7 +147,7 @@ def write_diagnostics_summary(
     # chain happens to sort first under the builtin ``min()`` (NaN comparisons are
     # all False, so ``min`` is order-dependent on a list containing NaN). Require
     # every chain to have a finite BFMI at or above the threshold.
-    bfmi_ok = bool(bfmi) and all(np.isfinite(b) and b >= BFMI_THRESHOLD for b in bfmi)
+    bfmi_ok = bfmi is not None and len(bfmi) > 0 and all(np.isfinite(b) and b >= BFMI_THRESHOLD for b in bfmi)
     # Non-finite BFMI does not serialise as valid JSON (json emits a bare ``NaN``
     # token); store ``None`` for those chains instead.
     bfmi_json = [None if (b is None or not np.isfinite(b)) else float(b) for b in bfmi] if bfmi is not None else None
@@ -150,12 +157,13 @@ def write_diagnostics_summary(
         "ess": bool(min_ess is not None and min_ess >= ESS_THRESHOLD),
         "divergences": bool(n_div == 0),
         "bfmi": bfmi_ok,
-        "diagnostics_assessable": not unassessable,
+        "diagnostics_assessable": assessable,
     }
     passed = all(checks.values())
 
     payload = {
         "passed": passed,
+        "scan_completed": scan_completed,
         "checks": checks,
         "divergences": n_div,
         "max_rhat": max_rhat,
@@ -170,7 +178,7 @@ def write_diagnostics_summary(
             "bfmi_threshold": BFMI_THRESHOLD,
         },
     }
-    _write_json_atomic(os.path.join(output_dir, "diagnostics_summary.json"), payload)
+    payload = _write_json_atomic(os.path.join(output_dir, "diagnostics_summary.json"), payload)
     if tables is not None:
         tables["diagnostics_summary"] = payload
     verdict = "[green]PASS[/green]" if passed else "[red]REVIEW[/red]"
@@ -183,22 +191,60 @@ def write_diagnostics_summary(
     return payload
 
 
-def _write_json_atomic(path: str, payload: dict[str, Any]) -> None:
+def _diagnostic_frame(summary: pd.DataFrame) -> pd.DataFrame:
+    """Keep all three required diagnostics, representing absent columns as NaN."""
+    return summary.reindex(columns=["r_hat", "ess_bulk", "ess_tail"]).apply(pd.to_numeric, errors="coerce")
+
+
+def _diagnostic_extrema(frame: pd.DataFrame) -> tuple[float, float, tuple[str, ...]]:
+    """Reduce a diagnostic frame and retain names skipped by NaN reductions."""
+    if frame.empty:
+        raise ValueError("No parameters were returned by the diagnostic summary.")
+    return (
+        float(frame["r_hat"].max()),
+        float(frame[["ess_bulk", "ess_tail"]].min(axis=1).min()),
+        tuple(str(name) for name in frame.index[~np.isfinite(frame).all(axis=1)]),
+    )
+
+
+def _json_safe(value: Any) -> Any:
+    """Copy nested JSON values, mapping non-finite numbers to null."""
+    if isinstance(value, np.ndarray):
+        return _json_safe(value.tolist())
+    if isinstance(value, np.floating):
+        return _json_safe(float(value))
+    if isinstance(value, np.generic):
+        return _json_safe(value.item())
+    if isinstance(value, dict):
+        return {key: _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    if isinstance(value, float) and not np.isfinite(value):
+        return None
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    return str(value)
+
+
+def _write_json_atomic(path: str, payload: dict[str, Any]) -> dict[str, Any]:
     """Write ``payload`` to ``path`` as JSON via a temp file and ``os.replace``.
 
     Keeps a reader from ever seeing a half-written summary when a gate amends the
-    file after the fit wrote it.
+    file after the fit wrote it. Return the sanitised payload so the caller's
+    cache agrees with the file, including nested amendments.
     """
     directory = os.path.dirname(path) or "."
+    payload = _json_safe(payload)
     fd, tmp_path = tempfile.mkstemp(dir=directory, suffix=".tmp")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            json.dump(payload, handle, indent=2, default=str)
+            json.dump(payload, handle, indent=2, default=str, allow_nan=False)
         os.replace(tmp_path, path)
     except BaseException:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
         raise
+    return payload
 
 
 def amend_diagnostics_summary(
@@ -249,7 +295,7 @@ def amend_diagnostics_summary(
         payload["passed"] = bool(explicit_passed)
     elif checks_update:
         payload["passed"] = all(payload["checks"].values())
-    _write_json_atomic(path, payload)
+    payload = _write_json_atomic(path, payload)
     if tables is not None:
         tables["diagnostics_summary"] = payload
     return payload
@@ -331,7 +377,8 @@ def style_diagnostics_table(
 
     Centralises the reported convergence-diagnostics table so every DSE model page
     highlights the same cells the same way: an ``r_hat`` above ``rhat_max`` and an
-    ``ess_bulk`` / ``ess_tail`` below ``ess_threshold`` are shown bold red. Columns not
+    ``ess_bulk`` / ``ess_tail`` below ``ess_threshold`` are shown bold red, as are
+    missing or non-finite diagnostic values. Columns not
     present in ``df`` are skipped, so the same call works for tables that carry only a
     subset of the diagnostic columns.
 
@@ -355,9 +402,10 @@ def style_diagnostics_table(
 
     def _flag(value: float, threshold: float, *, above: bool) -> str:
         try:
-            bad = value > threshold if above else value < threshold
-        except TypeError:
-            return ""
+            number = float(value)
+            bad = not np.isfinite(number) or (number > threshold if above else number < threshold)
+        except TypeError, ValueError:
+            bad = True
         return "color: #b00; font-weight: bold;" if bad else ""
 
     styler = df.style.format(precision=precision)
@@ -367,6 +415,7 @@ def style_diagnostics_table(
     if ess_cols:
         styler = styler.map(lambda v: _flag(v, ess_threshold, above=False), subset=ess_cols)
     styler.set_caption(
-        f"Reported convergence diagnostics. Cells highlighted red flag r̂ > {rhat_max} or ESS < {ess_threshold}."
+        f"Reported convergence diagnostics. Red cells flag r̂ > {rhat_max}, ESS < {ess_threshold}, "
+        "or unavailable diagnostics."
     )
     return styler

@@ -39,6 +39,10 @@ Helpers that need an extra lazy-import it and raise a clear error when it is abs
 
 `statistics.samples` aligns labelled predictive and observed arrays. `statistics.predictive` computes per-observation predictive checks, and `statistics.log_likelihood` aggregates factors into explicitly chosen evaluation units. See the [statistical array guide](../../docs/shared-predictive-arrays.md) for numerical conventions and consumer migration examples.
 
+## Shared report assets and feature groups
+
+`report.assets` inspects direct HTML resources and checks upload inventories and HTTP availability. `ml.feature_groups` builds and cuts clustering trees from existing dissimilarity matrices. See the [usage and migration guide](../../docs/shared-assets-and-feature-groups.md) for scope, numerical conventions and consumer adapters.
+
 ## Development
 
 Work from the repository root, which is the uv workspace root:

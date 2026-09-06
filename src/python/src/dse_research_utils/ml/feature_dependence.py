@@ -15,9 +15,10 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from scipy.cluster import hierarchy
 from scipy.spatial.distance import squareform
 from sklearn.feature_selection import mutual_info_regression
+
+from dse_research_utils.ml.feature_groups import linkage_from_dissimilarity
 
 
 def spearman_distance_matrix(X: pd.DataFrame | np.ndarray | list[float]) -> tuple[np.ndarray, np.ndarray]:
@@ -176,6 +177,7 @@ def distance_corr_dissimilarity_linkage(
 
     linkage : ndarray
         Linkage matrix resulting from hierarchical clustering using average linkage.
+        Zero or one feature returns shape ``(0, 4)``.
 
     Notes
     -----
@@ -187,7 +189,7 @@ def distance_corr_dissimilarity_linkage(
     """
     dissim, _corr_matrix = distance_corr_dissimilarity(X)
     condensed = squareform(dissim)
-    linkage = hierarchy.average(condensed)
+    linkage = linkage_from_dissimilarity(dissim, method="average")
     return dissim, condensed, linkage
 
 

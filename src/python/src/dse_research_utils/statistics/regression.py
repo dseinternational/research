@@ -40,6 +40,10 @@ def linear_regression_ols(x: list[float] | np.ndarray, y: list[float] | np.ndarr
         raise ValueError("x and y must have the same length")
     if len(x) < 2:
         raise ValueError("need at least two observations")
+    if not np.all(np.isfinite(x)) or not np.all(np.isfinite(y)):
+        raise ValueError("x and y must contain only finite values")
+    if np.all(x == x[0]):
+        raise ValueError("x must vary to estimate an intercept and slope")
 
     X = sm.add_constant(x)  # adds intercept column
     model = sm.OLS(y, X)

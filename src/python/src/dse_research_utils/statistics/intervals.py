@@ -34,10 +34,9 @@ def hdi_1d(x: list[float] | np.ndarray, hdi_prob: float = 0.89) -> tuple[float, 
     """
     Compute the highest density interval (HDI) for a 1D array of samples.
 
-    The HDI is the most "dense" part of the distribution. It has two defining characteristics:
-
-    - Every point inside the interval has a higher probability density than any point outside of it.
-    - It is the shortest possible interval that contains the required probability mass (e.g., 95%).
+    Estimate the shortest contiguous interval covering the requested mass.
+    For a multimodal distribution, this interval can span low-density gaps;
+    it does not estimate a disjoint highest-density region.
 
     Parameters
     ----------
@@ -296,7 +295,7 @@ def summarise_bands(
         arr = arr[:, None] if sample_axis == 0 else arr[None, :]
     inner_band = bands(arr, inner, kind, sample_axis=sample_axis)
     outer_band = bands(arr, outer, kind, sample_axis=sample_axis)
-    median = np.nanmedian(arr, axis=sample_axis)
+    median = np.nanmedian(np.where(np.isfinite(arr), arr, np.nan), axis=sample_axis)
     return pd.DataFrame(
         {
             grid_name: np.asarray(grid, dtype=float),

@@ -30,6 +30,8 @@ from typing import Any
 import numpy as np
 import xarray as xr
 
+from dse_research_utils.console.console import get_console
+
 ELPD_DIFF_INCONCLUSIVE = 4.0
 """House convention: an absolute ELPD difference below this is inconclusive.
 
@@ -37,6 +39,10 @@ Below it, two models are treated as predictively indistinguishable rather than
 ranked; see Sivula, Magnusson & Vehtari (2020) on the unreliability of small
 ELPD differences.
 """
+
+
+class _SampledParametersUnavailableError(LookupError):
+    """The trace has no sampled-parameter record and the caller supplied none."""
 
 
 def as_dataset(node: Any) -> xr.Dataset:
@@ -61,6 +67,8 @@ def group_names(idata: Any) -> set[str]:
     groups = getattr(idata, "groups", None)
     if groups is None:
         return set()
+    if callable(groups):
+        groups = groups()
     return {str(g).rstrip("/").rsplit("/", 1)[-1] for g in groups if str(g) not in ("", "/")}
 
 
@@ -87,7 +95,7 @@ def sampled_parameter_names(
         return list(names)
     recorded = attr_reader(trace) if attr_reader is not None else None
     if recorded is None:
-        raise LookupError(
+        raise _SampledParametersUnavailableError(
             "The trace does not record its sampled parameters and none were "
             "supplied; pass names=[rv.name for rv in model.free_RVs] from a "
             "rebuilt model, or accept ArviZ's default."
@@ -113,6 +121,8 @@ def sampled_parameter_reff(
 
     posterior = as_dataset(trace if isinstance(trace, xr.Dataset) else trace["posterior"])
     wanted = sampled_parameter_names(trace, names=names, attr_reader=attr_reader)
+    if not wanted:
+        raise ValueError("Select at least one sampled parameter to compute reff.")
     missing = [name for name in wanted if name not in posterior.data_vars]
     if missing:
         raise KeyError(f"Sampled parameters absent from the posterior: {missing}")
@@ -130,7 +140,7 @@ def reff_or_default(
     names: Sequence[str] | None = None,
     attr_reader: Callable[[Any], list[str] | None] | None = None,
     label: str = "",
-    warn: Callable[[str], Any] = print,
+    warn: Callable[[str], Any] | None = None,
 ) -> float | None:
     """``sampled_parameter_reff`` where it can be pinned, else ``None`` and a notice.
 
@@ -141,8 +151,9 @@ def reff_or_default(
     """
     try:
         return sampled_parameter_reff(trace, names=names, attr_reader=attr_reader)
-    except LookupError:
-        warn(
+    except _SampledParametersUnavailableError:
+        emit = get_console().print if warn is None else warn
+        emit(
             f"  {label + ': ' if label else ''}reff left at ArviZ's posterior-wide "
             "default — the trace predates the sampled-parameters record and no "
             "model was supplied to pin it."
@@ -173,7 +184,9 @@ def pareto_k_reliability(pareto_k: np.ndarray | Sequence[float], good_k: float) 
     dict
         ``max`` (largest k), ``n_above`` (count above ``good_k``),
         ``share_above`` (their share of the observations), ``reliable``
-        (no k above ``good_k``), and ``good_k`` (the threshold used).
+        (nonempty, all k finite and no k above a finite ``good_k``), and
+        ``good_k`` (the threshold used). Non-finite values are not usable evidence
+        of reliability; ``n_above`` remains a literal threshold-exceedance count.
     """
     values = np.asarray(pareto_k, dtype=float)
     n_above = int((values > good_k).sum())
@@ -181,7 +194,7 @@ def pareto_k_reliability(pareto_k: np.ndarray | Sequence[float], good_k: float) 
         "max": float(np.max(values)) if values.size else float("nan"),
         "n_above": n_above,
         "share_above": (n_above / values.size) if values.size else float("nan"),
-        "reliable": bool(values.size) and n_above == 0,
+        "reliable": bool(values.size and np.isfinite(good_k) and np.all(np.isfinite(values)) and n_above == 0),
         "good_k": float(good_k),
     }
 
@@ -238,16 +251,19 @@ def loo_summary_row(
     """
     k = pareto_k_values(loo)
     if k_threshold is None:
-        k_threshold = float(getattr(loo, "good_k", 0.7) or 0.7)
+        good_k = getattr(loo, "good_k", None)
+        k_threshold = 0.7 if good_k is None else float(good_k)
+    elpd = float(loo.elpd if hasattr(loo, "elpd") else loo.elpd_loo)
+    p_loo = float(loo.p if hasattr(loo, "p") else loo.p_loo)
     row: dict[str, Any] = {
         "label": label,
-        "elpd_loo": float(loo.elpd),
+        "elpd_loo": elpd,
         "se": float(loo.se),
-        "p_loo": float(loo.p),
+        "p_loo": p_loo,
         "reff": None if reff is None else float(reff),
     }
     if include_looic:
-        row["looic"] = float(-2.0 * loo.elpd)
+        row["looic"] = -2.0 * elpd
         row["looic_se"] = float(2.0 * loo.se)
     row["pareto_k_above"] = int((k > k_threshold).sum())
     row["k_threshold"] = float(k_threshold)

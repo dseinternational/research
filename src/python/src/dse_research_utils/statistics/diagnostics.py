@@ -36,12 +36,16 @@ BFMI_THRESHOLD = 0.3
 def _bfmi_per_chain(trace: Any) -> list[float] | None:
     """Per-chain BFMI from the sampler energy (Betancourt 2016).
 
-    ``arviz.bfmi`` was removed in the 1.x split, so compute it directly:
+    Compute it directly to return a plain list across ArviZ container versions:
     ``BFMI = sum((E_t - E_{t-1})**2) / sum((E_t - mean(E))**2)`` per chain. Returns
-    ``None`` if the energy trace is unavailable.
+    ``None`` if the energy trace is unavailable. Named dimensions determine the
+    draw order, regardless of the array's storage order.
     """
     try:
-        energy = np.atleast_2d(np.asarray(trace.sample_stats["energy"].values))
+        energy_array = trace.sample_stats["energy"]
+        if "chain" not in energy_array.dims:
+            energy_array = energy_array.expand_dims(chain=[0])
+        energy = np.asarray(energy_array.transpose("chain", "draw").values, dtype=float)
         out: list[float] = []
         for e in energy:
             num = float(np.sum(np.diff(e) ** 2))
@@ -102,6 +106,7 @@ def write_diagnostics_summary(
     rhat_failing: list[str] = []
     ess_failing: list[str] = []
     unassessable: list[str] = []
+    assessable = False
     try:
         # Evaluate the gate on unrounded diagnostics; presentation rounding is
         # applied by convergence_banner_markdown, not here (else a borderline
@@ -112,27 +117,26 @@ def write_diagnostics_summary(
         # ``"2g"`` rounds to 2 significant figures -- so ``None`` would silently gate
         # on rounded values (R-hat 1.045 -> 1.0 passing <= 1.01; ESS 395 -> 400
         # passing >= 400). See dseinternational/research#65.
-        s = az.summary(trace, var_names=var_names, round_to="none", ci_kind="eti")
-        if "r_hat" in s:
-            max_rhat = float(np.nanmax(s["r_hat"].values))
-            rhat_failing = [str(i) for i in s.index[s["r_hat"] > RHAT_MAX]]
-        ess_cols = [c for c in ("ess_bulk", "ess_tail") if c in s]
-        if ess_cols:
-            ess_min_row = s[ess_cols].min(axis=1)
-            min_ess = float(np.nanmin(ess_min_row.values))
-            ess_failing = [str(i) for i in s.index[ess_min_row < ESS_THRESHOLD]]
+        s = _diagnostic_frame(az.summary(trace, var_names=var_names, round_to="none", ci_kind="eti"))
+        max_rhat = float(s["r_hat"].max())
+        rhat_failing = [str(i) for i in s.index[s["r_hat"] > RHAT_MAX]]
+        ess_min_row = s[["ess_bulk", "ess_tail"]].min(axis=1)
+        min_ess = float(ess_min_row.min())
+        ess_failing = [str(i) for i in s.index[ess_min_row < ESS_THRESHOLD]]
         # The reductions above skip NaN, and a NaN also compares False against the
         # thresholds, so a variable ArviZ could not assess (constant or unsampled)
         # leaves no trace in the extrema or the failing lists — mixed with one
         # healthy parameter the gate would pass (2026-08-22 ITT audit, finding 1).
         # "We measured this and it failed" and "we could not measure this" are
         # different verdicts, so record the latter as its own check.
-        diagnostic_columns = [c for c in ("r_hat", *ess_cols) if c in s]
-        if diagnostic_columns:
-            finite = np.isfinite(s[diagnostic_columns].apply(pd.to_numeric, errors="coerce"))
-            unassessable = [str(i) for i in s.index[~finite.all(axis=1)]]
+        unassessable = [str(i) for i in s.index[~np.isfinite(s).all(axis=1)]]
+        assessable = not s.empty and not unassessable
     except Exception as exc:  # pragma: no cover - defensive
         get_console().print(f"[yellow]R-hat/ESS summary for the gate failed: {exc}[/yellow]")
+
+    # Use JSON null for unavailable extrema, as for unavailable per-chain BFMI.
+    max_rhat = max_rhat if max_rhat is not None and np.isfinite(max_rhat) else None
+    min_ess = min_ess if min_ess is not None and np.isfinite(min_ess) else None
 
     bfmi = _bfmi_per_chain(trace)
     # Order-independent and NaN-safe. A degenerate chain (zero energy variance ->
@@ -150,7 +154,7 @@ def write_diagnostics_summary(
         "ess": bool(min_ess is not None and min_ess >= ESS_THRESHOLD),
         "divergences": bool(n_div == 0),
         "bfmi": bfmi_ok,
-        "diagnostics_assessable": not unassessable,
+        "diagnostics_assessable": assessable,
     }
     passed = all(checks.values())
 
@@ -181,6 +185,11 @@ def write_diagnostics_summary(
             shown += f", ... ({len(unassessable)} in total)"
         get_console().print(f"[red]  R-hat / ESS could not be assessed for {shown}[/red]")
     return payload
+
+
+def _diagnostic_frame(summary: pd.DataFrame) -> pd.DataFrame:
+    """Keep all three required diagnostics, representing absent columns as NaN."""
+    return summary.reindex(columns=["r_hat", "ess_bulk", "ess_tail"]).apply(pd.to_numeric, errors="coerce")
 
 
 def _write_json_atomic(path: str, payload: dict[str, Any]) -> None:
@@ -331,7 +340,8 @@ def style_diagnostics_table(
 
     Centralises the reported convergence-diagnostics table so every DSE model page
     highlights the same cells the same way: an ``r_hat`` above ``rhat_max`` and an
-    ``ess_bulk`` / ``ess_tail`` below ``ess_threshold`` are shown bold red. Columns not
+    ``ess_bulk`` / ``ess_tail`` below ``ess_threshold`` are shown bold red, as are
+    missing or non-finite diagnostic values. Columns not
     present in ``df`` are skipped, so the same call works for tables that carry only a
     subset of the diagnostic columns.
 
@@ -355,9 +365,10 @@ def style_diagnostics_table(
 
     def _flag(value: float, threshold: float, *, above: bool) -> str:
         try:
-            bad = value > threshold if above else value < threshold
-        except TypeError:
-            return ""
+            number = float(value)
+            bad = not np.isfinite(number) or (number > threshold if above else number < threshold)
+        except TypeError, ValueError:
+            bad = True
         return "color: #b00; font-weight: bold;" if bad else ""
 
     styler = df.style.format(precision=precision)
@@ -367,6 +378,7 @@ def style_diagnostics_table(
     if ess_cols:
         styler = styler.map(lambda v: _flag(v, ess_threshold, above=False), subset=ess_cols)
     styler.set_caption(
-        f"Reported convergence diagnostics. Cells highlighted red flag r̂ > {rhat_max} or ESS < {ess_threshold}."
+        f"Reported convergence diagnostics. Red cells flag r̂ > {rhat_max}, ESS < {ess_threshold}, "
+        "or unavailable diagnostics."
     )
     return styler

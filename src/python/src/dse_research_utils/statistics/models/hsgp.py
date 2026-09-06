@@ -44,21 +44,24 @@ def _approx_hsgp_params(
 ) -> tuple[list[int], list[float]]:
     """Return ``(m, L)`` sized to cover ``x`` for the given lengthscale range.
 
-    ``c_floor`` (optional) is a minimum boundary factor enforced after
-    :func:`pm.gp.hsgp_approx.approx_hsgp_hyperparams` proposes its own
-    ``c``. PyMC recommends ``c >= 1.2``; pass a tighter floor here when
-    callers know the lengthscale prior has a long upper tail.
+    ``c_floor`` is a minimum boundary factor. Increasing the boundary also
+    increases the basis size to retain the recommended frequency coverage.
+    The half-range matches PyMC's centring of inputs at their midpoint.
     """
     x = np.asarray(x, dtype=float)
     x_min, x_max = float(x.min()), float(x.max())
+    if len(ls_range) != 2 or not np.all(np.isfinite(ls_range)) or not 0 < ls_range[0] < ls_range[1]:
+        raise ValueError("ls_range must contain two finite, positive, increasing lengthscales.")
     m, c = pm.gp.hsgp_approx.approx_hsgp_hyperparams(
         x_range=[x_min, x_max],
         lengthscale_range=list(ls_range),
         cov_func="expquad",
     )
     if c_floor is not None:
-        c = max(float(c), float(c_floor))
-    S = max(abs(x_min), abs(x_max))
+        new_c = max(float(c), float(c_floor))
+        m = int(np.ceil(m * new_c / c))
+        c = new_c
+    S = (x_max - x_min) / 2.0
     return [int(m)], [float(S * c)]
 
 
@@ -96,6 +99,12 @@ def build_hsgp_1d(
     X = np.asarray(X, dtype=float)
     if X.ndim == 1:
         X = X.reshape(-1, 1)
+    if X.ndim != 2 or X.shape[1] != 1 or X.shape[0] < 2:
+        raise ValueError("X must have shape (n,) or (n, 1) with at least two observations.")
+    if not np.all(np.isfinite(X)) or X.min() == X.max():
+        raise ValueError("X must contain finite values with a positive range.")
+    if not np.isfinite(c) or c <= 1:
+        raise ValueError("c must be finite and greater than 1.")
 
     if ls_range is not None:
         # When the caller supplies an explicit ``c``, treat it as a
@@ -105,7 +114,7 @@ def build_hsgp_1d(
         m_val = m_list[0]
         L_val = L
     else:
-        S = float(max(abs(X.min()), abs(X.max())))
+        S = float((X.max() - X.min()) / 2.0)
         m_val = int(m)
         L_val = [S * float(c)]
 

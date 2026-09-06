@@ -8,6 +8,16 @@ from dse_research_utils.statistics.regression import linear_regression_ols
 
 
 class TestLinearRegressionOls:
+    @pytest.mark.parametrize("value", [0.0, 2.0])
+    def test_constant_predictor_has_no_identifiable_slope(self, value):
+        with pytest.raises(ValueError, match="vary"):
+            linear_regression_ols([value] * 3, [1, 2, 3])
+
+    @pytest.mark.parametrize("bad", [np.nan, np.inf, -np.inf])
+    def test_rejects_nonfinite_response(self, bad):
+        with pytest.raises(ValueError, match="finite"):
+            linear_regression_ols([0, 1, 2], [1, bad, 3])
+
     def test_recovers_known_line(self) -> None:
         x = np.arange(100, dtype=float)
         y = 3.0 + 2.0 * x  # deterministic line, no noise

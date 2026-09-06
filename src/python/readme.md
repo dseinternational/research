@@ -35,6 +35,10 @@ Helpers that need an extra lazy-import it and raise a clear error when it is abs
 
 `storage.files.atomic_write` writes one complete file through a temporary file beside its destination. `metadata.provenance` provides `git_snapshot`, `package_versions` and `sha256_file` without choosing a project's manifest schema. See the [usage and migration guide](../../docs/shared-file-provenance.md) for examples, failure handling and compatibility requirements.
 
+## Shared statistical arrays
+
+`statistics.samples` aligns labelled predictive and observed arrays. `statistics.predictive` computes per-observation predictive checks, and `statistics.log_likelihood` aggregates factors into explicitly chosen evaluation units. See the [statistical array guide](../../docs/shared-predictive-arrays.md) for numerical conventions and consumer migration examples.
+
 ## Development
 
 Work from the repository root, which is the uv workspace root:

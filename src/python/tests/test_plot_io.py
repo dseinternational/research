@@ -125,3 +125,15 @@ def test_save_plotcollection_close_opt_out(tmp_path):
     save_plotcollection(pc, str(tmp_path), "kept_pc", close=False)
     assert fig.number in plt.get_fignums()
     plt.close(fig)
+
+
+def test_save_plotcollection_leaves_unrelated_figure_open(tmp_path):
+    fig = _tiny_fig()
+    unrelated = _tiny_fig()
+    try:
+        save_plotcollection(_FakePlotCollection(fig), tmp_path, "only_this", svg=False)
+        assert fig.number not in plt.get_fignums()
+        assert unrelated.number in plt.get_fignums()
+    finally:
+        plt.close(fig)
+        plt.close(unrelated)

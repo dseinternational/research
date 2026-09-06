@@ -192,7 +192,7 @@ def dataframe_table(
     columns : sequence of str, optional
         Subset (and order) of columns to render. Defaults to all columns.
     max_rows : int or None
-        If set, truncate long frames to this many rows. ``None`` renders
+        If set, truncate long frames to this many rows (at least zero). ``None`` renders
         every row.
     truncation : str
         ``"head"`` keeps the first ``max_rows`` and adds a trailing ellipsis
@@ -200,7 +200,7 @@ def dataframe_table(
         splits into head + tail with a caption noting the truncation.
     rank_column : str or None
         When set, prepend a 1-based rank column with this header (and suppress
-        the index column).
+        the index column). Ranks retain their positions in the full frame.
     show_index : bool
         When ``True`` and ``rank_column`` is ``None``, render the frame index
         as the first column.
@@ -219,6 +219,8 @@ def dataframe_table(
     """
     if truncation not in {"head", "head_tail"}:
         raise ValueError(f"truncation must be 'head' or 'head_tail', got {truncation!r}")
+    if max_rows is not None and max_rows < 0:
+        raise ValueError("max_rows must be non-negative or None")
 
     table = Table(
         title=title,
@@ -237,14 +239,16 @@ def dataframe_table(
     truncated = False
     hidden = 0
     display_df = df
+    positions = list(range(len(df)))
     if max_rows is not None and len(df) > max_rows:
         truncated = True
         hidden = len(df) - max_rows
         if truncation == "head_tail":
-            half = max(1, max_rows // 2)
-            display_df = pd.concat([df.head(half), df.tail(max_rows - half)])
+            half = (max_rows + 1) // 2
+            positions = list(range(half)) + list(range(len(df) - (max_rows - half), len(df)))
         else:
-            display_df = df.head(max_rows)
+            positions = positions[:max_rows]
+        display_df = df.iloc[positions]
 
     n_prefix_cols = 0
     if rank_column is not None:
@@ -258,10 +262,10 @@ def dataframe_table(
         justify = "left" if i == 0 and n_prefix_cols == 0 else "right"
         table.add_column(str(col), justify=justify, no_wrap=(i == 0 and n_prefix_cols == 0))
 
-    for rank, (idx, row) in enumerate(display_df.iterrows(), start=1):
+    for position, (idx, row) in zip(positions, display_df.iterrows(), strict=True):
         cells = [format_value(row[c], precision=precision) for c in cols]
         if rank_column is not None:
-            cells = [str(rank), *cells]
+            cells = [str(position + 1), *cells]
         elif show_index:
             cells = [str(idx), *cells]
         table.add_row(*cells)

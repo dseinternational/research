@@ -21,6 +21,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 
@@ -137,10 +138,14 @@ class ReportData:
     ) -> Any | None:
         """Value of ``column`` in a summary at the row whose ``key`` is nearest ``at``.
 
-        Returns ``None`` when the summary, the ``key`` column, or ``column`` is absent.
+        Returns ``None`` when the summary or a required column is absent, or
+        when no finite key can be compared with ``at``. Missing keys are skipped.
         """
         df = self.load_summary(model_id, name, config)
-        if df is None or key not in df.columns or column not in df.columns:
+        if df is None or df.empty or key not in df.columns or column not in df.columns or not np.isfinite(at):
             return None
-        row = df.iloc[(df[key] - at).abs().argmin()]
+        candidates = df.loc[np.isfinite(df[key])]
+        if candidates.empty:
+            return None
+        row = candidates.iloc[(candidates[key] - at).abs().argmin()]
         return row[column]

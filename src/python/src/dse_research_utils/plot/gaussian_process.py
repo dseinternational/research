@@ -41,6 +41,7 @@ def plot_line(
     """Plot line with consistent style (e.g. bordered lines)."""
     linewidth = plot_kwargs.get("linewidth", 3)
     plot_kwargs["linewidth"] = linewidth
+    zorder = plot_kwargs.pop("zorder", 31)
 
     # Copy settings for background
     background_plot_kwargs = dict(plot_kwargs.items())
@@ -48,8 +49,8 @@ def plot_line(
     background_plot_kwargs["color"] = "white"
     background_plot_kwargs.pop("label", None)  # no legend label for background
 
-    plt.plot(xs, ys, **background_plot_kwargs, zorder=30)
-    plt.plot(xs, ys, **plot_kwargs, zorder=31)
+    plt.plot(xs, ys, **background_plot_kwargs, zorder=zorder - 1)
+    plt.plot(xs, ys, **plot_kwargs, zorder=zorder)
 
 
 def plot_errorbar(
@@ -148,7 +149,7 @@ def plot_gaussian_process(
     # Plot GP samples (``samples`` is optional — guard the default so the
     # function does not raise ``TypeError: 'NoneType' is not iterable`` when
     # called with only a mean/cov).
-    for ii, sample in enumerate(samples or []):
+    for ii, sample in enumerate(() if samples is None else samples):
         label = "GP samples" if not ii else None
         plot_line(X, sample, color=f"C{ii}", linewidth=1, label=label)
 
@@ -202,7 +203,8 @@ def plot_gaussian_process_prior(
     X = np.linspace(-5, 5, resolution)[:, None]
 
     prior = gaussian_process_prior(X, kernel_function)
-    samples = prior.rvs(n_samples)
+    # scipy squeezes the sample axis when n_samples == 1.
+    samples = np.asarray(prior.rvs(n_samples)).reshape(n_samples, resolution)
 
     _, axs = plt.subplots(1, 2, figsize=figsize)
     plt.sca(axs[0])
@@ -236,8 +238,8 @@ def plot_2d_function(
     -------
     contour : matplotlib.contour.QuadContourSet
     """
-    resolution = len(xrange)
     xs, ys = np.meshgrid(xrange, yrange)
+    grid_shape = xs.shape
     xs = xs.ravel()
     ys = ys.ravel()
 
@@ -247,8 +249,8 @@ def plot_2d_function(
         plt.sca(ax)
 
     return plt.contour(
-        xs.reshape(resolution, resolution),
-        ys.reshape(resolution, resolution),
-        value.reshape(resolution, resolution),
+        xs.reshape(grid_shape),
+        ys.reshape(grid_shape),
+        value.reshape(grid_shape),
         **countour_kwargs,
     )

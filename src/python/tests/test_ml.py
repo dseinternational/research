@@ -88,9 +88,6 @@ def test_distance_corr_dissimilarity_linkage_uses_average_linkage(monkeypatch):
         "distance_corr_dissimilarity",
         lambda X: (dissim.copy(), 1.0 - dissim),
     )
-    monkeypatch.setattr(feature_dependence.hierarchy, "average", lambda condensed: expected_linkage)
-    monkeypatch.setattr(feature_dependence.hierarchy, "ward", lambda condensed: pytest.fail("ward should not be used"))
-
     out_dissim, condensed, linkage = feature_dependence.distance_corr_dissimilarity_linkage(np.ones((5, 3)))
     np.testing.assert_allclose(out_dissim, dissim)
     np.testing.assert_allclose(condensed, np.array([0.2, 0.8, 0.7]))

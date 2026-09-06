@@ -1,0 +1,323 @@
+{
+  "description": "Synthetic golden tables evaluated from the recorded downstream functions. No fitted outputs or source-study data. Regenerate only after reviewing the consumer contract.",
+  "numpy_version": "2.4.6",
+  "pandas_version": "3.0.5",
+  "source_snapshots": [
+    {
+      "repository": "dseinternational/vocabulary-growth",
+      "commit": "badd0179da3904340b15b539aa95b6ff57117b05",
+      "path": "src/vocab_growth/models/calibration.py",
+      "sha256": "cc41bbd6e65f39a438dd5ce6635abd40eebb47e9cacf2346fa0d3ca09a8c1b97",
+      "functions": [
+        "predictive_calibration_table"
+      ]
+    },
+    {
+      "repository": "dseinternational/language-reading-predictors",
+      "commit": "e19eeb8db387b2d2d6e6c4c4fb7206f80b3904e5",
+      "path": "src/language_reading_predictors/statistical_models/predictive_checks.py",
+      "sha256": "15c124784b628451c3a1aacbcbcfc96512fb8e0cf3219ed97247156360e30a80",
+      "functions": [
+        "_ppc_node_arrays",
+        "ppc_interval_coverage",
+        "ppc_calibration_table"
+      ]
+    }
+  ],
+  "inputs": {
+    "observation_ids": [
+      "row-3",
+      "row-1",
+      "row-4",
+      "row-2"
+    ],
+    "draw_ids": [
+      9,
+      2,
+      5,
+      1
+    ],
+    "draw_dtype": "float32",
+    "replicated": [
+      [
+        0,
+        0,
+        1,
+        1
+      ],
+      [
+        0,
+        1,
+        2,
+        3
+      ],
+      [
+        3,
+        4,
+        4,
+        5
+      ],
+      [
+        5,
+        6,
+        6,
+        7
+      ]
+    ],
+    "vg_observed": [
+      0,
+      4,
+      4,
+      6
+    ],
+    "lrp_observed": [
+      0,
+      null,
+      4,
+      6
+    ],
+    "ages": [
+      8,
+      10,
+      14,
+      18
+    ],
+    "age_bands": [
+      "[0, 12)",
+      "[0, 12)",
+      "[12, 24)",
+      "[12, 24)"
+    ],
+    "interval_probs": [
+      0.5,
+      0.89
+    ]
+  },
+  "vg_calibration": {
+    "columns": [
+      "age_band_months",
+      "n_observations",
+      "observed_mean",
+      "predictive_mean",
+      "mean_error",
+      "observed_zero_rate",
+      "predictive_zero_rate",
+      "mid_pit_mean",
+      "mid_pit_variance",
+      "expected_mid_pit_variance",
+      "mid_pit_extreme_rate",
+      "interval_probability",
+      "empirical_coverage",
+      "expected_coverage",
+      "mean_interval_width"
+    ],
+    "dtypes": {
+      "age_band_months": "str",
+      "n_observations": "int64",
+      "observed_mean": "float64",
+      "predictive_mean": "float64",
+      "mean_error": "float64",
+      "observed_zero_rate": "float64",
+      "predictive_zero_rate": "float64",
+      "mid_pit_mean": "float64",
+      "mid_pit_variance": "float64",
+      "expected_mid_pit_variance": "float64",
+      "mid_pit_extreme_rate": "float64",
+      "interval_probability": "float64",
+      "empirical_coverage": "float64",
+      "expected_coverage": "float64",
+      "mean_interval_width": "float64"
+    },
+    "rows": [
+      [
+        "all",
+        4,
+        3.5,
+        3.0,
+        -0.5,
+        0.25,
+        0.1875,
+        0.5625,
+        0.07421875,
+        0.0703125,
+        0.25,
+        0.5,
+        0.75,
+        0.625,
+        0.875
+      ],
+      [
+        "all",
+        4,
+        3.5,
+        3.0,
+        -0.5,
+        0.25,
+        0.1875,
+        0.5625,
+        0.07421875,
+        0.0703125,
+        0.25,
+        0.89,
+        0.75,
+        0.625,
+        1.752500057220459
+      ],
+      [
+        "[0, 12)",
+        2,
+        2.0,
+        1.0,
+        -1.0,
+        0.5,
+        0.375,
+        0.625,
+        0.140625,
+        0.0703125,
+        0.5,
+        0.5,
+        0.5,
+        0.75,
+        1.25
+      ],
+      [
+        "[0, 12)",
+        2,
+        2.0,
+        1.0,
+        -1.0,
+        0.5,
+        0.375,
+        0.625,
+        0.140625,
+        0.0703125,
+        0.5,
+        0.89,
+        0.5,
+        0.75,
+        1.8350000381469727
+      ],
+      [
+        "[12, 24)",
+        2,
+        5.0,
+        5.0,
+        0.0,
+        0.0,
+        0.0,
+        0.5,
+        0.0,
+        0.0703125,
+        0.0,
+        0.5,
+        1.0,
+        0.5,
+        0.5
+      ],
+      [
+        "[12, 24)",
+        2,
+        5.0,
+        5.0,
+        0.0,
+        0.0,
+        0.0,
+        0.5,
+        0.0,
+        0.0703125,
+        0.0,
+        0.89,
+        1.0,
+        0.5,
+        1.6700000762939453
+      ]
+    ]
+  },
+  "lrp_calibration": {
+    "columns": [
+      "observed",
+      "pp_median",
+      "pp_lo",
+      "pp_hi",
+      "inside"
+    ],
+    "dtypes": {
+      "observed": "float64",
+      "pp_median": "float32",
+      "pp_lo": "float32",
+      "pp_hi": "float32",
+      "inside": "bool"
+    },
+    "rows": [
+      [
+        0.0,
+        0.5,
+        0.0,
+        1.0,
+        true
+      ],
+      [
+        4.0,
+        4.0,
+        3.1649999618530273,
+        4.835000038146973,
+        true
+      ],
+      [
+        6.0,
+        6.0,
+        5.164999961853027,
+        6.835000038146973,
+        true
+      ]
+    ]
+  },
+  "lrp_coverage": {
+    "columns": [
+      "mode",
+      "node",
+      "unit",
+      "quantity",
+      "level",
+      "level_pct",
+      "n_total",
+      "n_inside",
+      "coverage"
+    ],
+    "dtypes": {
+      "mode": "str",
+      "node": "str",
+      "unit": "str",
+      "quantity": "str",
+      "level": "float64",
+      "level_pct": "int64",
+      "n_total": "int64",
+      "n_inside": "int64",
+      "coverage": "float64"
+    },
+    "rows": [
+      [
+        "count_interval",
+        "y_post",
+        "observations",
+        "observed score",
+        0.5,
+        50,
+        3,
+        3,
+        1.0
+      ],
+      [
+        "count_interval",
+        "y_post",
+        "observations",
+        "observed score",
+        0.89,
+        89,
+        3,
+        3,
+        1.0
+      ]
+    ]
+  }
+}

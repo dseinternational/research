@@ -61,3 +61,8 @@ jobs:
 
       - name: Run pytest
         run: uv run --no-sync pytest
+
+      - name: Check Python lint and formatting
+        run: |
+          uv run --no-sync ruff check src/python
+          uv run --no-sync ruff format --check src/python

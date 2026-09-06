@@ -1,3 +1,6 @@
+> [!NOTE]
+> Drafted by a LLM-based AI tool (Codex/GPT-6).
+
 # Research
 
 **\*Shared libraries and utilities for research supported by [Down Syndrome Education International](https://www.down-syndrome.org/).**
@@ -21,6 +24,8 @@ uv build --package dse-research-utils  # build the wheel
 Windows is supported natively — WSL is no longer required. Intel macOS is not supported, because numba publishes no macOS x86_64 wheels. Plotting model graphs additionally needs the system Graphviz `dot` binary (`brew install graphviz`, `apt install graphviz`, `winget install Graphviz.Graphviz`).
 
 Repositories still on the old conda environment should follow [docs/migrating-to-uv.md](docs/migrating-to-uv.md).
+
+The [shared-helper migration guide](docs/consolidation-migration.md) describes the consolidation APIs under development and how downstream projects can adopt them in one dependency upgrade.
 
 ## License
 

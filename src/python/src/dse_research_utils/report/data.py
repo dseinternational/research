@@ -8,10 +8,12 @@ payloads, figures) the same way, and must render a visible "pending fit" placeho
 not raise — when a model has not been fitted yet. This module supplies that shared
 pattern so no report re-implements it.
 
-Reports differ only in *where* a model's artefacts live, so :class:`ReportData` is
-constructed with a resolver mapping ``(model_id, config)`` to the model's output
-directory; the readers on top of it are identical across reports. The pure helpers
-:func:`show_or_pending` and :func:`num` need no directory context and are module-level.
+:class:`ReportData` uses a resolver mapping ``(model_id, config)`` to the model's
+output directory. Legacy loaders retain their existing return/exception behavior;
+the additive read methods distinguish missing files from parse failures and valid
+empty/null values. Report adapters decide schema, freshness and visibility. The
+pure helpers :func:`show_or_pending` and :func:`num` need no directory context and
+are module-level.
 """
 
 from __future__ import annotations
@@ -23,6 +25,10 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+
+from dse_research_utils.report.readers import FileRead, nearest_row
+from dse_research_utils.report.readers import read_csv as read_csv_file
+from dse_research_utils.report.readers import read_json as read_json_file
 
 
 def num(value: Any, fmt: str = "{:.0f}") -> str:
@@ -115,6 +121,31 @@ class ReportData:
         path = self.model_dir(model_id, config) / f"{name}.json"
         return json.loads(path.read_text()) if path.exists() else None
 
+    def read_summary(
+        self,
+        model_id: str,
+        name: str,
+        config: str | None = None,
+        *,
+        index_col: int | str | None = None,
+    ) -> FileRead[pd.DataFrame]:
+        """CSV read facts, retaining missing/invalid/empty distinctions.
+
+        ``index_col`` is passed to the shared CSV reader. Unlike
+        :meth:`load_summary`, read and parse failures are returned as facts;
+        schema, freshness and report visibility remain caller decisions.
+        """
+        return read_csv_file(self.model_dir(model_id, config) / f"{name}.csv", index_col=index_col)
+
+    def read_json(self, model_id: str, name: str, config: str | None = None) -> FileRead[Any]:
+        """JSON read facts, including present null and invalid numeric tokens.
+
+        Unlike :meth:`load_json`, this additive reader rejects NaN/Infinity and
+        unrepresentable floating numbers. Read/parse failures are facts, not
+        publication decisions. The legacy loader's behavior is unchanged.
+        """
+        return read_json_file(self.model_dir(model_id, config) / f"{name}.json")
+
     def fig(self, model_id: str, filename: str, config: str | None = None) -> str:
         """Path to a figure produced for a model, as a string (for embedding)."""
         return str(self.model_dir(model_id, config) / filename)
@@ -144,10 +175,5 @@ class ReportData:
         df = self.load_summary(model_id, name, config)
         if df is None or df.empty or key not in df.columns or column not in df.columns or not np.isfinite(at):
             return None
-        keys = pd.to_numeric(df[key], errors="coerce")
-        finite = np.isfinite(keys)
-        candidates = df.loc[finite]
-        if candidates.empty:
-            return None
-        row = candidates.iloc[(keys.loc[finite] - at).abs().argmin()]
-        return row[column]
+        row = nearest_row(df, key=key, at=at)
+        return None if row is None else row[column]

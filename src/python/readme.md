@@ -1,3 +1,6 @@
+> [!NOTE]
+> Drafted by a LLM-based AI tool (Codex/GPT-6).
+
 # Python utilities
 
 `dse-research-utils` — the shared library for [Down Syndrome Education International](https://www.down-syndrome.org/) research projects.
@@ -27,6 +30,18 @@ The base install carries the modelling stack (PyMC, PyTensor, nutpie, ArviZ, Pre
 | `all`        | every extra above          | development environments                           |
 
 Helpers that need an extra lazy-import it and raise a clear error when it is absent.
+
+## Shared file operations
+
+`storage.files.atomic_write` writes one complete file through a temporary file beside its destination. `metadata.provenance` provides `git_snapshot`, `package_versions` and `sha256_file` without choosing a project's manifest schema. See the [usage and migration guide](../../docs/shared-file-provenance.md) for examples, failure handling and compatibility requirements.
+
+## Shared statistical arrays
+
+`statistics.samples` aligns labelled predictive and observed arrays. `statistics.predictive` computes per-observation predictive checks, and `statistics.log_likelihood` aggregates factors into explicitly chosen evaluation units. See the [statistical array guide](../../docs/shared-predictive-arrays.md) for numerical conventions and consumer migration examples.
+
+## Shared report assets and feature groups
+
+`report.assets` inspects direct HTML resources and checks upload inventories and HTTP availability. `ml.feature_groups` builds and cuts clustering trees from existing dissimilarity matrices. See the [usage and migration guide](../../docs/shared-assets-and-feature-groups.md) for scope, numerical conventions and consumer adapters.
 
 ## Development
 

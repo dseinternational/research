@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import json
 import os
-import tempfile
+from pathlib import Path
 from typing import Any
 
 import arviz as az
@@ -26,6 +26,7 @@ import numpy as np
 import pandas as pd
 
 from dse_research_utils.console.console import get_console
+from dse_research_utils.storage.files import atomic_write
 
 # Convergence-gate thresholds.
 RHAT_MAX = 1.01
@@ -233,17 +234,13 @@ def _write_json_atomic(path: str, payload: dict[str, Any]) -> dict[str, Any]:
     file after the fit wrote it. Return the sanitised payload so the caller's
     cache agrees with the file, including nested amendments.
     """
-    directory = os.path.dirname(path) or "."
     payload = _json_safe(payload)
-    fd, tmp_path = tempfile.mkstemp(dir=directory, suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+
+    def write_temporary(temporary: Path) -> None:
+        with temporary.open("w", encoding="utf-8") as handle:
             json.dump(payload, handle, indent=2, default=str, allow_nan=False)
-        os.replace(tmp_path, path)
-    except BaseException:
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
-        raise
+
+    atomic_write(path, write_temporary)
     return payload
 
 

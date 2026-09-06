@@ -1,11 +1,11 @@
 > [!NOTE]
 > Drafted by a LLM-based AI tool (Codex/GPT-6).
 
-<!-- cspell:words HSGP MCMC BFMI logit elpd lengthscale -->
+<!-- cspell:words HSGP MCMC BFMI logit elpd lengthscale nonzero subfit -->
 
 # Source review, 6 September 2026
 
-The review found errors in statistical calculations, diagnostic decisions, plotting, report lookups and upload results. The accompanying fixes include regression tests. The starting commit was `8ee0c8c4e1b8cd68a00d0d163a1c2b79a32d7c52`.
+The review found errors in statistical calculations, diagnostic decisions, plotting, report lookups and upload results. The accompanying fixes include regression tests. The starting commit was `8ee0c8c4e1b8cd68a00d0d163a1c2b79a32d7c52`. The PR was subsequently rebased onto `7b27e8e` and updated in response to reviewer comments.
 
 The review covered the Python library, its tests, the Markdown formatting script, and the build and CI configuration. The Python source contains about 5,600 lines. The .NET area has no implementation to review. The checks below concern the shared library; they do not establish the validity of models fitted by consuming repositories.
 
@@ -36,11 +36,21 @@ The review also corrected two explanations. A single highest-density interval ca
 
 The original suite passed all 386 tests. The review added 52 cases. Before the fixes, 49 new cases failed and three passed. The full suite then passed all 438 tests. This includes comparisons with known regression lines, exact covariance matrices, named xarray dimensions, rendered table cells and URL round trips. Azure tests use a simulated client and do not publish files.
 
-For the HSGP covariance check, the inputs have 31 equally spaced points, the squared-exponential lengthscale is 0.2, and the calibration range is 0.2 to 0.3. Moving the input range from `[-1, 1]` to `[2, 4]` gave a maximum absolute covariance error of about 0.600 before the fix and 0.007 after it. With inputs in `[-1, 1]` and a boundary floor of 8, the error fell from about 0.694 to 0.0085. The test compares the full approximate matrix with the exact matrix, including its unit diagonal. PyMC documents both midpoint centring and the relationship between boundary size and basis size in its [HSGP implementation](https://www.pymc.io/projects/docs/en/stable/_modules/pymc/gp/hsgp_approx.html).
+For the HSGP covariance check, the inputs have 31 equally spaced points, the squared-exponential lengthscale is 0.2, and the calibration range is 0.2 to 0.3. Moving the input range from `[-1, 1]` to `[2, 4]` gave a maximum absolute covariance error of about 0.600 before the fix and 0.007 after it. With inputs in `[-1, 1]` and a boundary floor of 8, the error fell from about 0.694 to 0.0060 after the basis-rounding correction described below. The test compares the full approximate matrix with the exact matrix, including its unit diagonal. PyMC documents both midpoint centring and the relationship between boundary size and basis size in its [HSGP implementation](https://www.pymc.io/projects/docs/en/stable/_modules/pymc/gp/hsgp_approx.html).
 
 The BFMI calculation retains the existing formula. The fix concerns which observations it compares. This agrees with ArviZ's use of an explicit `chain, draw` ordering in its [diagnostic implementation](https://python.arviz.org/en/v0.22.0/_modules/arviz/stats/diagnostics.html).
 
 Ruff lint and formatting checks pass. Markdown formatting and spelling checks pass. The source distribution and wheel build successfully. The remaining test warnings come from existing tests that deliberately supply constant posterior parameters to ArviZ.
+
+## Reviewer follow-up
+
+The reviewer identified consumer assumptions that the initial library tests did not exercise. The follow-up adds explicit HSGP `L` and `center` arguments so a subset fit can preserve the full basis. Freezing only the half-width would still let PyMC change the midpoint. Tests compare functions with identical nonzero weights on full, reduced and one-row inputs. Boundary-floor calibration now applies PyMC's formula before integer truncation, giving 70 basis functions in the wide-boundary example instead of 67.
+
+The changes also accept NumPy BFMI arrays, share diagnostic reductions, distinguish a completed scan from a failed one, sanitise nested JSON amendments, reject non-finite LOO thresholds, expose unavailable-parameter errors publicly, preserve literal labels in console messages, coerce report lookup keys, and retain raw upload paths alongside encoded URLs. A real ArviZ plot collection now exercises the public figure accessor. Tests use Rich's public column cells and cover an absent ESS column separately from an all-missing column. The inverse-logit docstring now states its NumPy input contract.
+
+The follow-up adds 45 test cases, bringing the full passing suite to 483. The initial focused reproduction run failed 31 cases before the changes. The language-reading-predictors test `test_subfit_convergence_flags_low_bfmi` now passes with this branch's source in that project's environment. A check using vocabulary-growth's actual `unpublished_assets` function confirms that raw uploaded paths match filenames containing spaces, plus signs and non-ASCII characters; its current URL-stripping approach still needs migration. The dependency lock remains valid, and the built wheel and source distribution carry version 0.13.0.
+
+The [0.13.0 migration guide](migrating-to-0.13.md) records the changed contracts and pending consumer work. These targeted checks do not establish that the consumers can adopt this version unchanged.
 
 ## Effect on existing work
 

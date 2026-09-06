@@ -175,4 +175,4 @@ Ruff config (in `src/python/pyproject.toml`): line-length 120, target Python 3.1
 
 ## .NET
 
-SDK pinned to **10.0.200** (`rollForward: latestMinor`) via `global.json`. Test runner is `Microsoft.Testing.Platform`. NuGet sources: `nuget.org` (all packages) and `dseinternational` (`https://nuget.pkg.github.com/dseinternational/index.json`, `DSE.*` packages only) — package source mapping enforced with `<clear />`. No projects exist yet.
+SDK pinned to **10.0.400** (`rollForward: latestMinor`) via `global.json`. Test runner is `Microsoft.Testing.Platform`. NuGet sources: `nuget.org` (all packages) and `dseinternational` (`https://nuget.pkg.github.com/dseinternational/index.json`, `DSE.*` packages only) — package source mapping enforced with `<clear />`. No projects exist yet.

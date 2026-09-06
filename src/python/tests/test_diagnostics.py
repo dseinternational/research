@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from types import SimpleNamespace
 
@@ -164,6 +165,40 @@ def test_amended_json_sanitises_nested_nonfinite_values_and_cache(tmp_path):
     assert "NaN" not in text and "Infinity" not in text
     assert json.loads(text) == result
     assert np.isnan(updates["extra"]["values"][0])
+
+
+def test_atomic_writer_preserves_diagnostic_json_encoding(tmp_path):
+    from dse_research_utils.statistics.diagnostics import _write_json_atomic
+
+    path = tmp_path / "summary.json"
+    payload = {"label": "café", "values": np.array([1, np.nan]), "count": np.int64(2), "path": tmp_path}
+    expected = {"label": "café", "values": [1.0, None], "count": 2, "path": str(tmp_path)}
+    result = _write_json_atomic(str(path), payload)
+    assert result == expected
+    expected_text = json.dumps(expected, indent=2, default=str, allow_nan=False)
+    assert path.read_bytes() == expected_text.replace("\n", os.linesep).encode("utf-8")
+    assert np.isnan(payload["values"][1])
+
+
+def test_failed_amendment_keeps_saved_summary_and_table_cache(tmp_path, monkeypatch):
+    from dse_research_utils.statistics.diagnostics import amend_diagnostics_summary
+
+    path = tmp_path / "diagnostics_summary.json"
+    original = {"checks": {"rhat": True}, "passed": True}
+    path.write_text(json.dumps(original), encoding="utf-8")
+    original_bytes = path.read_bytes()
+    tables = {"diagnostics_summary": original}
+
+    def fail_replace(*args, **kwargs):
+        raise PermissionError("destination is in use")
+
+    monkeypatch.setattr("dse_research_utils.storage.files.os.replace", fail_replace)
+    with pytest.raises(PermissionError, match="destination is in use"):
+        amend_diagnostics_summary(str(tmp_path), {"checks": {"rhat": False}}, tables=tables)
+    assert path.read_bytes() == original_bytes
+    assert tables["diagnostics_summary"] is original
+    assert original == {"checks": {"rhat": True}, "passed": True}
+    assert list(tmp_path.iterdir()) == [path]
 
 
 def test_bfmi_per_chain_nan_for_degenerate_chain():

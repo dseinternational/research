@@ -176,8 +176,11 @@ def save_styled_figure(
 def _pc_figures(pc: Any) -> list[Figure]:
     """Matplotlib figures owned by a collection, without consulting pyplot state."""
     try:
-        figures = pc.viz["figure"]
-        values = figures.values if hasattr(figures, "values") else [figures.item()]
+        if hasattr(pc, "get_viz"):
+            figures = pc.get_viz("figure")
+            values = figures.values if hasattr(figures, "values") else figures
+        else:
+            values = [pc.viz["figure"].item()]
         return list(dict.fromkeys(fig for fig in np.asarray(values, dtype=object).flat if isinstance(fig, Figure)))
     except Exception:  # pragma: no cover - defensive
         return []
@@ -205,8 +208,9 @@ def save_plotcollection(
     """
     os.makedirs(output_dir, exist_ok=True)
     base = os.path.join(output_dir, _stem(name))
+    figures = _pc_figures(pc)
     if suptitle:
-        for fig in _pc_figures(pc):
+        for fig in figures:
             with contextlib.suppress(Exception):  # pragma: no cover - defensive
                 fig.suptitle(suptitle)
     pc.savefig(base + ".png", dpi=dpi)
@@ -215,5 +219,5 @@ def save_plotcollection(
     if data is not None:
         save_plot_data(output_dir, name, data)
     if close:
-        for fig in _pc_figures(pc):
+        for fig in figures:
             plt.close(fig)

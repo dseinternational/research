@@ -73,6 +73,24 @@ class TestContainerShims:
 
 
 class TestSampledParameterReff:
+    def test_unavailable_parameter_exception_is_public(self):
+        from dse_research_utils.statistics.loo import SampledParametersUnavailableError
+
+        with pytest.raises(SampledParametersUnavailableError):
+            sampled_parameter_names(object())
+
+    @pytest.mark.parametrize("label", ["model[arm A]", "VG15[itt]", "m[/bold]x"])
+    def test_default_notice_prints_labels_literally(self, captured_console, label):
+        assert reff_or_default(_tree(_posterior_dataset()), label=label) is None
+        assert label in captured_console.export_text()
+
+    def test_attr_reader_errors_do_not_trigger_fallback(self):
+        def read(trace):
+            raise KeyError("broken metadata")
+
+        with pytest.raises(KeyError, match="broken metadata"):
+            reff_or_default(_tree(_posterior_dataset()), attr_reader=read)
+
     def test_reff_or_default_does_not_hide_missing_parameters(self):
         with pytest.raises(KeyError, match="absent"):
             reff_or_default(_tree(_posterior_dataset()), names=["missing"])
@@ -171,6 +189,19 @@ class TestParetoK:
 
 
 class TestLooSummaryRow:
+    @pytest.mark.parametrize("threshold", [np.nan, np.inf, -np.inf])
+    @pytest.mark.parametrize("explicit", [False, True])
+    def test_nonfinite_threshold_is_rejected(self, threshold, explicit):
+        kwargs = {"k_threshold": threshold} if explicit else {}
+        with pytest.raises(ValueError, match="threshold"):
+            loo_summary_row(_fake_elpd(good_k=threshold), label="m", **kwargs)
+
+    def test_nonfinite_diagnostics_are_counted_separately(self):
+        row = loo_summary_row(_fake_elpd(k=(0.1, 0.8, np.nan, np.inf, -np.inf)), label="m")
+        assert row["pareto_k_above"] == 2
+        assert row["pareto_k_nonfinite"] == 3
+        assert row["pareto_k_unusable"] == 4
+
     def test_zero_good_k_is_preserved(self):
         row = loo_summary_row(_fake_elpd(k=(-0.1, 0.1), good_k=0.0), label="small")
         assert row["k_threshold"] == 0.0

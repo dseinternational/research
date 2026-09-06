@@ -3,7 +3,7 @@
 
 from pathlib import Path
 from types import SimpleNamespace
-from urllib.parse import unquote, urlsplit
+from urllib.parse import quote, unquote, urlsplit
 
 import pytest
 
@@ -41,6 +41,25 @@ def test_uploaded_urls_encode_blob_names(tmp_path, fake_blob_uploads):
     assert " " not in result.urls[0]
     assert unquote(parsed.path) == "/reports/" + fake_blob_uploads[0][0]
     assert "%23" in result.prefix_url
+
+
+def test_upload_preserves_raw_relative_paths(tmp_path, fake_blob_uploads):
+    names = ["psi (dev).png", "a+b.csv", "café #1.csv", "trace.nc"]
+    for name in names:
+        (tmp_path / name).write_text(name, encoding="utf-8")
+    result = upload_directory_to_blob_storage(
+        tmp_path,
+        "model #1",
+        project="test project",
+        run_id="run",
+        skip=lambda path: path == "a+b.csv",
+        container_url="https://acct.blob.core.windows.net/reports",
+        credential=object(),
+    )
+    assert result.relative_paths == ["café #1.csv", "psi (dev).png"]
+    assert result.urls == [result.prefix_url + quote(path, safe="/") for path in result.relative_paths]
+    assert result.uploaded_files == 2
+    assert result.skipped_files == 2
 
 
 def test_report_url_points_to_root_index(tmp_path, fake_blob_uploads):

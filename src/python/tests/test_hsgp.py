@@ -49,6 +49,50 @@ def test_hsgp_rejects_invalid_inputs(x):
         build_hsgp_1d("f", x)
 
 
+@pytest.mark.parametrize("ls_range", [0.2, (0.2,), (0.2, 0.3, 0.4), (0, 0.3), (-1, 0.3), (0.3, 0.2), (0.2, np.nan)])
+def test_hsgp_rejects_invalid_lengthscale_ranges(ls_range):
+    with pytest.raises(ValueError, match="ls_range"), pm.Model():
+        build_hsgp_1d("f", [-1, 1], ls_range=ls_range)
+
+
+@pytest.mark.parametrize("x,c_floor,expected_m", [([-1, 1], 8.0, 70), ([-2.5, 1.9], 1.5, 28)])
+def test_boundary_floor_uses_unrounded_pymc_basis_formula(x, c_floor, expected_m):
+    m, _ = _approx_hsgp_params(np.asarray(x), (0.2, 0.3), c_floor=c_floor)
+    assert m == [expected_m]
+
+
+@pytest.mark.parametrize("builder", [build_hsgp_1d, build_tau_modifier])
+def test_frozen_hsgp_design_preserves_curve_on_subset(builder):
+    x = np.array([-2.4712, -1.0, 0.0, 0.5, 1.9])
+    center = (x.min() + x.max()) / 2
+    boundary = (x.max() - x.min()) / 2 * 1.5
+    curves = []
+    for values in (x, x[1:], x[1:2]):
+        with pm.Model() as model:
+            curve = builder("f", values, m=15, L=boundary, center=center)
+        point = model.initial_point()
+        point["f__g_unit_hsgp_coeffs"] = np.linspace(-1, 1, 15)
+        value_curve = model.replace_rvs_by_values([curve])[0]
+        curves.append(model.compile_fn(value_curve, inputs=model.value_vars)(point))
+    np.testing.assert_allclose(curves[0][1:], curves[1], rtol=1e-12, atol=1e-12)
+    np.testing.assert_allclose(curves[0][1:2], curves[2], rtol=1e-12, atol=1e-12)
+
+
+@pytest.mark.parametrize("m", [0, -1, 1.5, True])
+def test_hsgp_rejects_invalid_basis_sizes(m):
+    with pytest.raises(ValueError, match="m must be a positive integer"), pm.Model():
+        build_hsgp_1d("f", [-1, 1], m=m)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [{"L": 0}, {"L": np.inf}, {"L": 0.5}, {"center": 0}, {"L": 2, "center": np.nan}, {"L": 2, "ls_range": (0.2, 0.3)}],
+)
+def test_hsgp_rejects_invalid_frozen_design(kwargs):
+    with pytest.raises(ValueError), pm.Model():
+        build_hsgp_1d("f", [-1, 1], **kwargs)
+
+
 def test_build_hsgp_1d_registers_named_nodes():
     rng = np.random.default_rng(0)
     x = rng.normal(size=40)

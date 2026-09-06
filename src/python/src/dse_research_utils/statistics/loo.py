@@ -41,7 +41,7 @@ ELPD differences.
 """
 
 
-class _SampledParametersUnavailableError(LookupError):
+class SampledParametersUnavailableError(LookupError):
     """The trace has no sampled-parameter record and the caller supplied none."""
 
 
@@ -87,7 +87,7 @@ def sampled_parameter_names(
 
     ``attr_reader`` is a repo-supplied callable that reads the recorded
     sampled-parameter names off the trace (the repositories record them as a
-    trace attribute at sampling time). Raises ``LookupError`` when neither is
+    trace attribute at sampling time). Raises ``SampledParametersUnavailableError`` when neither is
     available — a trace from before the attribute existed, read without a model
     to name the parameters.
     """
@@ -95,7 +95,7 @@ def sampled_parameter_names(
         return list(names)
     recorded = attr_reader(trace) if attr_reader is not None else None
     if recorded is None:
-        raise _SampledParametersUnavailableError(
+        raise SampledParametersUnavailableError(
             "The trace does not record its sampled parameters and none were "
             "supplied; pass names=[rv.name for rv in model.free_RVs] from a "
             "rebuilt model, or accept ArviZ's default."
@@ -142,23 +142,29 @@ def reff_or_default(
     label: str = "",
     warn: Callable[[str], Any] | None = None,
 ) -> float | None:
-    """``sampled_parameter_reff`` where it can be pinned, else ``None`` and a notice.
+    """Pin relative efficiency, falling back only when parameter names are unavailable.
 
     ``None`` hands ``az.loo`` its default — the posterior-wide average — which is
     the only option for a trace that neither records its sampled parameters nor
     comes with a model to name them. The notice is printed rather than swallowed
     because a comparison that mixes the two conventions should say so.
+    Missing named posterior variables, empty selections and errors from the
+    attribute reader or efficiency calculation propagate to the caller.
     """
     try:
-        return sampled_parameter_reff(trace, names=names, attr_reader=attr_reader)
-    except _SampledParametersUnavailableError:
-        emit = get_console().print if warn is None else warn
-        emit(
+        wanted = sampled_parameter_names(trace, names=names, attr_reader=attr_reader)
+    except SampledParametersUnavailableError:
+        message = (
             f"  {label + ': ' if label else ''}reff left at ArviZ's posterior-wide "
             "default — the trace predates the sampled-parameters record and no "
             "model was supplied to pin it."
         )
+        if warn is None:
+            get_console().print(message, markup=False)
+        else:
+            warn(message)
         return None
+    return sampled_parameter_reff(trace, names=wanted)
 
 
 def pareto_k_values(loo: Any) -> np.ndarray:
@@ -238,7 +244,7 @@ def loo_summary_row(
         pass e.g. ``"n_subjects"`` for a subject-level LOO).
     k_threshold : float, optional
         Pareto-k threshold for the ``pareto_k_above`` count. ``None`` (default)
-        uses the fit's own ``loo.good_k`` when present, else 0.7.
+        uses the fit's own ``loo.good_k`` when present, else 0.7. Must be finite.
     include_looic : bool, optional
         Also emit ``looic`` / ``looic_se`` (the deviance-scale view).
 
@@ -246,13 +252,17 @@ def loo_summary_row(
     -------
     dict
         ``label``, ``elpd_loo``, ``se``, ``p_loo``, ``reff``,
-        ``pareto_k_above``, ``k_threshold``, the ``unit_name`` count, and
-        optionally ``looic`` / ``looic_se``.
+        ``pareto_k_above``, ``pareto_k_nonfinite``, ``pareto_k_unusable``,
+        ``k_threshold``, the ``unit_name`` count, and optionally ``looic`` /
+        ``looic_se``. ``pareto_k_unusable`` counts the union of non-finite
+        values and threshold exceedances, without double-counting infinity.
     """
     k = pareto_k_values(loo)
     if k_threshold is None:
         good_k = getattr(loo, "good_k", None)
         k_threshold = 0.7 if good_k is None else float(good_k)
+    if not np.isfinite(k_threshold):
+        raise ValueError("k_threshold must be finite.")
     elpd = float(loo.elpd if hasattr(loo, "elpd") else loo.elpd_loo)
     p_loo = float(loo.p if hasattr(loo, "p") else loo.p_loo)
     row: dict[str, Any] = {
@@ -266,6 +276,8 @@ def loo_summary_row(
         row["looic"] = -2.0 * elpd
         row["looic_se"] = float(2.0 * loo.se)
     row["pareto_k_above"] = int((k > k_threshold).sum())
+    row["pareto_k_nonfinite"] = int((~np.isfinite(k)).sum())
+    row["pareto_k_unusable"] = int(((k > k_threshold) | ~np.isfinite(k)).sum())
     row["k_threshold"] = float(k_threshold)
     row[unit_name] = int(k.size)
     return row

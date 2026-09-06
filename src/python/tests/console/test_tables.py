@@ -103,7 +103,7 @@ def test_dataframe_table_rank_column(captured_console):
 def test_dataframe_table_truncation_preserves_original_ranks():
     df = pd.DataFrame({"feature": [f"feature_{i}" for i in range(100)]}, index=["duplicate"] * 100)
     table = dataframe_table(df, rank_column="#", max_rows=4)
-    assert table.columns[0]._cells == ["1", "2", "99", "100"]
+    assert list(table.columns[0].cells) == ["1", "2", "99", "100"]
 
 
 def test_dataframe_table_zero_rows_displays_no_data():

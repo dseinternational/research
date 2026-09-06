@@ -81,7 +81,10 @@ def logit(p: float | np.ndarray) -> float | np.ndarray:
 
 
 def invlogit(x: float | np.ndarray) -> float | np.ndarray:
-    """Vectorised logistic sigmoid, evaluated without overflow for large inputs."""
+    """NumPy logistic sigmoid without overflow for large scalars or arrays.
+
+    For symbolic PyMC model expressions, use ``pm.math.sigmoid`` instead.
+    """
     return expit(x)
 
 

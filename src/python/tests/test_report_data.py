@@ -100,7 +100,7 @@ def test_value_at_nearest_key(tmp_path):
     assert report.value_at("vg01", "summary", "Ey_median", at=25, key="not_a_col") is None
 
 
-@pytest.mark.parametrize("keys", [[], [np.nan], [np.inf, -np.inf]])
+@pytest.mark.parametrize("keys", [[], [np.nan], [np.inf, -np.inf], ["unknown", "12m"]])
 def test_value_at_without_finite_keys_returns_none(tmp_path, keys):
     report = _make_report(tmp_path)
     directory = report.model_dir("m")
@@ -114,6 +114,16 @@ def test_value_at_ignores_missing_keys(tmp_path):
     directory = report.model_dir("m")
     directory.mkdir()
     pd.DataFrame({"age_months": [np.nan, 12, 24], "median": [999, 5, 40]}).to_csv(directory / "s.csv", index=False)
+    assert report.value_at("m", "s", "median", at=25) == 40
+
+
+def test_value_at_coerces_numeric_keys_before_matching(tmp_path):
+    report = _make_report(tmp_path)
+    directory = report.model_dir("m")
+    directory.mkdir()
+    pd.DataFrame({"age_months": ["unknown", "12", "24"], "median": [999, 5, 40]}).to_csv(
+        directory / "s.csv", index=False
+    )
     assert report.value_at("m", "s", "median", at=25) == 40
 
 

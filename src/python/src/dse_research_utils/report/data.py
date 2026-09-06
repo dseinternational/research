@@ -144,8 +144,10 @@ class ReportData:
         df = self.load_summary(model_id, name, config)
         if df is None or df.empty or key not in df.columns or column not in df.columns or not np.isfinite(at):
             return None
-        candidates = df.loc[np.isfinite(df[key])]
+        keys = pd.to_numeric(df[key], errors="coerce")
+        finite = np.isfinite(keys)
+        candidates = df.loc[finite]
         if candidates.empty:
             return None
-        row = candidates.iloc[(candidates[key] - at).abs().argmin()]
+        row = candidates.iloc[(keys.loc[finite] - at).abs().argmin()]
         return row[column]

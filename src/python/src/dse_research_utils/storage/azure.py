@@ -57,6 +57,9 @@ class BlobUploadResult:
     elapsed_seconds: float = 0.0
     """Upload wall time in seconds."""
 
+    relative_paths: list[str] = field(default_factory=list)
+    """Raw POSIX paths of uploaded files, aligned with ``urls`` and excluding skipped files."""
+
 
 def container_url_from_environment(env_var: str = DEFAULT_CONTAINER_URL_ENV_VAR) -> str:
     """Read an Azure Blob container URL from an environment variable."""
@@ -157,12 +160,14 @@ def upload_directory_to_blob_storage(
         run_id = str(uuid.uuid7())
 
     blob_prefix = f"projects/{project}/output/{run_id}/{model_label}"
+    prefix_url = f"{target.base_url}/{quote(blob_prefix, safe='/')}/"
     credential = credential or DefaultAzureCredential()
     container_client = BlobServiceClient(target.account_url, credential=credential).get_container_client(
         target.container_name
     )
 
     urls: list[str] = []
+    relative_paths: list[str] = []
     uploaded = 0
     skipped = 0
     bytes_sent = 0
@@ -189,15 +194,17 @@ def upload_directory_to_blob_storage(
                 overwrite=True,
                 content_settings=ContentSettings(content_type=content_type),
             )
-        url = f"{target.base_url}/{quote(blob_name, safe='/')}"
+        url = prefix_url + quote(relative_path, safe="/")
         urls.append(url)
+        relative_paths.append(relative_path)
         if relative_path == "index.html":
             report_url = url
         uploaded += 1
 
     return BlobUploadResult(
         urls=urls,
-        prefix_url=f"{target.base_url}/{quote(blob_prefix, safe='/')}/",
+        relative_paths=relative_paths,
+        prefix_url=prefix_url,
         report_url=report_url,
         uploaded_files=uploaded,
         skipped_files=skipped,

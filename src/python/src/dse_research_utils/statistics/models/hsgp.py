@@ -50,16 +50,27 @@ def _approx_hsgp_params(
     """
     x = np.asarray(x, dtype=float)
     x_min, x_max = float(x.min()), float(x.max())
-    if len(ls_range) != 2 or not np.all(np.isfinite(ls_range)) or not 0 < ls_range[0] < ls_range[1]:
+    try:
+        lengths = np.asarray(ls_range, dtype=float)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("ls_range must contain two finite, positive, increasing lengthscales.") from exc
+    if lengths.shape != (2,) or not np.all(np.isfinite(lengths)) or not 0 < lengths[0] < lengths[1]:
         raise ValueError("ls_range must contain two finite, positive, increasing lengthscales.")
     m, c = pm.gp.hsgp_approx.approx_hsgp_hyperparams(
         x_range=[x_min, x_max],
-        lengthscale_range=list(ls_range),
+        lengthscale_range=lengths.tolist(),
         cov_func="expquad",
     )
     if c_floor is not None:
         new_c = max(float(c), float(c_floor))
-        m = int(np.ceil(m * new_c / c))
+        if new_c > c:
+            # Reuse PyMC's formula before integer truncation. Scaling its
+            # already-rounded m can understate the required frequency coverage.
+            m, _ = pm.gp.hsgp_approx.approx_hsgp_hyperparams(
+                x_range=[x_min, x_max],
+                lengthscale_range=[float(lengths[0] * c / new_c), float(lengths[1])],
+                cov_func="expquad",
+            )
         c = new_c
     S = (x_max - x_min) / 2.0
     return [int(m)], [float(S * c)]
@@ -71,6 +82,8 @@ def build_hsgp_1d(
     *,
     m: int = 20,
     c: float = 1.5,
+    L: float | None = None,
+    center: float | None = None,
     amplitude_prior: Continuous | None = None,
     lengthscale_prior: Continuous | None = None,
     ls_range: tuple[float, float] | None = None,
@@ -86,8 +99,14 @@ def build_hsgp_1d(
     X
         Standardised 1D inputs, shape ``(n,)`` or ``(n, 1)``.
     m, c
-        HSGP basis size and boundary factor. If ``ls_range`` is supplied they
-        are recomputed via :func:`pm.gp.hsgp_approx.approx_hsgp_hyperparams`.
+        HSGP basis size and boundary factor. With ``ls_range``, ``m`` is
+        calibrated and ``c`` sets a minimum boundary factor.
+    L, center
+        Optional fixed half-width and midpoint of the basis domain. With ``L``,
+        ``c`` is ignored and ``ls_range`` must be omitted. ``center`` requires
+        ``L`` and otherwise defaults to the midpoint of ``X``. Preserve ``m``,
+        ``L`` and ``center`` from the full design when fitting subsets; fixing
+        only ``L`` still lets the basis move with the subset's midpoint.
     amplitude_prior
         preliz distribution for eta. Defaults to ``HalfNormal(0.3)``.
     lengthscale_prior
@@ -99,20 +118,33 @@ def build_hsgp_1d(
     X = np.asarray(X, dtype=float)
     if X.ndim == 1:
         X = X.reshape(-1, 1)
-    if X.ndim != 2 or X.shape[1] != 1 or X.shape[0] < 2:
-        raise ValueError("X must have shape (n,) or (n, 1) with at least two observations.")
-    if not np.all(np.isfinite(X)) or X.min() == X.max():
+    if X.ndim != 2 or X.shape[1] != 1 or X.shape[0] == 0:
+        raise ValueError("X must have shape (n,) or (n, 1) with at least one observation.")
+    if not np.all(np.isfinite(X)):
+        raise ValueError("X must contain finite values.")
+    if L is None and X.min() == X.max():
         raise ValueError("X must contain finite values with a positive range.")
-    if not np.isfinite(c) or c <= 1:
+    if L is None and (not np.isfinite(c) or c <= 1):
         raise ValueError("c must be finite and greater than 1.")
+    if center is not None and (L is None or not np.isfinite(center)):
+        raise ValueError("center must be finite and requires an explicit L.")
+    if ls_range is None and (isinstance(m, (bool, np.bool_)) or not isinstance(m, (int, np.integer)) or m < 1):
+        raise ValueError("m must be a positive integer.")
 
-    if ls_range is not None:
+    if L is not None:
+        if ls_range is not None:
+            raise ValueError("Explicit L cannot be combined with ls_range; preserve the calibrated m instead.")
+        midpoint = float((X.min() + X.max()) / 2.0) if center is None else float(center)
+        if not np.isfinite(L) or L <= 0 or np.max(np.abs(X - midpoint)) >= L:
+            raise ValueError("L must be finite, positive and contain all X strictly within center +/- L.")
+        m_val, L_val = int(m), [float(L)]
+    elif ls_range is not None:
         # When the caller supplies an explicit ``c``, treat it as a
         # minimum floor on the calibrated boundary factor — otherwise
         # the kwarg was silently ignored.
-        m_list, L = _approx_hsgp_params(X[:, 0], ls_range, c_floor=c)
+        m_list, bounds = _approx_hsgp_params(X[:, 0], ls_range, c_floor=c)
         m_val = m_list[0]
-        L_val = L
+        L_val = bounds
     else:
         S = float((X.max() - X.min()) / 2.0)
         m_val = int(m)
@@ -123,6 +155,11 @@ def build_hsgp_1d(
 
     cov = pm.gp.cov.ExpQuad(1, ls=lengthscale)
     hsgp = pm.gp.HSGP(cov_func=cov, m=[m_val], L=L_val)
+    if center is not None:
+        # PyMC retains the midpoint of the first prior_linearized call. Seed
+        # that public API with the frozen domain, then evaluate the actual rows.
+        # This creates no random variables and avoids setting private GP state.
+        hsgp.prior_linearized(np.array([[center - L_val[0]], [center + L_val[0]]]))
     g_unit = hsgp.prior(f"{name}__g_unit", X=X)
     return pm.Deterministic(name, amplitude * g_unit)
 
@@ -133,6 +170,8 @@ def build_tau_modifier(
     *,
     m: int = 15,
     c: float = 1.5,
+    L: float | None = None,
+    center: float | None = None,
     amplitude_prior: Continuous | None = None,
     lengthscale_prior: Continuous | None = None,
     ls_range: tuple[float, float] | None = None,
@@ -143,6 +182,8 @@ def build_tau_modifier(
         X,
         m=m,
         c=c,
+        L=L,
+        center=center,
         amplitude_prior=amplitude_prior or _default_amplitude_prior(),
         lengthscale_prior=lengthscale_prior,
         ls_range=ls_range,

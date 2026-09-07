@@ -1,9 +1,11 @@
+> [!NOTE]
+> Drafted by a LLM-based AI tool (Codex/GPT-6). Earlier migration guidance was drafted with Claude Code/Opus 5.
+
 # Migrating a consuming repository from conda to uv
 
-> [!NOTE]
-> Drafted by a LLM-based AI tool (Claude Code/Opus 5).
-
 This repository has moved from the hybrid conda + pip environment model to a `uv` workflow. This guide covers what changes for the repositories that consume `dse-research-utils`, and the order to do it in. See [#86](https://github.com/dseinternational/research/issues/86) for the investigation behind the change.
+
+For a new migration, also follow the [0.14.0 upgrade notes](migrating-to-0.14.md), including the earlier 0.13.0 requirements. The version examples below apply after `v0.14.0` is tagged. The per-project inventories and issues in this guide record the original uv transition; recheck current imports and completion status before changing a consumer.
 
 ## Why the hybrid model existed, and why it no longer does
 
@@ -59,7 +61,7 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-dse-research-utils = { git = "https://github.com/dseinternational/research.git", tag = "v0.11.2", subdirectory = "src/python" }
+dse-research-utils = { git = "https://github.com/dseinternational/research.git", tag = "v0.14.0", subdirectory = "src/python" }
 ```
 
 Extras per repo, derived from what each repo actually imports on `main` rather than from what it currently declares. Each has a tracking issue with the full per-repo instructions:
@@ -97,6 +99,6 @@ Replace the `pip` ecosystem entry with `package-ecosystem: uv`. Keep the numpy `
 
 Changes to the shared core follow the usual sequence, and this one is no different: **merge here, tag a release, then bump and re-run each consuming repo**. Consuming repos pin the library by git tag, so nothing downstream moves until its tag is bumped.
 
-The first two steps are done: **`v0.11.2` is tagged and is the version to migrate to.** It supersedes `v0.11.0`, which left `h5netcdf` in the `storage` extra and so could not write a trace without it ([#89](https://github.com/dseinternational/research/issues/89)), and `v0.11.1`, whose console helpers raised on a legacy Windows code page ([#91](https://github.com/dseinternational/research/issues/91)). What remains is the three consuming repos, each tracked by the issue linked above.
+The original uv migration targeted `v0.11.2`. It corrected `v0.11.0`, which left `h5netcdf` in the `storage` extra and could not write a trace without it ([#89](https://github.com/dseinternational/research/issues/89)), and `v0.11.1`, whose console helpers raised on a legacy Windows code page ([#91](https://github.com/dseinternational/research/issues/91)). These are historical minimum-version fixes. Use the [0.14.0 release sequence](migrating-to-0.14.md#release-sequence) for the consolidated helpers, and check the linked consumer issues for the status of their original uv migration.
 
 Until a repo has migrated, it keeps working unchanged: `environment-core.yml` and the `dse-check-env` console script are retained and deprecated, not deleted, and a parity test in this repo prevents the retained core from drifting away from `pyproject.toml`. Once all three repos are on uv, delete `environment-core.yml`, `dse-check-env`, `tests/test_environment_core_parity.py` and this guide.

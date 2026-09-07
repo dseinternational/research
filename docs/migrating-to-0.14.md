@@ -40,6 +40,8 @@ dse-research-utils = { git = "https://github.com/dseinternational/research.git",
 
 Keep the existing dependency declaration and extras, then run `uv lock` and `uv sync --locked`. Commit the changed pin and lockfile together with the adapters and their checks. There is no need to adopt every helper immediately, but copied implementations continue to require maintenance until callers delegate to the shared functions.
 
+The combined upgrades are tracked in [language-reading-predictors #662](https://github.com/dseinternational/language-reading-predictors/issues/662), [vocabulary-growth #313](https://github.com/dseinternational/vocabulary-growth/issues/313) and [us-birth-certificates #113](https://github.com/dspopulations/us-birth-certificates/issues/113). The remaining convergence table across selected models is separate work in [research #46](https://github.com/dseinternational/research/issues/46).
+
 Projects upgrading from before `0.13.0` must also apply the [0.13.0 migration requirements](migrating-to-0.13.md). That version changed HSGP boundaries, diagnostic decisions and upload results; moving directly to `0.14.0` does not remove those requirements.
 
 ## What the release adds

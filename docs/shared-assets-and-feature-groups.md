@@ -5,7 +5,7 @@
 
 # Shared report assets and feature groups
 
-This part of PR #101 adds direct HTML asset inspection and feature grouping from an existing distance matrix. Both APIs are unreleased. They use dependencies already available in the library. They do not upload a report, select a scientific result for publication or choose a study's feature cutoff.
+Version 0.14.0 adds direct HTML asset inspection and feature grouping from an existing distance matrix. See the [upgrade notes](migrating-to-0.14.md) for installation and the release sequence. Both APIs use dependencies already available in the library. They do not upload a report, select a scientific result for publication or choose a study's feature cutoff.
 
 ## Check the local report before checking an upload
 

@@ -5,7 +5,7 @@
 
 # Shared sample arrays and predictive summaries
 
-This part of the consolidation work implements explicit likelihood aggregation and per-observation predictive summaries. The new APIs are on PR #101 and have not yet been released. They use the library's existing NumPy, pandas and xarray dependencies. Downstream projects retain their observation-unit definitions, grouping, reporting schemas, missingness rules and fit-acceptance policies.
+Version 0.14.0 adds explicit likelihood aggregation and per-observation predictive summaries. See the [upgrade notes](migrating-to-0.14.md) for installation and the release sequence. These APIs use the library's existing NumPy, pandas and xarray dependencies. Downstream projects retain their observation-unit definitions, grouping, reporting schemas, missingness rules and fit-acceptance policies.
 
 ## Preserve observation identity when reshaping samples
 

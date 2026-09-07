@@ -5,7 +5,7 @@
 
 # Migrating to 0.13.0
 
-Version 0.13.0 changes Gaussian-process approximations, convergence decisions and upload results. Prepare the consumer changes below before updating a project's dependency pin. Existing pins continue to select the older library until changed. The version bump in this PR prepares a release; it does not publish a tag or refit any models.
+Version 0.13.0 changes Gaussian-process approximations, convergence decisions and upload results. Its tag is published. The checklist below records the original upgrade requirements, not a live record of each consumer's completion. Projects moving from an older version directly to [0.14.0](migrating-to-0.14.md) must still address these changes. Updating a dependency pin does not refit models.
 
 ## Preserve the full HSGP design during refits
 

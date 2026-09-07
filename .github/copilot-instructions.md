@@ -1,5 +1,8 @@
 # Copilot Instructions
 
+> [!NOTE]
+> Drafted by a LLM-based AI tool (Codex/GPT-6).
+
 This file provides guidance to AI coding agents when working with code in this repository.
 
 > **Keep in sync:** `CLAUDE.md`, `AGENTS.md`, and `.github/copilot-instructions.md` must contain identical guidance (except for the first heading). When updating one, update all three.
@@ -135,13 +138,22 @@ uv run pytest path/to/test_file.py::test_function_name  # single test
 
 - **`environment/`** — system info, execution context; `init_workbook()` / `init_script()` for notebook/script setup; the configurable output-root resolver (`paths.OutputRoot`: CLI override > env var > repo default) and disk preflight (`disk.free_space_gb` / `preflight_disk`); `check.py` (the `dse-check-env` console script) is **deprecated**, retained only while consuming repos migrate off conda
 - **`math/`** — constants (`EPSILON`, etc.)
-- **`metadata/`** — package version introspection
-- **`ml/`** — ML utilities (placeholder)
+- **`metadata/`** provides package version introspection and provenance facts (`provenance.git_snapshot`, `package_versions`, `sha256_file`). Callers choose manifest schemas and which files to hash.
+- **`ml/`** provides feature dependence measures (`feature_dependence.py`), feature grouping from explicit distances and linkage (`feature_groups.linkage_from_dissimilarity`, `feature_groups_from_linkage`), and permutation score changes (`permutation.heldout_permutation_deltas`, `pooled_oof_permutation_deltas`). Callers supply prediction and scoring functions, score direction, feature groups and donor plans. Model search, cross-validation and kernel helpers also live here.
 - **`plot/`** — matplotlib/ArviZ plotting helpers; the styled figure-save layer (`io.save_styled_figure` / `save_plot_data` / `save_plotcollection`: PNG + optional size-capped SVG sibling + optional data CSV); ArviZ subplot budgeting (`diagnostics_mcmc.capped_plot_var_names`); constants follow `FIGSIZE_XS`, `COLOUR_BLUE`, `DPI_NOTEBOOK` naming, plus `styles.categorical_palette`
-- **`report/`** — report data-access helpers (`ReportData`, `show_or_pending`) that read a fitted model's artefacts and degrade to a visible "pending fit" placeholder before a fit exists
+- **`report/`** provides report data-access helpers (`ReportData`, `show_or_pending`) that read a fitted model's artefacts and degrade to a visible "pending fit" placeholder before a fit exists. The separate file readers (`readers.FileRead`, `read_csv`, `read_json`, `nearest_row`) distinguish present, missing and invalid files. Asset checks (`assets.inspect_local_assets`, `check_uploaded_assets`, `verify_published_assets`) inspect direct HTML references, compare upload inventories and check HTTP reachability. Callers retain schema, freshness and publication decisions.
 - **`statistics/`** — descriptive stats; credible/confidence intervals (`intervals.hdi_1d` / `eti_1d` / `eti_bands`, the `interval_1d` kind dispatcher, per-grid `bands`, and the tidy two-band `summarise_bands`); the shared evidence ladder (`evidence.py`: `evidence_label` / `odds_string` / `favoured_direction`); the ROPE report card (`rope.py`: `rope_card`); the MCMC convergence gate, banner, and styled diagnostics table (`diagnostics.py`, including the `diagnostics_assessable` check and `amend_diagnostics_summary`); unrounded sampling-quality signal extraction (`sampling_quality.py`); PSIS-LOO/ELPD helpers (`loo.py`: reff pinning, Pareto-k reductions, the canonical LOO summary row, and the `elpd_verdict` convention); and PyMC models and sampling presets
+- **`storage/`** provides file replacement (`files.atomic_write`), staged directory promotion (`directories.promote_directory`) and Azure uploads (`azure.upload_directory_to_blob_storage`, `BlobUploadResult`). Directory promotion requires an explicit lock context and backup path, retains any backup and leaves cleanup to callers. Replacing an existing directory uses two renames, so readers can see a gap. The Azure upload result records raw relative paths for asset inventory checks.
 
-All `__init__.py` files are empty — no re-exports. Use fully-qualified absolute imports everywhere (e.g. `from dse_research_utils.math.constants import EPSILON`).
+The array and model helpers in `statistics/` keep caller choices explicit:
+
+- `array_intervals.equal_tail_interval` reduces declared sample axes with an explicit interval probability and policy for NaN and infinite values. Existing `intervals.py` helpers retain their own defaults and filtering rules.
+- `samples.sample_matrix` returns a `SampleMatrix` with observation-by-sample values and indexes. It requires named sample and observation dimensions with explicit unique labels. `SampleMatrix.observed_values` checks exact observation alignment without dropping missing values or flattening undeclared event dimensions.
+- `predictive.predictive_observation_checks` calculates per-observation summaries, central intervals and optional probability integral transform values. Callers choose probabilities, observation groups and how to handle missing values.
+- `log_likelihood.LogLikelihoodFactor` and `aggregate_log_likelihood` sum explicitly declared factors and row contributions into caller-defined units. Callers supply row mappings and event dimensions; the helper does not integrate latent effects or mutate traces.
+- `models/hsgp_design.HSGPDesign`, `calibrate_hsgp_1d` and `create_hsgp` share one-dimensional HSGP basis geometry. Callers provide the covariance and retain their model priors, variable names and grouping choices. Existing high-level HSGP builders remain available.
+
+The package root `__init__.py` stores `__version__` for Hatch; all other `__init__.py` files are empty. None provide re-exports. Use fully-qualified absolute imports everywhere (e.g. `from dse_research_utils.math.constants import EPSILON`).
 
 `statistics/models/reporting.ReportingConfiguration` carries the reporting `ci_prob` (credible-interval coverage) and `interval_kind` (`"eti"` equal-tailed or `"hdi"` highest-density); reports read both back so tables, plots, and the diagnostics summary agree on the interval convention. Credible-interval coverage defaults to **0.89** across the shared helpers (`hdi_1d`, `eti_1d`, `rope_card`, `ReportingConfiguration.ci_prob`, …), matching ArviZ's `rcParams["stats.ci_prob"]`; a report that wants a different width passes it explicitly (e.g. `vocabulary-growth` uses 0.90, `language-reading-predictors` uses 0.95).
 

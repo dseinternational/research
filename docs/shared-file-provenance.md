@@ -5,9 +5,9 @@
 
 # Shared file writes and provenance
 
-This is the first library implementation from the downstream consolidation review. It provides file replacement and raw provenance facts. Each consumer still owns its manifest fields, JSON encoding, file selection, hash prefixes and rules for accepting a saved result.
+Version 0.14.0 adds file replacement and raw provenance facts from the downstream consolidation review. Each consumer still owns its manifest fields, JSON encoding, file selection, hash prefixes and rules for accepting a saved result.
 
-The APIs described here are on this branch and have not yet been released. They use the Python standard library and add no dependencies. The library's diagnostic writer now uses the shared file operation. Its JSON formatting, non-finite value handling, returned summary and table cache remain unchanged.
+See the [0.14.0 upgrade notes](migrating-to-0.14.md) for installation and the release sequence. These APIs use the Python standard library and add no dependencies. The library's diagnostic writer now uses the shared file operation. Its JSON formatting, non-finite value handling, returned summary and table cache remain unchanged.
 
 ## Write one complete file
 

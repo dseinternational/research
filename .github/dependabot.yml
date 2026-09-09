@@ -13,14 +13,14 @@ updates:
         patterns:
           - "*"
     ignore:
-      # numpy 2.5 is unreachable for anything depending on pymc: pytensor 3.3.0
-      # pins numba <=0.66.0, and numba 0.66.0 still pins numpy <2.5. (numba
-      # 0.67.0 has relaxed to numpy <2.6, but pytensor does not admit it yet.)
+      # numpy 2.6 is unreachable for anything depending on pymc: pytensor 3.3.1
+      # pins numba <=0.67.0, and numba 0.67.0 still pins numpy <2.6. (The 2.5
+      # ceiling lifted on 2026-09-09, when pytensor 3.3.1 admitted numba 0.67.)
       # The ceiling in src/python/pyproject.toml records the same chain; raising
       # it only declares a range no resolver can use. Remove once a pytensor
-      # release admits numba 0.67.
+      # release admits numba 0.68.
       - dependency-name: "numpy"
-        versions: [">=2.5.0"]
+        versions: [">=2.6.0"]
     assignees:
       - frankbuckley
 

@@ -93,7 +93,9 @@ The Windows job needs no `PYTHONUTF8: "1"`: from `v0.11.2` the shared console re
 
 ### 4. Update dependabot
 
-Replace the `pip` ecosystem entry with `package-ecosystem: uv`. Keep the numpy `>=2.5.0` ignore rule: `pytensor` still pins `numba<=0.66.0`, and `numba` 0.66.0 still pins `numpy<2.5`, so numpy 2.5 remains unreachable. It lifts when a PyTensor release admits numba 0.67.
+Replace the `pip` ecosystem entry with `package-ecosystem: uv`. Keep a numpy ignore rule, but at the current ceiling: as of `0.15.0` it is `>=2.6.0`, because PyTensor 3.3.1 admits `numba<=0.67.0` and numba 0.67.0 pins `numpy<2.6`. (Through `0.14.0` it was `>=2.5.0`.) It lifts again when a PyTensor release admits numba 0.68.
+
+This guidance is for the consuming repositories. The `research` repository itself no longer runs Dependabot as of `0.15.0`; its dependencies are updated deliberately, in sweeps.
 
 ## Ordering
 

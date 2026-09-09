@@ -31,11 +31,14 @@
 channels:
   - conda-forge
 dependencies:
-  - python=3.14.6
+  - python=3.14.7
   # --- core numerics (compiled) ---
-  # numpy 2.5.2 is released but unreachable: pymc 6.3.1 -> pytensor 3.3.0 ->
-  # numba <=0.66.0, and numba 0.66.0 pins numpy <2.5. Lifting this needs a
-  # numba release that supports numpy 2.5 and a pytensor release that admits it.
+  # numpy 2.5 is reachable on PyPI now (pytensor 3.3.1 admits numba 0.67.0,
+  # which allows numpy <2.6) but NOT yet on conda-forge, which still ships
+  # pytensor 3.3.0 -> numba <=0.66.0 -> numpy <2.5. pyproject.toml therefore
+  # carries the wider `<2.6` ceiling while this conda core keeps `<2.5`; the
+  # parity test compares floors only, so the two legitimately differ here.
+  # Raise once conda-forge ships pytensor 3.3.1.
   - numpy>=2.4.6,<2.5
   - scipy>=1.18.0
   - pandas>=3.0.5
@@ -49,16 +52,17 @@ dependencies:
   # rather than being re-declared per repo.
   # Floor is 24.0.0, not the current 25.0.0, because libarrow 25.x needs
   # libabseil >=20260526 while every conda-forge jaxlib build (through jax
-  # 0.10.2) still pins libabseil <20260108 — the two do not co-solve. Raise this
-  # once jaxlib is rebuilt against the newer abseil.
+  # 0.10.2, still the newest there) pins libabseil <20260108 — the two do not
+  # co-solve. Raise this once jaxlib is rebuilt against the newer abseil.
   - pyarrow>=24.0.0
-  # Cap tracks whatever the admitted pytensor accepts: pymc 6.3.1 admits
-  # pytensor >=3.2.2,<3.4, and current pytensor 3.3.0 caps numba at 0.66.0.
-  # Note this does not move the numpy cap above: numba 0.66.0 still pins <2.5.
+  # Cap tracks whatever the admitted pytensor accepts. conda-forge's newest
+  # pytensor is still 3.3.0, which caps numba at 0.66.0; PyPI's pytensor 3.3.1
+  # has raised that to 0.67.0. Note this cap is what holds the numpy cap above:
+  # numba 0.66.0 still pins <2.5.
   - numba>=0.58,<=0.66.0
   - matplotlib>=3.11.1
   - scikit-learn>=1.9.0
-  - statsmodels>=0.14.6
+  - statsmodels>=0.15.0
   # --- columnar dataframes ---
   # Promoted from a repo-specific add-on so the Arrow-backed dataframe layer
   # cannot drift across repos. polars ships its own Rust Arrow implementation
@@ -66,20 +70,21 @@ dependencies:
   # versions everywhere rather than per-repo floors. Repos that do not use
   # polars still declare it: the core is a single lockstep spec, not an
   # à-la-carte list.
-  - polars>=1.43.2
+  - polars>=1.44.1
   # --- Bayesian modelling stack ---
-  # pymc pulls pytensor + a C toolchain from conda-forge. PyMC 6.3.1 admits
-  # pytensor >=3.2.2,<3.4; current pytensor 3.3.0 caps numba <=0.66.0, which in
-  # turn caps numpy <2.5. Floors are the minimum supported, not exact pins.
+  # pymc pulls pytensor + a C toolchain from conda-forge. PyMC admits
+  # pytensor >=3.2.2,<3.4; conda-forge's pytensor 3.3.0 caps numba <=0.66.0,
+  # which in turn caps numpy <2.5. Floors are the minimum supported, not exact
+  # pins — pyproject.toml floors pytensor at 3.3.1, which conda-forge lacks.
   - pymc>=6.3.1
   - nutpie>=0.16.11
   - numpyro>=0.21.0
   - jax>=0.10.2 # CPU build; GPU acceleration via environment-gpu.yml
   - arviz>=1.3.0
   - arviz-base>=1.3.0
-  - arviz-stats>=1.3.0
-  - arviz-plots>=1.3.0
-  - preliz>=0.27.1
+  - arviz-stats>=1.3.2
+  - arviz-plots>=1.3.1
+  - preliz>=0.28.0
   # --- serialization / storage (system libraries) ---
   - h5py>=3.16.0
   - h5netcdf>=1.8.1

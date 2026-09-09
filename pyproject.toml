@@ -23,11 +23,11 @@ dependencies = ["dse-research-utils[all]"]
 # design: they are never written into published package metadata, so nothing
 # here reaches consumers of dse-research-utils.
 dev = [
-    "build>=1.3.0",
-    "hatch>=1.14.0",
+    "build>=1.6.0",
+    "hatch>=1.18.0",
     "pandas-stubs",
     "pytest>=9.1.1",
-    "ruff>=0.16.1",
+    "ruff>=0.16.6",
     "scipy-stubs"
 ]
 # Pure-Python tail used by research work in this repo (notebooks, scratch
@@ -36,7 +36,7 @@ research = [
     "formulaic>=1.2.2",
     "mpmath>=1.4.1",
     "pingouin>=0.6.1",
-    "plotly>=6.9.0",
+    "plotly>=7.0.0",
     "pyxlsb>=1.0.10"
 ]
 

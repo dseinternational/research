@@ -28,7 +28,7 @@ Check that both built distributions report `0.15.0`. Git tags are the installati
 
 The floor deliberately stays at `2.4.6`. A floor states the minimum supported version, and PyTensor 3.3.0 with numba 0.66 and NumPy 2.4.x remains a legal solution for a project that has not moved.
 
-Two places record this cap, and both changed together: the specification in `src/python/pyproject.toml` and the Dependabot ignore rule in `.github/dependabot.yml`, now `numpy >=2.6.0`. A consuming repository carries its own copy of that ignore rule and must update it in the same PR as the pin, or Dependabot will keep proposing a widening no resolver can use.
+This release also removes Dependabot from this repository, so `src/python/pyproject.toml` is now the only place the cap is recorded here; dependency updates are made deliberately, in sweeps like this one. **Consuming repositories still run Dependabot and still carry their own `numpy >=2.5.0` ignore rule**, which must move to `>=2.6.0` in the same PR as the tag bump — otherwise Dependabot keeps proposing a widening no resolver can use. `us-birth-certificates` additionally ignores `numba >0.66.0`, which must move to `>0.67.0`.
 
 The retained conda core (`environment-core.yml`, deprecated) keeps `numpy<2.5`. conda-forge still ships PyTensor 3.3.0, so the older ceiling is still correct there. The parity test compares floors only, so the two files legitimately differ on the cap.
 
@@ -79,7 +79,7 @@ Retain the project's existing extras. A project that records its Git source in `
 dse-research-utils = { git = "https://github.com/dseinternational/research.git", tag = "v0.15.0", subdirectory = "src/python" }
 ```
 
-Then run `uv lock` and `uv sync --locked`, and update the repository's own `numpy` Dependabot ignore rule to `>=2.6.0` in the same PR. Commit the pin, the lockfile and the ignore-rule change together.
+Then run `uv lock` and `uv sync --locked`, and update the repository's own `numpy` Dependabot ignore rule to `>=2.6.0` in the same PR (`us-birth-certificates` also has a `numba >0.66.0` rule to move to `>0.67.0`). Commit the pin, the lockfile and the ignore-rule changes together.
 
 Projects upgrading from before `0.14.0` must also apply the [0.14.0 migration requirements](migrating-to-0.14.md) and, from before `0.13.0`, the [0.13.0 requirements](migrating-to-0.13.md). This release does not remove them.
 

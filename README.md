@@ -25,7 +25,7 @@ Windows is supported natively — WSL is no longer required. Intel macOS is not 
 
 Repositories still on the old conda environment should follow [docs/migrating-to-uv.md](docs/migrating-to-uv.md).
 
-The [0.14.0 upgrade notes](docs/migrating-to-0.14.md) describe the release sequence and installation. The [shared-helper migration guide](docs/consolidation-migration.md) explains how downstream projects can adopt the shared APIs in one dependency upgrade.
+The [0.15.0 upgrade notes](docs/migrating-to-0.15.md) describe the current dependency release, including the lifted NumPy ceiling and the Optuna 5.0 move. The [0.14.0 upgrade notes](docs/migrating-to-0.14.md) describe the shared-helper release sequence and installation. The [shared-helper migration guide](docs/consolidation-migration.md) explains how downstream projects can adopt the shared APIs in one dependency upgrade.
 
 ## License
 

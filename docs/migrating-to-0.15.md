@@ -1,7 +1,8 @@
 > [!NOTE]
 > Drafted by a LLM-based AI tool (Claude Code/Opus 5).
+> Updated by a LLM-based AI tool (Codex/GPT-6).
 
-<!-- cspell:words abseil libarrow libabseil ANOVA lockfiles NSGAII Chainer -->
+<!-- cspell:words ANOVA lockfiles NSGAII Chainer -->
 
 # Migrating to 0.15.0
 
@@ -29,8 +30,6 @@ Check that both built distributions report `0.15.0`. Git tags are the installati
 The floor deliberately stays at `2.4.6`. A floor states the minimum supported version, and PyTensor 3.3.0 with numba 0.66 and NumPy 2.4.x remains a legal solution for a project that has not moved.
 
 This release also removes Dependabot from this repository, so `src/python/pyproject.toml` is now the only place the cap is recorded here; dependency updates are made deliberately, in sweeps like this one. **Consuming repositories still run Dependabot and still carry their own `numpy >=2.5.0` ignore rule**, which must move to `>=2.6.0` in the same PR as the tag bump — otherwise Dependabot keeps proposing a widening no resolver can use. `us-birth-certificates` additionally ignores `numba >0.66.0`, which must move to `>0.67.0`.
-
-The retained conda core (`environment-core.yml`, deprecated) keeps `numpy<2.5`. conda-forge still ships PyTensor 3.3.0, so the older ceiling is still correct there. The parity test compares floors only, so the two files legitimately differ on the cap.
 
 ## Optuna 5.0 changes tuning defaults
 
@@ -60,7 +59,7 @@ A project that resumes a stored study, or that compares a new search against rec
 | `seaborn`                      | `>=0.13`   | `>=0.13.2` | `viz`                      |
 | `networkx`                     | `>=3.6`    | `>=3.6.1`  | `graphs`                   |
 
-Floors held deliberately, because conda-forge cannot yet satisfy a higher one while the retained core is still in use: `scipy>=1.18.0` (conda-forge has 1.18.0, PyPI 1.18.1), `pymc>=6.3.1` (conda-forge 6.3.1, PyPI 6.3.2) and `jax>=0.10.2` (conda-forge jaxlib is still 0.10.2). `pyarrow>=24.0.0` is held for the same reason it always has been: libarrow 25.x needs a newer libabseil than any conda-forge jaxlib build pins. Resolving fresh on PyPI still installs the current version of each.
+This release retained `scipy>=1.18.0`, `pymc>=6.3.1`, `jax>=0.10.2` and `pyarrow>=24.0.0`. These minimums permit later compatible releases when the environment is resolved.
 
 Repository tooling also moved: `hatchling>=1.32.0`, `build>=1.6.0`, `hatch>=1.18.0`, `ruff>=0.16.6`, `plotly>=7.0.0`, cspell 10.3.0 and the .NET SDK pin to 10.0.401. These are development-only and reach no consumer.
 

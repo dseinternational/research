@@ -1,23 +1,24 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Guard the transition away from the conda-forge core.
+"""Check that current Python floors cover the retained conda baseline.
 
 ``data/environment-core.yml`` is retained, deprecated, so the consuming repos
 that have not yet migrated off conda keep a working ``dse-check-env``. That
-leaves two declarations of the same floors for as long as the transition runs,
-and this test stops them drifting apart: every package in the retained core must
-carry the same lower bound as ``pyproject.toml``, whether it sits in the base
-dependencies or in one of the extras.
+file retains the baseline shipped in 0.15.1. It cannot track newer PyPI floors
+because conda-forge does not yet provide the same compatible package set. Every
+package in that baseline must remain declared in ``pyproject.toml``, with a floor
+at least as high, whether it sits in the base dependencies or in an extra.
 
-Delete this module together with ``environment-core.yml`` and ``dse-check-env``
-once every consuming repository is on uv.
+Remove this module together with ``environment-core.yml`` and ``dse-check-env``
+in a separate cleanup when support for legacy consumers ends.
 """
 
 import tomllib
 from pathlib import Path
 
 import pytest
+from packaging.version import Version
 
 from dse_research_utils.environment.check import load_core
 
@@ -73,14 +74,17 @@ def _core_floors() -> dict[str, str | None]:
 
 
 @pytest.mark.parametrize("package", sorted(_core_floors()))
-def test_retained_conda_core_floor_matches_pyproject(package: str) -> None:
-    """Each retained conda core package is declared in pyproject with the same floor."""
+def test_current_floor_covers_retained_conda_baseline(package: str) -> None:
+    """A move to the current Python requirements must not lower a legacy floor."""
     pyproject = _pyproject_floors()
     assert package in pyproject, (
         f"'{package}' is in the retained conda core but is declared nowhere in "
         f"pyproject.toml — consuming repos on conda would get a floor this package no longer states"
     )
-    assert pyproject[package] == _core_floors()[package], (
-        f"'{package}' floor drift: conda core says >={_core_floors()[package]}, "
-        f"pyproject.toml says >={pyproject[package]}"
+    current_floor = pyproject[package]
+    legacy_floor = _core_floors()[package]
+    assert current_floor is not None and legacy_floor is not None
+    assert Version(current_floor) >= Version(legacy_floor), (
+        f"'{package}' minimum regressed: retained conda baseline says >={legacy_floor}, "
+        f"pyproject.toml says >={current_floor}"
     )

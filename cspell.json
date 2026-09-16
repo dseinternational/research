@@ -21,7 +21,6 @@
     "jupytext",
     "lightgbm",
     "matplotlib",
-    "micromamba",
     "mpmath",
     "mypy",
     "networkx",

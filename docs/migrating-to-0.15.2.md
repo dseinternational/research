@@ -32,8 +32,6 @@ NumPy retains its `<2.6` limit and PyTensor retains `<3.4`. PyTensor 3.3.2 requi
 
 [PyTensor 3.3.2](https://github.com/pymc-devs/pytensor/releases/tag/rel-3.3.2) fixes Numba compatibility with SciPy 1.18. [Zarr 3.4.0](https://github.com/zarr-developers/zarr-python/releases/tag/v3.4.0) adds `msgspec` as a metadata-validation dependency.
 
-The deprecated conda specification retains the 0.15.1 baseline. It does not certify the new release. Conda-forge still lacks several required versions, including PyTensor 3.3.2 and JAX 0.11.1, so consumers should use the [uv migration guide](migrating-to-uv.md).
-
 ## Repository tooling
 
 The repository's development minimums also move to build 1.6.1, pandas-stubs 3.0.5.260914, Ruff 0.16.7 and scipy-stubs 1.18.1.0. Its research group requires Plotly 7.1.0. These groups are not included in the library's published dependency metadata.

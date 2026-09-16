@@ -90,7 +90,7 @@ Uses Prettier with `proseWrap: "preserve"` so existing prose line breaks are kep
 
 ### Python — environment
 
-Requires [uv](https://docs.astral.sh/uv/) (`brew install uv`, `winget install astral-sh.uv`, or the installer from the uv docs). uv provisions CPython 3.14 itself from `.python-version`, so there is no separate Python install step. Conda is no longer used — see `docs/migrating-to-uv.md`.
+Requires [uv](https://docs.astral.sh/uv/) (`brew install uv`, `winget install astral-sh.uv`, or the installer from the uv docs). uv provisions CPython 3.14 itself from `.python-version`, so there is no separate Python install step.
 
 ```bash
 uv sync                 # create/refresh .venv from uv.lock (interpreter, library, extras, tooling)
@@ -136,7 +136,7 @@ uv run pytest path/to/test_file.py::test_function_name  # single test
 
 `src/python/src/dse_research_utils/` is structured by domain:
 
-- **`environment/`** — system info, execution context; `init_workbook()` / `init_script()` for notebook/script setup; the configurable output-root resolver (`paths.OutputRoot`: CLI override > env var > repo default) and disk preflight (`disk.free_space_gb` / `preflight_disk`); `check.py` (the `dse-check-env` console script) is **deprecated**, retained only while consuming repos migrate off conda
+- **`environment/`** — system info, execution context; `init_workbook()` / `init_script()` for notebook/script setup; the configurable output-root resolver (`paths.OutputRoot`: CLI override > env var > repo default) and disk preflight (`disk.free_space_gb` / `preflight_disk`)
 - **`math/`** — constants (`EPSILON`, etc.)
 - **`metadata/`** provides package version introspection and provenance facts (`provenance.git_snapshot`, `package_versions`, `sha256_file`). Callers choose manifest schemas and which files to hash.
 - **`ml/`** provides feature dependence measures (`feature_dependence.py`), feature grouping from explicit distances and linkage (`feature_groups.linkage_from_dissimilarity`, `feature_groups_from_linkage`), and permutation score changes (`permutation.heldout_permutation_deltas`, `pooled_oof_permutation_deltas`). Callers supply prediction and scoring functions, score direction, feature groups and donor plans. Model search, cross-validation and kernel helpers also live here.

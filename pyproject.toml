@@ -1,9 +1,8 @@
 # Development workspace for the DSE research shared libraries.
 #
-# This replaces the former conda `environment.yml`. It is a uv workspace root: it
-# is never packaged or published, it just assembles the environment contributors
-# work in. The publishable library — and the canonical dependency floors every
-# consuming repo inherits — live in the workspace member, src/python.
+# This uv workspace root assembles the contributor environment. It is never
+# packaged or published. The library and its shared dependency minimums live
+# in the workspace member, src/python.
 #
 #   uv sync            # create/refresh .venv (Python, library, extras, tooling)
 #   uv run pytest      # run the test suite
@@ -47,7 +46,7 @@ default-groups = ["dev", "research"]
 # numba publishes no macosx x86_64 wheels at all, and shap pins numba<0.63
 # there, so the stack cannot solve on that platform — upstream has dropped it,
 # not us. Everything else the repos actually run on is covered, including native
-# win-amd64, which the conda-forge stack could not serve (no win-64 jaxlib).
+# win-amd64.
 environments = [
     "sys_platform == 'linux' and platform_machine == 'x86_64'",
     "sys_platform == 'linux' and platform_machine == 'aarch64'",

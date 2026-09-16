@@ -13,7 +13,7 @@ Current projects using these libraries include:
 
 ## Getting started
 
-The Python environment is managed with [uv](https://docs.astral.sh/uv/); conda is no longer used. uv provisions CPython 3.14 itself, so this is the whole setup:
+The Python environment is managed with [uv](https://docs.astral.sh/uv/). uv provisions CPython 3.14 itself, so this is the whole setup:
 
 ```bash
 uv sync                                # create .venv from uv.lock
@@ -22,8 +22,6 @@ uv build --package dse-research-utils  # build the wheel
 ```
 
 Windows is supported natively — WSL is no longer required. Intel macOS is not supported, because numba publishes no macOS x86_64 wheels. Plotting model graphs additionally needs the system Graphviz `dot` binary (`brew install graphviz`, `apt install graphviz`, `winget install Graphviz.Graphviz`).
-
-Repositories still on the old conda environment should follow [docs/migrating-to-uv.md](docs/migrating-to-uv.md).
 
 The [0.15.2 upgrade notes](docs/migrating-to-0.15.2.md) describe the raised minimum dependency versions and downstream upgrade steps. The [0.15.1 upgrade notes](docs/migrating-to-0.15.1.md) record the earlier lock refresh. The [0.15.0 upgrade notes](docs/migrating-to-0.15.md) describe the lifted NumPy ceiling and the Optuna 5.0 move. The [0.14.0 upgrade notes](docs/migrating-to-0.14.md) describe the shared-helper release sequence and installation. The [shared-helper migration guide](docs/consolidation-migration.md) explains how downstream projects can adopt the shared APIs in one dependency upgrade.
 

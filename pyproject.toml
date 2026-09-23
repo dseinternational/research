@@ -27,7 +27,7 @@ dev = [
     "pandas-stubs>=3.0.5.260914",
     "pytest>=9.1.1",
     "ruff>=0.16.8",
-    "scipy-stubs>=1.18.1.0"
+    "scipy-stubs>=1.18.1.1"
 ]
 # Pure-Python tail used by research work in this repo (notebooks, scratch
 # analyses) but not by the library itself, so it stays out of the package.

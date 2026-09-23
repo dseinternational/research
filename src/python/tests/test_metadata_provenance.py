@@ -45,7 +45,13 @@ def _commit(root):
     return _git(root, "rev-parse", "HEAD")
 
 
-@pytest.mark.parametrize("content", [b"", bytes(range(256)), b"\0binary\xff\r\n" * 200_000])
+@pytest.mark.parametrize(
+    "content",
+    [b"", bytes(range(256)), b"\0binary\xff\r\n" * 200_000],
+    # Explicit ids keep the multi-megabyte value out of tmp_path, which would
+    # exceed the Windows path length limit.
+    ids=["empty", "all-byte-values", "multi-chunk"],
+)
 def test_sha256_hashes_exact_binary_contents(tmp_path, content):
     path = tmp_path / "input.bin"
     path.write_bytes(content)

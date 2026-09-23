@@ -7,12 +7,13 @@ import os
 import shutil
 import stat
 from concurrent.futures import ThreadPoolExecutor
-from threading import Barrier
+from threading import Barrier, Timer
 
 import numpy as np
 import pandas as pd
 import pytest
 
+from dse_research_utils.storage import files
 from dse_research_utils.storage.files import atomic_write
 
 
@@ -191,3 +192,81 @@ def test_concurrent_writers_use_distinct_temporary_files(tmp_path):
     assert len(set(staged)) == 2
     assert destination.read_bytes() in outputs
     assert list(tmp_path.iterdir()) == [destination]
+
+
+def _windows_error(winerror):
+    error = PermissionError(13, "Access is denied")
+    # Set directly so the retry rule is testable on every platform.
+    error.winerror = winerror
+    return error
+
+
+def test_transient_windows_replace_refusal_is_retried(tmp_path, monkeypatch):
+    destination = tmp_path / "result.txt"
+    destination.write_text("old")
+    real_replace = os.replace
+    failures = [_windows_error(32), _windows_error(5)]
+
+    def flaky_replace(source, target):
+        if failures:
+            raise failures.pop(0)
+        real_replace(source, target)
+
+    sleeps = []
+    monkeypatch.setattr(files.os, "replace", flaky_replace)
+    monkeypatch.setattr(files.time, "sleep", sleeps.append)
+    atomic_write(destination, lambda temporary: temporary.write_text("new"))
+    assert destination.read_text() == "new"
+    assert sleeps == list(files._REPLACE_RETRY_DELAYS[:2])
+    assert list(tmp_path.iterdir()) == [destination]
+
+
+@pytest.mark.parametrize("winerror", [None, 183])
+def test_other_permission_errors_are_not_retried(tmp_path, monkeypatch, winerror):
+    destination = tmp_path / "result.txt"
+    destination.write_text("old")
+    error = PermissionError(13, "Permission denied") if winerror is None else _windows_error(winerror)
+    calls = []
+
+    def refuse(source, target):
+        calls.append(target)
+        raise error
+
+    monkeypatch.setattr(files.os, "replace", refuse)
+    monkeypatch.setattr(files.time, "sleep", lambda delay: pytest.fail("unexpected retry"))
+    with pytest.raises(PermissionError):
+        atomic_write(destination, lambda temporary: temporary.write_text("new"))
+    assert len(calls) == 1
+    assert destination.read_text() == "old"
+    assert list(tmp_path.iterdir()) == [destination]
+
+
+def test_persistent_windows_replace_refusal_propagates_after_bounded_retries(tmp_path, monkeypatch):
+    destination = tmp_path / "result.txt"
+    destination.write_text("old")
+    calls = []
+
+    def refuse(source, target):
+        calls.append(target)
+        raise _windows_error(32)
+
+    sleeps = []
+    monkeypatch.setattr(files.os, "replace", refuse)
+    monkeypatch.setattr(files.time, "sleep", sleeps.append)
+    with pytest.raises(PermissionError):
+        atomic_write(destination, lambda temporary: temporary.write_text("new"))
+    assert len(calls) == len(files._REPLACE_RETRY_DELAYS) + 1
+    assert sleeps == list(files._REPLACE_RETRY_DELAYS)
+    assert destination.read_text() == "old"
+    assert list(tmp_path.iterdir()) == [destination]
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows sharing semantics")
+def test_replacement_waits_for_a_reader_to_close_the_destination(tmp_path):
+    destination = tmp_path / "result.txt"
+    destination.write_text("old")
+    reader = destination.open("rb")
+    Timer(0.05, reader.close).start()
+    atomic_write(destination, lambda temporary: temporary.write_text("new"))
+    assert reader.closed
+    assert destination.read_text() == "new"

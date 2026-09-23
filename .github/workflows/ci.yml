@@ -46,7 +46,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-26.04-arm]
+        # Windows runs x64: uv.lock resolves no win-arm64 environment.
+        os: [ubuntu-26.04-arm, windows-2025]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7.0.1
@@ -62,7 +63,9 @@ jobs:
       - name: Run pytest
         run: uv run --no-sync pytest
 
+      # Lint and format results do not depend on the OS, so check them once.
       - name: Check Python lint and formatting
+        if: runner.os == 'Linux'
         run: |
           uv run --no-sync ruff check src/python
           uv run --no-sync ruff format --check src/python

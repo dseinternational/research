@@ -3,6 +3,7 @@
 
 """Publication identity at HTML, filesystem and HTTP URL boundaries."""
 
+import os
 from pathlib import Path
 
 import pytest
@@ -17,7 +18,12 @@ from dse_research_utils.report.assets import check_uploaded_assets, inspect_loca
         ("50%2520.csv", "50%20.csv"),
         ("plus+name.png", "plus+name.png"),
         ("caf%C3%A9.png", "café.png"),
-        ("figure%23question%3F.png", "figure#question?.png"),
+        ("figure%23hash.png", "figure#hash.png"),
+        pytest.param(
+            "figure%23question%3F.png",
+            "figure#question?.png",
+            marks=pytest.mark.skipif(os.name == "nt", reason="'?' is not valid in Windows filenames"),
+        ),
         ("amp&amp;name.png", "amp&name.png"),
     ],
 )
@@ -58,7 +64,7 @@ def test_unicode_whitespace_is_part_of_the_requested_filename(tmp_path, whitespa
 def test_internal_symlink_retains_the_browser_requested_alias(tmp_path):
     (tmp_path / "images").mkdir()
     (tmp_path / "images" / "real.png").write_bytes(b"image")
-    (tmp_path / "alias.png").symlink_to("images/real.png")
+    (tmp_path / "alias.png").symlink_to(Path("images", "real.png"))
     page = tmp_path / "index.html"
     page.write_text('<img src="alias.png">', encoding="utf-8")
     inspection = inspect_local_assets(page)
@@ -98,7 +104,7 @@ def test_symlinked_upload_root_preserves_internal_alias_suffix(tmp_path, use_roo
 
 def test_dot_segments_are_normalized_before_following_filesystem_symlinks(tmp_path):
     (tmp_path / "deep" / "nested").mkdir(parents=True)
-    (tmp_path / "alias").symlink_to("deep/nested", target_is_directory=True)
+    (tmp_path / "alias").symlink_to(Path("deep", "nested"), target_is_directory=True)
     (tmp_path / "image.png").write_bytes(b"browser target")
     page = tmp_path / "index.html"
     page.write_text('<img src="alias/../image.png">', encoding="utf-8")
@@ -220,7 +226,7 @@ def test_distinct_finite_page_aliases_are_checked_in_each_browser_url_context(tm
     (tmp_path / "shared" / "report.html").write_text('<img src="image.png">', encoding="utf-8")
     for name in ("first", "second"):
         (tmp_path / name).mkdir()
-        (tmp_path / name / "report.html").symlink_to("../shared/report.html")
+        (tmp_path / name / "report.html").symlink_to(Path("..", "shared", "report.html"))
     (tmp_path / "first" / "image.png").write_bytes(b"image")
     page = tmp_path / "index.html"
     page.write_text('<a href="first/report.html">First</a><a href="second/report.html">Second</a>', encoding="utf-8")

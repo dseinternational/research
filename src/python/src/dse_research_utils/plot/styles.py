@@ -40,6 +40,9 @@ LINE_COLOUR = "#c0c0c0"
 
 FONT_SIZE_DEFAULT = 12
 
+FONT_FAMILY_DEFAULT = "Noto Sans"
+FONT_FAMILY_MATH = "Noto Sans Math"
+
 DEFAULT_STYLE_DICT = {
     # Figure Settings
     "figure.figsize": FIGSIZE_MD,
@@ -51,10 +54,30 @@ DEFAULT_STYLE_DICT = {
     "figure.titleweight": "bold",
     # Font and Text
     "font.family": "sans-serif",
-    "font.sans-serif": ["Source Sans 3", "Helvetica Neue LT Std", "Helvetica", "Arial", "DejaVu Sans", "sans-serif"],
+    "font.sans-serif": [
+        FONT_FAMILY_DEFAULT,
+        "Helvetica Neue LT Std",
+        "Helvetica",
+        "Arial",
+        "DejaVu Sans",
+        "sans-serif",
+    ],
     # "font.stretch": "semi-condensed",
     "font.size": FONT_SIZE_DEFAULT,
     "text.color": TEXT_COLOUR,
+    # Math Text
+    # Noto Sans Math has a single upright face, so the italic and bold styles
+    # come from Noto Sans, the text family it is designed to pair with. STIX
+    # Sans supplies what Noto Sans Math cannot reach through mathtext
+    # (\mathbb, sized delimiters). \mathcal renders upright.
+    "mathtext.fontset": "custom",
+    "mathtext.rm": FONT_FAMILY_MATH,
+    "mathtext.sf": FONT_FAMILY_MATH,
+    "mathtext.cal": FONT_FAMILY_MATH,
+    "mathtext.it": f"{FONT_FAMILY_DEFAULT}:italic",
+    "mathtext.bf": f"{FONT_FAMILY_DEFAULT}:bold",
+    "mathtext.bfit": f"{FONT_FAMILY_DEFAULT}:italic:bold",
+    "mathtext.fallback": "stixsans",
     # Axes
     "axes.labelsize": FONT_SIZE_DEFAULT,
     "axes.titlesize": FONT_SIZE_DEFAULT,

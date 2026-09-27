@@ -11,10 +11,10 @@ This package's `pyproject.toml` is the canonical source of the dependency floors
 
 ## Install
 
-Install the dependency baseline from `v0.15.2` with the command below once the tag is available. The [0.15.2 upgrade notes](../../docs/migrating-to-0.15.2.md) explain the minimum versions and checks for existing consumers.
+Install `v0.16.0` with the command below once the tag is available. The [0.16.0 upgrade notes](../../docs/migrating-to-0.16.md) explain the new default plot fonts, the minimum versions and the checks for existing consumers.
 
 ```bash
-uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.15.2#subdirectory=src/python"
+uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.16.0#subdirectory=src/python"
 ```
 
 The base install carries the modelling stack (PyMC, PyTensor, nutpie, ArviZ, PreliZ), the numerics core, and the netCDF engine (h5netcdf, h5py) that `InferenceData.to_netcdf` requires. Optional layers are extras:

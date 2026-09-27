@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import matplotlib.pyplot as plt
+from matplotlib import font_manager
 
 FIGSIZE_XS = (2.913, 2.060)  # 74mm x 52mm (A8 landscape)
 FIGSIZE_SM = (4.134, 2.923)  # 105mm x 74mm (A7 landscape)
@@ -42,6 +43,7 @@ FONT_SIZE_DEFAULT = 12
 
 FONT_FAMILY_DEFAULT = "Noto Sans"
 FONT_FAMILY_MATH = "Noto Sans Math"
+FONT_FAMILY_FALLBACK = "DejaVu Sans"  # ships with matplotlib, so always installed
 
 DEFAULT_STYLE_DICT = {
     # Figure Settings
@@ -53,7 +55,13 @@ DEFAULT_STYLE_DICT = {
     "figure.titlesize": FONT_SIZE_DEFAULT,
     "figure.titleweight": "bold",
     # Font and Text
-    "font.family": "sans-serif",
+    # matplotlib resolves the generic "sans-serif" to one font, the first
+    # installed entry of font.sans-serif, and falls back glyph by glyph only
+    # across the families listed in font.family. Noto Sans has no arrows or
+    # mathematical relations (→ ≈ ≤ ✓), so DejaVu Sans draws them.
+    # set_matplotlib_default_style() puts Noto Sans Math ahead of DejaVu Sans
+    # when it is installed.
+    "font.family": ["sans-serif", FONT_FAMILY_FALLBACK],
     "font.sans-serif": [
         FONT_FAMILY_DEFAULT,
         "Helvetica Neue LT Std",
@@ -124,8 +132,49 @@ DEFAULT_STYLE_DICT = {
 
 
 def set_matplotlib_default_style() -> None:
-    """Applies the default custom matplotlib style dictionary."""
+    """Applies the default custom matplotlib style dictionary.
+
+    ``font.family`` is then set from :func:`default_font_families`, so plain text
+    draws the symbols Noto Sans lacks from Noto Sans Math where it is installed.
+    Like any rcParam, the setting applies to text created after the call.
+    """
     plt.style.use(DEFAULT_STYLE_DICT)
+    plt.rcParams["font.family"] = default_font_families()
+
+
+def default_font_families() -> list[str]:
+    """Return the ``font.family`` list for the default style on this machine.
+
+    matplotlib falls back to another font glyph by glyph only across the families
+    named in ``font.family``, and resolves the generic ``"sans-serif"`` to a single
+    font: the first installed entry of ``font.sans-serif``. Noto Sans has no
+    arrows, mathematical operators, technical symbols, geometric shapes or
+    dingbats, so the list continues with Noto Sans Math, which is designed to pair
+    with it, and then DejaVu Sans, which ships with matplotlib.
+
+    Noto Sans Math is listed only when it is installed, because matplotlib logs a
+    warning every time it lays out text with a named family it cannot find.
+
+    Returns
+    -------
+    list[str]
+        ``["sans-serif", "Noto Sans Math", "DejaVu Sans"]``, or
+        ``["sans-serif", "DejaVu Sans"]`` when Noto Sans Math is not installed.
+    """
+    families = ["sans-serif"]
+    if _font_family_installed(FONT_FAMILY_MATH):
+        families.append(FONT_FAMILY_MATH)
+    families.append(FONT_FAMILY_FALLBACK)
+    return families
+
+
+def _font_family_installed(family: str) -> bool:
+    # A list, because FontProperties parses a lone string as a fontconfig pattern.
+    try:
+        font_manager.findfont(font_manager.FontProperties(family=[family]), fallback_to_default=False)
+    except ValueError:
+        return False
+    return True
 
 
 def categorical_palette(n: int, palette: str | None = None) -> list:

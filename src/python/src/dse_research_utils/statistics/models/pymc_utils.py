@@ -14,6 +14,7 @@ from pytensor.tensor.variable import TensorVariable
 from dse_research_utils.console.console import get_console
 from dse_research_utils.console.sections import section_header, subsection
 from dse_research_utils.math.constants import EPSILON
+from dse_research_utils.plot.styles import FONT_FAMILY_DEFAULT
 
 if TYPE_CHECKING:
     from graphviz import Digraph
@@ -75,10 +76,13 @@ def model_to_graphviz(model: pm.Model, *, dpi: int | None = None) -> Digraph:
             "(pip install dse-research-utils[graphs]) and the system Graphviz binaries."
         ) from exc
 
+    # Graphviz writes fontname verbatim into SVG font-family, so name a generic
+    # fallback for viewers without Noto Sans; Pango reads the same list for PNG.
+    fontname = f"{FONT_FAMILY_DEFAULT},sans-serif"
     dg = pm.model_to_graphviz(model)
-    dg.graph_attr["fontname"] = "Helvetica"
-    dg.node_attr["fontname"] = "Helvetica"
-    dg.edge_attr["fontname"] = "Helvetica"
+    dg.graph_attr["fontname"] = fontname
+    dg.node_attr["fontname"] = fontname
+    dg.edge_attr["fontname"] = fontname
     if dpi is not None:
         dg.graph_attr["dpi"] = str(dpi)
     return dg

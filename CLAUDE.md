@@ -101,6 +101,8 @@ Run anything inside the environment with `uv run <command>`, or activate `.venv`
 
 `dse_research_utils.plot.graphs` additionally needs the system Graphviz `dot` binary, which is not a Python package: `brew install graphviz`, `apt install graphviz`, or `winget install Graphviz.Graphviz`.
 
+The default plot style (`dse_research_utils.plot.styles`) sets text in Noto Sans and math in Noto Sans Math, and `statistics.models.pymc_utils.model_to_graphviz` labels model graphs in Noto Sans. Both are system fonts, not Python packages: `brew install --cask font-noto-sans font-noto-sans-math`, `apt install fonts-noto-core`, or the Google Fonts downloads on Windows. Without them matplotlib falls back to DejaVu Sans. matplotlib caches its font list, so after installing, delete `fontlist-*.json` from the directory `matplotlib.get_cachedir()` returns.
+
 ### Python — dependencies
 
 `src/python/pyproject.toml` is the single source of truth for the shared compiled core — the dependency floors every consuming repo inherits transitively by depending on `dse-research-utils`. Declare dependencies there, never by re-listing packages in a consuming repo:

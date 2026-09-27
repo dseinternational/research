@@ -37,3 +37,24 @@ def test_set_matplotlib_default_style_applies() -> None:
     assert plt.rcParams["figure.facecolor"] == "white"
     assert plt.rcParams["axes.grid"] is True
     assert plt.rcParams["font.size"] == float(styles.FONT_SIZE_DEFAULT)
+
+
+def test_default_style_uses_noto_fonts() -> None:
+    with plt.rc_context():
+        styles.set_matplotlib_default_style()
+        assert plt.rcParams["font.sans-serif"][0] == "Noto Sans"
+        assert plt.rcParams["mathtext.fontset"] == "custom"
+        assert plt.rcParams["mathtext.rm"] == "Noto Sans Math"
+        assert plt.rcParams["mathtext.it"] == "Noto Sans:italic"
+
+
+def test_default_style_renders_math_text() -> None:
+    # Draws whether or not the Noto fonts are installed: findfont falls back.
+    with plt.rc_context():
+        styles.set_matplotlib_default_style()
+        fig, ax = plt.subplots()
+        ax.set_title(
+            r"$\hat{R} \leq 1.01,\ \mathbf{x} \sim \mathcal{N}(\mu, \sigma^2),\ \mathbb{E}\left[\frac{a}{b}\right]$"
+        )
+        fig.canvas.draw()
+        plt.close(fig)

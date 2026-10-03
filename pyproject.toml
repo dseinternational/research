@@ -26,7 +26,7 @@ dev = [
     "hatch>=1.18.1",
     "pandas-stubs>=3.0.5.260914",
     "pytest>=9.1.1",
-    "ruff>=0.16.9",
+    "ruff>=0.16.10",
     "scipy-stubs>=1.18.1.1"
 ]
 # Pure-Python tail used by research work in this repo (notebooks, scratch

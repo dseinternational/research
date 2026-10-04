@@ -34,13 +34,26 @@ ESS_THRESHOLD = 400
 BFMI_THRESHOLD = 0.3
 
 
-def _bfmi_per_chain(trace: Any) -> list[float] | None:
+def bfmi_per_chain(trace: Any) -> list[float] | None:
     """Per-chain BFMI from the sampler energy (Betancourt 2016).
 
     Compute it directly to return a plain list across ArviZ container versions:
     ``BFMI = sum((E_t - E_{t-1})**2) / sum((E_t - mean(E))**2)`` per chain. Returns
-    ``None`` if the energy trace is unavailable. Named dimensions determine the
-    draw order, regardless of the array's storage order.
+    ``None`` if the energy trace is unavailable or cannot be read. A chain with
+    constant energy returns NaN. Named dimensions determine the draw order,
+    regardless of the array's storage order. No pass/fail policy is applied.
+
+    Parameters
+    ----------
+    trace
+        Trace with an energy variable in its ``sample_stats`` group. Energy
+        must have a draw dimension and may omit the chain dimension for a
+        single chain. Additional dimensions are not flattened.
+
+    Returns
+    -------
+    list of float or None
+        Values in chain coordinate order, or None when unavailable.
     """
     try:
         energy_array = trace.sample_stats["energy"]
@@ -55,6 +68,40 @@ def _bfmi_per_chain(trace: Any) -> list[float] | None:
         return out
     except Exception:
         return None
+
+
+def _bfmi_per_chain(trace: Any) -> list[float] | None:
+    """Retain the private compatibility path used by existing consumers."""
+    return bfmi_per_chain(trace)
+
+
+def diagnostic_extrema(summary: pd.DataFrame) -> tuple[float, float, tuple[str, ...]]:
+    """Reduce an existing unrounded diagnostic table without computing it again.
+
+    Parameters
+    ----------
+    summary
+        Table with ``r_hat``, ``ess_bulk`` and ``ess_tail`` columns. Missing
+        columns, nullable missing values and values that cannot be converted
+        to numbers become NaN.
+        Callers select variables, remove any permitted constant rows and
+        rename diagnostic columns before calling this function. They must
+        supply unrounded values; rounding cannot be reversed here.
+
+    Returns
+    -------
+    tuple
+        Largest R-hat, smallest bulk/tail effective sample size, and row names
+        with at least one non-finite diagnostic, in table order. Extrema skip
+        NaN, but retain infinities. Entirely unavailable extrema are NaN. The
+        unavailable names must be considered separately by any pass/fail rule.
+
+    Raises
+    ------
+    ValueError
+        If the table has no rows.
+    """
+    return _diagnostic_extrema(_diagnostic_frame(summary))
 
 
 def write_diagnostics_summary(
@@ -193,8 +240,11 @@ def write_diagnostics_summary(
 
 
 def _diagnostic_frame(summary: pd.DataFrame) -> pd.DataFrame:
-    """Keep all three required diagnostics, representing absent columns as NaN."""
-    return summary.reindex(columns=["r_hat", "ess_bulk", "ess_tail"]).apply(pd.to_numeric, errors="coerce")
+    """Keep required diagnostics with absent, invalid and nullable missing cells as NaN."""
+    numeric = summary.reindex(columns=["r_hat", "ess_bulk", "ess_tail"]).apply(pd.to_numeric, errors="coerce")
+    # Numeric coercion can retain pd.NA in nullable dtypes. NumPy floats make
+    # missing cells explicit in both the reductions and the finite-value mask.
+    return numeric.astype(float)
 
 
 def _diagnostic_extrema(frame: pd.DataFrame) -> tuple[float, float, tuple[str, ...]]:

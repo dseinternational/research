@@ -1,7 +1,7 @@
 > [!NOTE]
 > Drafted by a LLM-based AI tool (Codex/GPT-6).
 
-<!-- cspell:words pathlib dataclass shutil fsmonitor worktree -->
+<!-- cspell:words pathlib dataclass shutil fsmonitor worktree umask -->
 
 # Shared file writes and provenance
 
@@ -53,6 +53,20 @@ In this adapter, `_json_default` is the consumer's existing encoder. Changing it
 On POSIX, the temporary file starts with owner-only read/write permissions. The destination takes the temporary file's final permissions and metadata. A callback can use `shutil.copy2` to retain source-file metadata or set an explicitly required mode. Existing destination permissions are not inherited. VG's current ordinary file creation can produce different permissions, so its migration must choose the intended sharing mode explicitly.
 
 An existing destination symlink is replaced as a directory entry; its target is unchanged. A callback must leave a regular file, not a symlink or directory. Created parent directories are retained after failure.
+
+### Unreleased permission option
+
+The working source adds a keyword-only `mode` option. `mode=None` keeps the existing behaviour. An integer such as `mode=0o640` sets those permission bits after the callback. `mode="default"` uses the mode of an ordinary newly created file in the destination directory. An empty, exclusively created probe reads that mode without changing the process-wide `umask`. The probe is removed before replacement. A failed probe or permission change preserves the old destination.
+
+```python
+atomic_write(
+    Path("output") / "estimates.csv",
+    lambda temporary: frame.to_csv(temporary, index=False),
+    mode="default",
+)
+```
+
+The public `default_file_mode(directory)` helper exposes the same probe for callers that need the numeric mode. Its directory must already exist. Explicit `mode` values override permissions set by the callback, including a metadata-preserving copy. These options do not preserve access-control entries or inherit an existing destination's permissions. They need a library release before a consumer pinned to an earlier tag can use them.
 
 This operation does not coordinate competing writers. The last successful replacement wins, and a read-modify-write operation can still lose another writer's update. It does not commit several files as one transaction or guarantee durability after a power loss. The [directory promotion helper](consolidation-migration.md#promote-a-completed-directory) accepts an explicit lock and retains a backup for completed directory trees.
 

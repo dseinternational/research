@@ -18,7 +18,7 @@ should fail (dseinternational/research#65).
 
 **Coercion.** ``trace.sample_stats["diverging"]`` is an xarray ``DataArray``; reduce it
 via ``np.asarray(....values).sum()`` rather than relying on ``DataArray.__int__``, and
-take BFMI from :func:`dse_research_utils.statistics.diagnostics._bfmi_per_chain`, since
+take BFMI from :func:`dse_research_utils.statistics.diagnostics.bfmi_per_chain`, since
 ``az.bfmi`` returns a ``DataTree`` in ArviZ 1.x that cannot be coerced to an array.
 
 This module extracts the numbers and nothing else. It deliberately does **not** decide
@@ -35,7 +35,8 @@ from typing import Any
 import arviz as az
 import numpy as np
 
-from dse_research_utils.statistics.diagnostics import _bfmi_per_chain, _diagnostic_extrema, _diagnostic_frame
+from dse_research_utils.statistics.diagnostics import bfmi_per_chain as _bfmi_per_chain
+from dse_research_utils.statistics.diagnostics import diagnostic_extrema
 
 
 @dataclass(frozen=True)
@@ -89,13 +90,13 @@ def sampling_quality(trace: Any, *, var_names: list[str] | None = None) -> Sampl
         uncheckable fit means for them.
     """
     # ``round_to="none"`` must be the string — see the module docstring.
-    summ = _diagnostic_frame(az.summary(trace, var_names=var_names, round_to="none", kind="diagnostics"))
+    summ = az.summary(trace, var_names=var_names, round_to="none", kind="diagnostics")
     # pandas ``.max()`` / ``.min()`` skip NaN by default, so a constant or unsampled
     # variable does not poison the reduction. That is the right *extraction*
     # behaviour — one unassessable nuisance term should not make ``max_rhat``
     # meaningless — but it is not a verdict: the skipped rows are reported
     # separately through ``unassessable`` so a gate can fail closed on them.
-    max_rhat, min_ess, unassessable = _diagnostic_extrema(summ)
+    max_rhat, min_ess, unassessable = diagnostic_extrema(summ)
 
     n_div: int | None = None
     sample_stats = getattr(trace, "sample_stats", None)

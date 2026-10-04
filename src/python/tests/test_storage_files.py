@@ -6,6 +6,8 @@ import json
 import os
 import shutil
 import stat
+import subprocess
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier, Timer
 
@@ -270,3 +272,69 @@ def test_replacement_waits_for_a_reader_to_close_the_destination(tmp_path):
     atomic_write(destination, lambda temporary: temporary.write_text("new"))
     assert reader.closed
     assert destination.read_text() == "new"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX permission bits")
+def test_default_file_mode_matches_creation_without_changing_umask(tmp_path):
+    # Change only a child process's umask; other tests and threads retain theirs.
+    code = """
+import os
+import stat
+import sys
+from pathlib import Path
+from dse_research_utils.storage.files import atomic_write, default_file_mode
+root = Path(sys.argv[1])
+for mask in (0o022, 0o027, 0o077):
+    os.umask(mask)
+    directory = root / str(mask)
+    directory.mkdir()
+    reference = directory / 'plain.txt'
+    reference.write_text('plain')
+    expected = stat.S_IMODE(reference.stat().st_mode)
+    assert default_file_mode(directory) == expected
+    atomic_write(directory / 'atomic.txt', lambda p: p.write_text('new'), mode='default')
+    assert stat.S_IMODE((directory / 'atomic.txt').stat().st_mode) == expected
+    after = directory / 'after.txt'
+    after.write_text('after')
+    assert stat.S_IMODE(after.stat().st_mode) == expected
+    assert sorted(p.name for p in directory.iterdir()) == ['after.txt', 'atomic.txt', 'plain.txt']
+"""
+    subprocess.run([sys.executable, "-c", code, str(tmp_path)], check=True)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX permission bits")
+def test_explicit_atomic_mode_overrides_copied_permissions(tmp_path):
+    source = tmp_path / "source.txt"
+    source.write_text("source")
+    source.chmod(0o600)
+    destination = tmp_path / "out.txt"
+    destination.write_text("old")
+    destination.chmod(0o777)
+    atomic_write(destination, lambda p: shutil.copy2(source, p), mode=0o640)
+    assert destination.read_text() == "source"
+    assert stat.S_IMODE(destination.stat().st_mode) == 0o640
+    assert source.stat().st_mtime_ns == destination.stat().st_mtime_ns
+
+
+def test_mode_probe_failure_keeps_old_file_and_cleans_staged_output(tmp_path, monkeypatch):
+    destination = tmp_path / "out.txt"
+    destination.write_text("old")
+
+    def fail_probe(directory):
+        raise PermissionError("probe denied")
+
+    monkeypatch.setattr(files, "default_file_mode", fail_probe)
+    with pytest.raises(PermissionError, match="probe denied"):
+        atomic_write(destination, lambda p: p.write_text("new"), mode="default")
+    assert destination.read_text() == "old"
+    assert list(tmp_path.iterdir()) == [destination]
+
+
+@pytest.mark.parametrize("mode", [True, 0.5, "existing", -1, 0o10000])
+def test_invalid_mode_is_rejected_before_callback_or_directory_creation(tmp_path, mode):
+    def writer(path):
+        pytest.fail("callback should not run")
+
+    with pytest.raises((TypeError, ValueError)):
+        atomic_write(tmp_path / "new/out.txt", writer, mode=mode)
+    assert list(tmp_path.iterdir()) == []

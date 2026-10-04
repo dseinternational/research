@@ -1,7 +1,7 @@
 > [!NOTE]
 > Drafted by a LLM-based AI tool (Codex/GPT-6).
 
-<!-- cspell:words hsgp -->
+<!-- cspell:words hsgp bfmi -->
 
 # Python utilities
 
@@ -39,6 +39,12 @@ Helpers that need an extra lazy-import it and raise a clear error when it is abs
 ## Shared file operations
 
 `storage.files.atomic_write` writes one complete file through a temporary file beside its destination. `metadata.provenance` provides `git_snapshot`, `package_versions` and `sha256_file` without choosing a project's manifest schema. See the [usage and migration guide](../../docs/shared-file-provenance.md) for examples, failure handling and compatibility requirements.
+
+The working source also adds an optional `mode` to `atomic_write` and a `default_file_mode` probe. Both preserve the existing owner-only default unless the caller opts into another mode. These additions are unreleased.
+
+## Shared sampling signals
+
+The unreleased `statistics.diagnostics.bfmi_per_chain` reads energy diagnostics in named chain and draw order. `diagnostic_extrema` reduces an existing unrounded summary into maximum R-hat, minimum effective sample size and names with unavailable diagnostics. Neither selects variables nor applies a pass/fail rule. Existing `sampling_quality` and diagnostic-writing APIs retain their current behaviour.
 
 ## Shared statistical arrays
 

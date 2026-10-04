@@ -82,7 +82,8 @@ def diagnostic_extrema(summary: pd.DataFrame) -> tuple[float, float, tuple[str, 
     ----------
     summary
         Table with ``r_hat``, ``ess_bulk`` and ``ess_tail`` columns. Missing
-        columns and values that cannot be converted to numbers become NaN.
+        columns, nullable missing values and values that cannot be converted
+        to numbers become NaN.
         Callers select variables, remove any permitted constant rows and
         rename diagnostic columns before calling this function. They must
         supply unrounded values; rounding cannot be reversed here.
@@ -239,8 +240,11 @@ def write_diagnostics_summary(
 
 
 def _diagnostic_frame(summary: pd.DataFrame) -> pd.DataFrame:
-    """Keep all three required diagnostics, representing absent columns as NaN."""
-    return summary.reindex(columns=["r_hat", "ess_bulk", "ess_tail"]).apply(pd.to_numeric, errors="coerce")
+    """Keep required diagnostics with absent, invalid and nullable missing cells as NaN."""
+    numeric = summary.reindex(columns=["r_hat", "ess_bulk", "ess_tail"]).apply(pd.to_numeric, errors="coerce")
+    # Numeric coercion can retain pd.NA in nullable dtypes. NumPy floats make
+    # missing cells explicit in both the reductions and the finite-value mask.
+    return numeric.astype(float)
 
 
 def _diagnostic_extrema(frame: pd.DataFrame) -> tuple[float, float, tuple[str, ...]]:

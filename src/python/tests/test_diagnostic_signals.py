@@ -55,3 +55,48 @@ def test_missing_diagnostic_column_does_not_hide_unavailable_rows():
     assert unavailable == ("a",)
     with pytest.raises(ValueError, match="No parameters"):
         diagnostic_extrema(pd.DataFrame())
+
+
+@pytest.mark.parametrize("dtype", ["Float64", "Int64", "UInt64", "double[pyarrow]", "int64[pyarrow]", "string"])
+def test_nullable_diagnostics_keep_every_unavailable_row(dtype):
+    summary = pd.DataFrame(
+        {
+            "r_hat": pd.array([1, pd.NA, 1, 1, pd.NA], dtype=dtype),
+            "ess_bulk": pd.array([700, 600, pd.NA, 600, pd.NA], dtype=dtype),
+            "ess_tail": pd.array([800, 700, 650, pd.NA, pd.NA], dtype=dtype),
+        },
+        index=["healthy", "missing_rhat", "missing_bulk", "missing_tail", "missing_all"],
+    )
+    original = summary.copy(deep=True)
+    assert diagnostic_extrema(summary) == (
+        1.0,
+        600.0,
+        ("missing_rhat", "missing_bulk", "missing_tail", "missing_all"),
+    )
+    pd.testing.assert_frame_equal(summary, original)
+
+
+@pytest.mark.parametrize("dtype", ["Float64", "Int64", "double[pyarrow]", "int64[pyarrow]"])
+def test_entirely_missing_nullable_diagnostics_return_nan_extrema(dtype):
+    summary = pd.DataFrame(
+        {name: pd.array([pd.NA, pd.NA], dtype=dtype) for name in ("r_hat", "ess_bulk", "ess_tail")},
+        index=["first", "second"],
+    )
+    original = summary.copy(deep=True)
+    max_rhat, min_ess, unavailable = diagnostic_extrema(summary)
+    assert np.isnan(max_rhat) and np.isnan(min_ess)
+    assert unavailable == ("first", "second")
+    pd.testing.assert_frame_equal(summary, original)
+
+
+def test_nullable_diagnostics_retain_unrounded_values_and_infinities():
+    summary = pd.DataFrame(
+        {
+            "r_hat": pd.array([1.01004, np.inf, pd.NA], dtype="Float64"),
+            "ess_bulk": pd.array([399.8, -np.inf, pd.NA], dtype="Float64"),
+            "ess_tail": pd.array([500, 600, pd.NA], dtype="Int64"),
+        },
+        index=["boundary", "infinite", "missing"],
+    )
+    assert diagnostic_extrema(summary.iloc[:1]) == (1.01004, 399.8, ())
+    assert diagnostic_extrema(summary) == (np.inf, -np.inf, ("infinite", "missing"))

@@ -115,6 +115,38 @@ def test_sampling_quality_keeps_finite_ess_when_other_column_is_missing(monkeypa
     assert quality.unassessable == ("mu",)
 
 
+@pytest.mark.parametrize("all_missing_rhat", [False, True])
+def test_gate_and_sampling_quality_keep_nullable_missing_diagnostics(tmp_path, monkeypatch, all_missing_rhat):
+    from dse_research_utils.statistics.sampling_quality import sampling_quality
+
+    summary = pd.DataFrame(
+        {
+            "r_hat": pd.array([pd.NA if all_missing_rhat else 1.0, pd.NA], dtype="Float64"),
+            "ess_bulk": pd.array([500, pd.NA], dtype="Int64"),
+            "ess_tail": pd.array([600, pd.NA], dtype="Int64"),
+        },
+        index=["mu", "sigma"],
+    )
+    monkeypatch.setattr("arviz.summary", lambda *args, **kwargs: summary)
+    unavailable = ("mu", "sigma") if all_missing_rhat else ("sigma",)
+    quality = sampling_quality(_make_trace())
+    assert quality.unassessable == unavailable
+    assert quality.min_ess == 500.0
+    if all_missing_rhat:
+        assert np.isnan(quality.max_rhat)
+    else:
+        assert quality.max_rhat == 1.0
+
+    result = write_diagnostics_summary(_make_trace(), str(tmp_path))
+    assert result["scan_completed"] is True
+    assert result["unassessable_parameters"] == list(unavailable)
+    assert result["checks"]["diagnostics_assessable"] is False
+    assert result["passed"] is False
+    assert result["max_rhat"] == (None if all_missing_rhat else 1.0)
+    assert result["min_ess"] == 500.0
+    assert json.loads((tmp_path / "diagnostics_summary.json").read_text()) == result
+
+
 @pytest.mark.parametrize(
     "bfmi,expected", [(np.array([0.2, 0.8]), 0.2), (np.array([]), None), ([], None), (np.array([0.2, np.nan]), None)]
 )

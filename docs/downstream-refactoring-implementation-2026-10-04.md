@@ -64,7 +64,7 @@ An initial vocabulary-growth run found three failures in a paper-helper test fix
 
 The descriptive adapter still runs the shared Anderson-Darling calculation before dropping its two rows. A synthetic timing check compared the full original and shared summaries for 10,000 normal observations. All retained values matched. Median times over three runs were 2.79 seconds and 2.84 seconds. The added Anderson-Darling calculation alone took a median 0.062 seconds for one million normal observations. These timings do not establish production performance or the cost of every data distribution.
 
-All 79 Python cells in the seven edited Quarto files compiled as source. The new reader tests execute the boosting template's setup and parsing helpers. Complete reports were not rendered from production fit artefacts. No production fit was run or altered. The projects' full slow fitting suites have not been run.
+All 79 Python cells in the seven edited Quarto files compiled as source. The new reader tests execute the boosting template's setup and parsing helpers. Complete reports were not rendered from production fit artefacts. No production fit was run or altered. The projects' full slow fitting suites were not run for this initial local implementation. Pull requests record the subsequent publication checks.
 
 ## Review and release state
 
@@ -76,4 +76,4 @@ The downstream edits are committed on `dev/codex/shared-refactors` in each repos
 | Vocabulary growth               | `/private/tmp/dse-shared-refactors/vocabulary-growth`           | `dc17c0ed3b4c7043142e3eebdebcff125986e96b` |
 | US birth certificates           | `/private/tmp/dse-shared-refactors/us-birth-certificates`       | `eee5efcd517fff55092d7c0c7188811c30fdc86d` |
 
-The new library APIs are unreleased. Downstream projects retain their `v0.16.2` pins and only import APIs already present in that release. After a library release, their permission adapters and per-chain diagnostic calculations can adopt the new public functions. Their own thresholds, exemptions and publication decisions must remain explicit. No branches have been pushed and no pull requests have been opened.
+The new library APIs are unreleased. Downstream projects retain their `v0.16.2` pins and only import APIs already present in that release. After a library release, their permission adapters and per-chain diagnostic calculations can adopt the new public functions. Their own thresholds, exemptions and publication decisions must remain explicit. At the completion of local implementation, no branches had been pushed and no pull requests had been opened.

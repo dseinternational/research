@@ -11,10 +11,10 @@ This package's `pyproject.toml` is the canonical source of the dependency floors
 
 ## Install
 
-Install `v0.16.2` with the command below once the tag is published after merge. The [0.16.2 upgrade notes](../../docs/migrating-to-0.16.2.md) explain the new dependency minimums and downstream upgrade steps. The [0.16.1 upgrade notes](../../docs/migrating-to-0.16.1.md) explain the font fallback for symbols that Noto Sans lacks. The [0.16.0 upgrade notes](../../docs/migrating-to-0.16.md) explain the new default plot fonts, the minimum versions and the checks for existing consumers.
+Install `v0.17.0` with the command below once the tag is published after merge. The [0.17.0 upgrade notes](../../docs/migrating-to-0.17.md) explain the diagnostic and file-permission APIs and downstream upgrade steps. The [0.16.2 upgrade notes](../../docs/migrating-to-0.16.2.md) explain the dependency minimums. The [0.16.1 upgrade notes](../../docs/migrating-to-0.16.1.md) explain the font fallback for symbols that Noto Sans lacks. The [0.16.0 upgrade notes](../../docs/migrating-to-0.16.md) explain the default plot fonts and the checks for existing consumers.
 
 ```bash
-uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.16.2#subdirectory=src/python"
+uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.17.0#subdirectory=src/python"
 ```
 
 The base install carries the modelling stack (PyMC, PyTensor, nutpie, ArviZ, PreliZ), the numerics core, and the netCDF engine (h5netcdf, h5py) that `InferenceData.to_netcdf` requires. Optional layers are extras:
@@ -40,11 +40,11 @@ Helpers that need an extra lazy-import it and raise a clear error when it is abs
 
 `storage.files.atomic_write` writes one complete file through a temporary file beside its destination. `metadata.provenance` provides `git_snapshot`, `package_versions` and `sha256_file` without choosing a project's manifest schema. See the [usage and migration guide](../../docs/shared-file-provenance.md) for examples, failure handling and compatibility requirements.
 
-The working source also adds an optional `mode` to `atomic_write` and a `default_file_mode` probe. Both preserve the existing owner-only default unless the caller opts into another mode. These additions are unreleased.
+Version 0.17.0 adds an optional `mode` to `atomic_write` and a `default_file_mode` probe. Omitting `mode` retains the callback's permissions, including the owner-only initial permissions when the callback does not change them. Callers can opt into explicit permission bits or the mode of an ordinary new file.
 
 ## Shared sampling signals
 
-The unreleased `statistics.diagnostics.bfmi_per_chain` reads energy diagnostics in named chain and draw order. `diagnostic_extrema` reduces an existing unrounded summary into maximum R-hat, minimum effective sample size and names with unavailable diagnostics. Neither selects variables nor applies a pass/fail rule. Existing `sampling_quality` and diagnostic-writing APIs retain their current behaviour.
+Version 0.17.0 exposes `statistics.diagnostics.bfmi_per_chain`, which reads energy diagnostics in named chain and draw order. `diagnostic_extrema` reduces an existing unrounded summary into maximum R-hat, minimum effective sample size and names with unavailable diagnostics. Neither selects variables nor applies a pass/fail rule. Nullable missing diagnostics now become NaN before reduction in both the new helper and existing diagnostic writers and sampling-quality helpers. Thresholds remain unchanged.
 
 ## Shared statistical arrays
 

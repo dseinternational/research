@@ -54,9 +54,9 @@ On POSIX, the temporary file starts with owner-only read/write permissions. The 
 
 An existing destination symlink is replaced as a directory entry; its target is unchanged. A callback must leave a regular file, not a symlink or directory. Created parent directories are retained after failure.
 
-### Unreleased permission option
+### Permission options in 0.17.0
 
-The working source adds a keyword-only `mode` option. `mode=None` keeps the existing behaviour. An integer such as `mode=0o640` sets those permission bits after the callback. `mode="default"` uses the mode of an ordinary newly created file in the destination directory. An empty, exclusively created probe reads that mode without changing the process-wide `umask`. The probe is removed before replacement. A failed probe or permission change preserves the old destination.
+Version 0.17.0 adds a keyword-only `mode` option. `mode=None` keeps the existing behaviour. An integer such as `mode=0o640` sets those permission bits after the callback. `mode="default"` uses the mode of an ordinary newly created file in the destination directory. An empty, exclusively created probe reads that mode without changing the process-wide `umask`. The probe is removed before replacement. A failed probe or permission change preserves the old destination.
 
 ```python
 atomic_write(
@@ -66,7 +66,7 @@ atomic_write(
 )
 ```
 
-The public `default_file_mode(directory)` helper exposes the same probe for callers that need the numeric mode. Its directory must already exist. Explicit `mode` values override permissions set by the callback, including a metadata-preserving copy. These options do not preserve access-control entries or inherit an existing destination's permissions. They need a library release before a consumer pinned to an earlier tag can use them.
+The public `default_file_mode(directory)` helper exposes the same probe for callers that need the numeric mode. Its directory must already exist. Explicit `mode` values override permissions set by the callback, including a metadata-preserving copy. These options do not preserve access-control entries or inherit an existing destination's permissions. Consumers must select `v0.17.0` or a later tag before using them; see the [0.17.0 upgrade notes](migrating-to-0.17.md).
 
 This operation does not coordinate competing writers. The last successful replacement wins, and a read-modify-write operation can still lose another writer's update. It does not commit several files as one transaction or guarantee durability after a power loss. The [directory promotion helper](consolidation-migration.md#promote-a-completed-directory) accepts an explicit lock and retains a backup for completed directory trees.
 

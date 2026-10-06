@@ -47,7 +47,7 @@ dependencies = [
 # and here cannot drift between repositories.
 viz = ["seaborn>=0.13.2"]          # dse_research_utils.plot.grids (histogram grids)
 graphs = ["graphviz>=0.21", "networkx>=3.7"]  # dse_research_utils.plot.graphs — ALSO needs the system Graphviz `dot` binary
-notebook = ["jupyter>=1.1.1", "jupytext>=1.19.5"]  # notebook/Jupyter stack (ipython drives plot.io.display_image)
+notebook = ["jupyter>=1.1.1", "jupytext>=1.19.6"]  # notebook/Jupyter stack (ipython drives plot.io.display_image)
 dependence = ["dcor>=0.7"]              # dse_research_utils.ml.feature_dependence.distance_corr_matrix
 tuning = ["optuna>=5.0.0", "optuna-integration>=5.0.0"]  # optuna 5 changed default samplers/importance evaluator; see the release notes before re-running a study
 io = ["orjson>=3.12.0", "tabulate>=0.10.0"]

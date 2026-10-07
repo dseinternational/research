@@ -1,13 +1,11 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Evidence-strength helpers: turn a posterior probability into a verbal label or odds.
+"""Map a posterior probability to a reporting label or odds.
 
-These are deliberately small, pure helpers shared across DSE research reports so the
-*evidence* attached to a claim is described the same way everywhere. They operate on a
-posterior probability that is already oriented toward a *named claim* (e.g. a
-probability of direction, or ``P(effect > delta)``); the label qualifies the strength
-of the evidence, never the size of the effect.
+The probability must refer to a named claim, such as ``P(effect >= delta)``.
+Labels describe the probability of that claim, not the effect size. They
+remain conditional on the model and its data.
 """
 
 _EVIDENCE_LADDER: tuple[tuple[float, str], ...] = (
@@ -19,13 +17,11 @@ _EVIDENCE_LADDER: tuple[tuple[float, str], ...] = (
 
 
 def evidence_label(prob: float) -> str:
-    """Round-odds evidence label for a posterior probability of a *named claim*.
+    """Label the posterior probability of a named claim.
 
-    The boundaries are round odds (3:1 / 10:1 / 30:1 / 100:1), deliberately *not*
-    the ``p = 0.05 / 0.025 / 0.01`` images, so they do not smuggle the significance
-    grid back in. ``prob`` must already be oriented toward the claim (e.g. the
-    probability of direction for a sign claim, or ``P(effect >= delta)`` for a
-    magnitude claim); the label qualifies the *evidence*, never the effect size.
+    Thresholds are 0.75, 0.91, 0.97 and 0.99; equality enters the higher band.
+    These approximate odds of 3:1, 10:1, 30:1 and 100:1. Orient ``prob`` toward
+    the claim before calling. The label does not describe effect size.
 
     Parameters
     ----------
@@ -65,30 +61,23 @@ def odds_string(prob: float) -> str:
 
 
 def favoured_direction(prob_positive: float) -> dict[str, float | str]:
-    """Evidence for the *favoured* direction of a signed effect.
-
-    :func:`evidence_label` expects a probability already oriented to a **named**
-    claim. For a sign claim the favoured direction is ``"positive"`` when
-    ``P(effect > 0) >= 0.5`` else ``"negative"``; the claim probability is
-    ``max(P>0, P<0)`` and the label qualifies the evidence for THAT direction — so a
-    clearly negative effect reads as strong evidence of a negative association rather
-    than the "inconclusive" that ``evidence_label(P>0)`` would return for the
-    *positive* claim. Report the raw ``P(effect > 0)`` separately for the benefit
-    claim; callers supply the direction words (benefit / harm for treatment effects,
-    positive / negative for associations).
+    """Label the more probable side of a signed effect.
 
     Parameters
     ----------
     prob_positive : float
-        ``P(effect > 0)`` for the effect of interest, in [0, 1].
+        ``P(effect > 0)`` in [0, 1]. The complement is treated as the negative
+        direction, which assumes no probability mass at exactly zero. If zero
+        has positive mass, the complement instead describes a non-positive effect.
 
     Returns
     -------
     dict
-        ``favoured_direction`` (``"positive"``/``"negative"``),
-        ``favoured_direction_prob`` (``max(P>0, P<0)``), and
-        ``favoured_direction_label`` (the :func:`evidence_label` for that
-        probability).
+        ``favoured_direction`` is positive when the supplied probability is
+        at least 0.5, otherwise negative. ``favoured_direction_prob`` is
+        ``max(prob_positive, 1 - prob_positive)``. ``favoured_direction_label``
+        applies :func:`evidence_label` to that probability. Report the raw
+        positive-direction probability separately when the claim requires it.
     """
     p_pos = float(prob_positive)
     if not 0.0 <= p_pos <= 1.0:

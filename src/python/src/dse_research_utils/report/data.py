@@ -1,19 +1,13 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Report data-access helpers with graceful degradation before a fit exists.
+"""Read model artefacts through a project-supplied directory resolver.
 
-Every DSE report chapter reads a fitted model's artefacts (summary CSVs, JSON gate
-payloads, figures) the same way, and must render a visible "pending fit" placeholder —
-not raise — when a model has not been fitted yet. This module supplies that shared
-pattern so no report re-implements it.
-
-:class:`ReportData` uses a resolver mapping ``(model_id, config)`` to the model's
-output directory. Legacy loaders retain their existing return/exception behavior;
-the additive read methods distinguish missing files from parse failures and valid
-empty/null values. Report adapters decide schema, freshness and visibility. The
-pure helpers :func:`show_or_pending` and :func:`num` need no directory context and
-are module-level.
+Legacy loaders return None for missing files and propagate parse failures.
+The ``read_*`` methods distinguish missing, invalid and present values,
+including empty tables and JSON null. Report adapters choose schemas,
+freshness checks and visibility rules. ``show_or_pending`` supplies an
+optional placeholder for an absent fit.
 """
 
 from __future__ import annotations
@@ -52,8 +46,8 @@ def num(value: Any, fmt: str = "{:.0f}") -> str:
 def show_or_pending(df: Any, what: str, *, hint: str = "its output artefacts are present") -> Any:
     """Return ``df`` if present, else a visible "pending fit" Markdown placeholder.
 
-    The graceful-degradation primitive for report chapters: a chapter that references a
-    not-yet-fitted model renders an explanatory callout rather than failing to build.
+    Use this when an absent fit is an expected report state. Do not translate
+    invalid required artefacts into None merely to display a pending message.
 
     Parameters
     ----------

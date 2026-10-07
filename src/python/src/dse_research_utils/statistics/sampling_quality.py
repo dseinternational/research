@@ -1,30 +1,16 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""One correct way to read sampling-quality signals off a trace.
+"""Extract unrounded sampling diagnostics without applying a pass/fail rule.
 
-Every gate and every ad-hoc script needs the same four numbers — max R-hat, min ESS,
-min per-chain BFMI, total divergences — and each one that re-derives them can get them
-subtly wrong. Two traps, both observed in the consuming repositories:
+The result contains maximum R-hat, minimum effective sample size, minimum
+per-chain BFMI, divergence count and names with unavailable diagnostics.
+Callers choose variables, thresholds and how to handle missing information.
 
-**Rounding.** ``az.summary()`` rounds to ``rcParams["stats.round_to"]`` (``"2g"`` — two
-significant figures) unless passed ``round_to="none"``, *the string*. ``round_to=None``
-and ``"auto"`` both fall through to the rounded default. ArviZ 1.2 returned a
-string-dtype frame when the argument was omitted; ArviZ 1.3 returns numeric columns,
-but still applies the rounded default. Rounding erases exactly the digits the gate turns
-on: across the whole gate-relevant range every
-R-hat from 1.011 to 1.049 rounds to ``1.0`` and clears an ``R-hat <= 1.01`` test it
-should fail (dseinternational/research#65).
-
-**Coercion.** ``trace.sample_stats["diverging"]`` is an xarray ``DataArray``; reduce it
-via ``np.asarray(....values).sum()`` rather than relying on ``DataArray.__int__``, and
-take BFMI from :func:`dse_research_utils.statistics.diagnostics.bfmi_per_chain`, since
-``az.bfmi`` returns a ``DataTree`` in ArviZ 1.x that cannot be coerced to an array.
-
-This module extracts the numbers and nothing else. It deliberately does **not** decide
-whether a fit passed: the call sites differ in which variables they gate over and in how
-they treat a missing BFMI, and those policies stay where they are rather than being
-silently homogenised here.
+ArviZ summaries must use the string ``round_to="none"``. Passing None uses
+the configured rounding default, which can conceal threshold exceedances.
+Divergences are reduced from the numeric sample-statistics array. BFMI comes
+from ``statistics.diagnostics.bfmi_per_chain`` in named chain/draw order.
 """
 
 from __future__ import annotations
@@ -54,12 +40,8 @@ class SamplingQuality:
     unassessable: tuple[str, ...] = ()
     """Summarised variables whose R-hat or ESS is non-finite.
 
-    The reductions above skip NaN, so a variable ArviZ could not assess leaves no
-    trace in ``max_rhat`` / ``min_ess``: mixed with one healthy parameter, a
-    constant or unsampled one yields finite extrema and empty failing lists, and
-    the fit passes (2026-08-22 ITT audit, finding 1). Extracting the names here
-    keeps this module's contract — read the signals, decide nothing — while giving
-    every gate the one fact it cannot recover from the extrema.
+    Extrema skip NaN, so finite extrema do not establish that every row
+    was assessable. Callers must consider these names separately.
     """
 
     def summary_line(self) -> str:
@@ -79,8 +61,8 @@ def sampling_quality(trace: Any, *, var_names: list[str] | None = None) -> Sampl
         group; ``sample_stats`` is used for divergences and BFMI when present.
     var_names : list of str, optional
         Restrict the R-hat / ESS summary to these variables. ``None`` summarises
-        everything ArviZ reports for the trace, which includes deterministics — pass the
-        caller's curated gate variables when that matters.
+        ArviZ's default variable selection, which can include deterministics.
+        Supply the project's selected variables when its gate requires them.
 
     Returns
     -------
@@ -91,11 +73,7 @@ def sampling_quality(trace: Any, *, var_names: list[str] | None = None) -> Sampl
     """
     # ``round_to="none"`` must be the string — see the module docstring.
     summ = az.summary(trace, var_names=var_names, round_to="none", kind="diagnostics")
-    # pandas ``.max()`` / ``.min()`` skip NaN by default, so a constant or unsampled
-    # variable does not poison the reduction. That is the right *extraction*
-    # behaviour — one unassessable nuisance term should not make ``max_rhat``
-    # meaningless — but it is not a verdict: the skipped rows are reported
-    # separately through ``unassessable`` so a gate can fail closed on them.
+    # Extrema skip NaN; keep unavailable row names for the caller's gate.
     max_rhat, min_ess, unassessable = diagnostic_extrema(summ)
 
     n_div: int | None = None

@@ -5,7 +5,7 @@
 
 <!-- cspell:ignore cachetools msgspec -->
 
-Version 0.15.2 raises every directly declared Python dependency minimum to its latest compatible stable release checked on 16 September 2026. Requirements already at that release keep their existing minimum. The library API and Python 3.14 requirement are unchanged. Publish `v0.15.2` on the merged release commit after its checks pass; downstream upgrades require that tag to exist.
+Version 0.15.2 raises the dependency minimums listed below. The library API and Python 3.14 requirement are unchanged. These are the requirements at the published tag, rather than a list of current upstream releases.
 
 ## Library requirements
 
@@ -32,26 +32,10 @@ NumPy retains its `<2.6` limit and PyTensor retains `<3.4`. PyTensor 3.3.2 requi
 
 [PyTensor 3.3.2](https://github.com/pymc-devs/pytensor/releases/tag/rel-3.3.2) fixes Numba compatibility with SciPy 1.18. [Zarr 3.4.0](https://github.com/zarr-developers/zarr-python/releases/tag/v3.4.0) adds `msgspec` as a metadata-validation dependency.
 
-## Repository tooling
+## Upgrade
 
-The repository's development minimums also move to build 1.6.1, pandas-stubs 3.0.5.260914, Ruff 0.16.7 and scipy-stubs 1.18.1.0. Its research group requires Plotly 7.1.0. These groups are not included in the library's published dependency metadata.
+Follow the [shared upgrade procedure](README.md#upgrade-a-consuming-project), with `v0.15.2` as the target tag. New minimums require changes wherever the old lock selected an older version. Other packages can remain locked.
 
-The release also contains the refreshed Python lock, cspell 10.3.2, Prettier 3.9.7 and setup-uv 10.1.0. Consumers manage their own npm dependencies and workflows.
+The Zarr minimum applies directly only when the `storage` extra is selected. If another dependency also installs Zarr, the consuming project's resolver determines its version from all applicable requirements.
 
-## Upgrade a downstream repository
-
-1. Change the research source tag from `v0.15.1` to `v0.15.2` in the downstream `pyproject.toml`. Preserve its existing extras and other dependency constraints.
-2. Resolve the new library requirement and install the resulting environment.
-
-```bash
-uv lock --upgrade-package dse-research-utils
-uv lock --check
-uv sync --locked
-```
-
-The new minimums force changes wherever the old lock selected an older version. Other packages can remain at their previously locked versions. To refresh the entire downstream environment, use `uv lock --upgrade` and review all resulting changes. A minimum requirement permits later compatible releases; it does not make the research lock an exact environment specification for consumers.
-
-In the three downstream local checkouts inspected on 16 September 2026, nutpie also brings in Zarr as a dependency. The new Zarr minimum applies directly only to consumers selecting the `storage` extra. A consumer without that extra can update Zarr through its own lock refresh without adding a duplicate dependency declaration.
-
-3. Run the downstream repository's tests, including its model compilation, sampling, plotting and storage checks. Verify the installed library version is 0.15.2 and record the resolved tag commit and package versions.
-4. Keep the recorded environments of existing fitted results. Test results for the shared library do not establish that rerunning an analysis with new dependencies will reproduce identical numerical results.
+Test model compilation, sampling, plotting and storage where the project uses them. Preserve recorded environments for existing fits. Apply the [0.15.0 notes](migrating-to-0.15.md) and earlier requirements if upgrading from before those versions.

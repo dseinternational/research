@@ -5,7 +5,9 @@
 
 # Migrating to 0.13.0
 
-Version 0.13.0 changes Gaussian-process approximations, convergence decisions and upload results. Its tag is published. The checklist below records the original upgrade requirements, not a live record of each consumer's completion. Projects moving from an older version directly to [0.14.0](migrating-to-0.14.md) must still address these changes. Updating a dependency pin does not refit models.
+Version 0.13.0 changes Gaussian-process approximations, convergence decisions and upload results. These requirements also apply when upgrading from an earlier version directly to a later release. Follow the [shared upgrade procedure](README.md#upgrade-a-consuming-project). Updating a dependency pin does not refit models.
+
+HSGP means Hilbert space Gaussian process, a finite-basis approximation to a smooth random function. R-hat measures agreement across sampling chains. ESS means effective sample size, an estimate of sampling precision in equivalent independent draws. BFMI checks how chains move through energy levels. LOO means leave-one-out prediction.
 
 ## Preserve the full HSGP design during refits
 
@@ -67,14 +69,8 @@ return shared_loo.reff_or_default(
 - Interval summaries use the same finite draws for medians and interval bounds.
 - `invlogit` supports numeric scalars and NumPy arrays. Use `pm.math.sigmoid` for symbolic PyMC expressions.
 
-## Consumer adoption checklist
+## Checks when adopting these changes
 
-These changes are pending in the consuming repositories. Complete and test them as part of adopting the new tag; this library PR does not change their pins or source.
+Persist and replay the full HSGP design in fitting, prediction and held-out evaluation. Fits produced with the old boundary calculation need a fresh fit before comparison with the corrected implementation. Handle JSON null extrema and explicit scan status in report readers. Test relative-efficiency wrappers with unavailable metadata, empty selections, missing variables and reader errors. Compare raw upload paths with local filenames and verify the encoded root report URL.
 
-- [ ] In language-reading-predictors, update `statistical_models/hsgp.py`, `factories/mechanism.py`, `fitted_payloads.py` and the LOO refit path to persist and forward `m`, `L` and `center`. Remove the `max(abs(X))` boundary calculation and subset-dependent `hsgp_c_for` reconstruction. Extend the consumer test to execute the shared constructor and compare full/subset functions rather than repeating a boundary formula. Refit affected models and rebuild their held-out evaluations with the same recorded design.
-- [ ] In language-reading-predictors, update `statistical_models/convergence.py` to handle null extrema and the explicit scan status. Pass the structured upload result through `storage.py` so `scripts/upload.py` uses its root `report_url`.
-- [ ] In vocabulary-growth, delegate `loo_reff.reff_or_default` through the shared `attr_reader` hook. Test unavailable metadata, empty selections, missing named variables and reader errors. Audit LOO report counts and use the explicit unusable count where appropriate.
-- [ ] In vocabulary-growth, update `storage._verify_report_upload` to use `result.relative_paths`. Update `publication_checks.verify_published` to use encoded URLs and test names with spaces, plus signs and non-ASCII characters. Use `scan_completed` in `models.common.enforce_convergence_gate` so unavailable diagnostics receive the right explanation while still failing the gate.
-- [ ] After the library release and consumer changes are reviewed, update each consumer pin and lockfile, run its relevant tests, and complete any required refits before accepting new reported results.
-
-The cited language-reading-predictors low-BFMI test passes against this branch in that project's environment. A check using vocabulary-growth's actual `unpublished_assets` function confirms that the new raw paths match the uploaded files, while its current URL-stripping approach still fails for encoded names. Azure clients were simulated. These targeted checks do not replace the pending consumer migrations or their full test suites.
+Run the consuming project's tests and any required refits. The library tests use synthetic data and simulated Azure clients; they do not establish that an existing analysis can adopt these changes unchanged.

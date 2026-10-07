@@ -178,14 +178,12 @@ def _font_family_installed(family: str) -> bool:
 
 
 def categorical_palette(n: int, palette: str | None = None) -> list:
-    """Return ``n`` distinct colours for qualitative (categorical) series.
+    """Return ``n`` colours for categorical series.
 
-    The default palette is ``tab10``, auto-widening to ``tab20`` when ``n``
-    exceeds 10 so nearby categories stay distinguishable. A named *continuous*
-    colormap passed as ``palette`` is sampled evenly rather than cycled, so it
-    still yields distinct qualitative colours (the two consuming repositories
-    each solved half of this: one had the auto-widen, the other the
-    continuous-colormap sampling).
+    The default is ``tab10`` for at most ten colours, otherwise ``tab20``.
+    Listed palettes cycle when ``n`` exceeds their size, so colours can repeat.
+    Colormaps with at least 256 entries are sampled evenly, including endpoints.
+    This function does not guarantee that all colours are visually distinct.
     """
     cmap = plt.get_cmap(palette or ("tab20" if n > 10 else "tab10"))
     if cmap.N >= 256:  # continuous colormap used as qualitative

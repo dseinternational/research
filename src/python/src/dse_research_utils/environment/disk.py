@@ -1,11 +1,7 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Disk-space preflight for scripts that write large artefacts.
-
-Model traces exceed 10 GB at reporting configurations, so a full volume should
-fail fast at the start of a run rather than after a multi-hour sample.
-"""
+"""Check free disk space before scripts write large artefacts."""
 
 from __future__ import annotations
 

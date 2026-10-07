@@ -53,12 +53,12 @@ def report_model_summary(model: pm.Model) -> None:
 
 def model_to_graphviz(model: pm.Model, *, dpi: int | None = None) -> Digraph:
     """
-    Export the PyMC model to a Graphviz dot file.
+    Return a styled Graphviz graph of the PyMC model without writing a file.
 
     Parameters
     ----------
     model : pm.Model
-        The PyMC model to export.
+        The PyMC model to represent.
     dpi : int, optional
         Raster resolution recorded on the graph (e.g. 150 for a publication
         PNG); ``None`` leaves Graphviz's default.

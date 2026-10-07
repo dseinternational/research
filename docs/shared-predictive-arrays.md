@@ -5,7 +5,7 @@
 
 # Shared sample arrays and predictive summaries
 
-Version 0.14.0 adds explicit likelihood aggregation and per-observation predictive summaries. See the [upgrade notes](migrating-to-0.14.md) for installation and the release sequence. These APIs use the library's existing NumPy, pandas and xarray dependencies. Downstream projects retain their observation-unit definitions, grouping, reporting schemas, missingness rules and fit-acceptance policies.
+These APIs require 0.14.0 or later and use NumPy, pandas and xarray. See the [installation and upgrade notes](README.md#upgrade-a-consuming-project). Consuming projects retain their observation units, groups, reporting schemas, missing-value rules and fit-acceptance policies.
 
 ## Preserve observation identity when reshaping samples
 
@@ -62,11 +62,11 @@ Bounds use NumPy's linear quantiles at `(1 - p) / 2` and `1 - (1 - p) / 2`. Incl
 
 Both inputs must contain finite real numeric values and nonempty observation and sample axes. Masked arrays require explicit filtering or filling. Boolean predictive draws require explicit conversion to numeric zero/one values. Overflow raises an error. The helper neither silently removes missing values nor chooses which observation population to report.
 
-LRP's adapter should retain its existing non-finite observation mask and apply that same mask to the matrix, row labels and groups. It must also retain its existing empty-table or zero-observation coverage result when no rows remain. VG should retain its own empty-input policy and explicitly handle invalid observations before calling. These adapters control which rows enter a report.
+If a project excludes non-finite observations, apply the same mask to observations, draw rows, labels and groups before calling. Handle the case where no rows remain in the adapter. These choices determine the population shown in the report.
 
-Scalar quantile calculations preserve float32 bounds and medians. The predictive mean uses the input reduction dtype before storage as float64. A VG adapter should compute interval widths in the bounds' dtype and then store the per-observation widths as float64 before taking group means. It should retain the difference of group means for its mean-error field. These details matter for exact numerical and table compatibility.
+Scalar quantile calculations preserve float32 bounds and medians. The predictive mean uses the input reduction dtype before storage as float64. To preserve an existing grouped summary, check the dtype of interval widths before aggregation and whether mean error is calculated as a mean of differences or a difference of means. These choices can change floating-point results.
 
-There is one explicit arithmetic convention to review when migrating unusual interval widths. LRP currently uses `(1 + p) / 2` for the upper quantile in these checks. It is algebraically equivalent to the shared complement formula, but floating-point rounding can differ. With draws `[0, 1]`, `p=1e-6` and observed value `0.5000005000000001`, LRP excludes the observation while the shared formula includes it. The tested ordinary reporting widths agree. A consumer using other widths should compare boundary cases before migration.
+The upper-quantile formulas `(1 + p) / 2` and `1 - (1 - p) / 2` are algebraically equal but can round differently. With draws `[0, 1]`, `p=1e-6` and observation `0.5000005000000001`, the first formula excludes the observation while the shared complement formula includes it. Compare boundary cases when replacing raw quantile calls.
 
 Age bands, arm labels, outcome groups, zero-count summaries and report columns remain in consumer adapters. Group-level off-floor rates use a different observation unit and remain a separate calculation. Checks that reuse observations from a fit do not establish calibration for new children or validate the model as a whole.
 
@@ -109,10 +109,10 @@ An individual factor may have zero rows if other factors cover all requested uni
 
 Negative infinity is retained because an impossible observation can have log likelihood `-inf`. NaN, positive infinity and arithmetic overflow are rejected. No sum skips missing values. The result is a new `DataArray` named `log_likelihood`. It is not attached to a trace automatically. Keep derived aggregates separate from their source factors when another tool might otherwise count both.
 
-All likelihood values are converted to float64 before event or row sums. This can change a consumer's existing float32 event reduction. For example, `[-1e8, -1, -1]` sums to `-100000000` in float32 and `-100000002` after conversion to float64. Downstream comparisons match exactly for the tested float64 likelihoods, including pointwise PSIS-LOO estimates and Pareto-k values. A consumer using lower-precision likelihoods must review the numerical change before migration.
+All likelihood values are converted to float64 before event or row sums. This can change a consumer's existing float32 event reduction. For example, `[-1e8, -1, -1]` sums to `-100000000` in float32 and `-100000002` after conversion to float64. Downstream comparisons match exactly for the tested float64 likelihoods, including pointwise leave-one-out estimates and their Pareto-k reliability diagnostics. A consumer using lower-precision likelihoods must review the numerical change before migration.
 
 ## Validate consumer adoption
 
-Focused tests check array identity, complete predictive outputs, dtype-sensitive calculations, empirical PIT references, explicit likelihood units and invalid sums. Synthetic adapter comparisons against the current downstream implementations also check whole DataFrames and their column types, including missing-row and empty-output policies.
+Focused tests check array identity, complete predictive outputs, dtype-sensitive calculations, empirical PIT references, explicit likelihood units and invalid sums. Consumer-comparison fixtures also check whole DataFrames and column types, including missing-row and empty-output policies. They describe the tested cases rather than the current state of each downstream repository.
 
 Before adopting these helpers, compare pointwise arrays and unit coordinates, then downstream tables and rendered captions. Similar totals alone do not establish equal held-out units or report populations. Saved-fit identity and publication rules still apply when code moves into the shared library. The [file and provenance guide](shared-file-provenance.md) describes those separate compatibility requirements.

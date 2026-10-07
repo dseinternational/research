@@ -10,11 +10,11 @@ import psutil
 class SamplingConfiguration:
     draws: int
     """
-    Number of MCMC draws.
+    Number of retained posterior draws per chain.
     """
     tune: int
     """
-    Number of MCMC tuning steps.
+    Number of tuning steps per chain, excluded from the retained draws.
     """
     chains: int
     """
@@ -61,8 +61,28 @@ def _get_available_cores() -> int:
 
 
 def get_sampling_configuration(config: str = "dev", random_seed: int = 47) -> SamplingConfiguration:
-    """
-    Returns a sampling configuration.
+    """Return a named sampling preset with a caller-supplied random seed.
+
+    Parameters
+    ----------
+    config : str, default "dev"
+        Accepted names are ``dev``/``development``, ``test``/``testing``,
+        ``rep-lite``/``reporting-lite``/``rep_lite``, and
+        ``reporting``/``report``/``rep``. See the Python readme for preset values.
+    random_seed : int, default 47
+        Seed recorded in the returned configuration.
+
+    Returns
+    -------
+    SamplingConfiguration
+        Draws and tuning steps per chain, chain count, worker count, acceptance
+        target and seed. Worker count is capped by chains and available cores.
+        These settings do not guarantee convergence or sampling precision.
+
+    Raises
+    ------
+    ValueError
+        If the configuration name is unknown.
     """
     if config == "reporting" or config == "report" or config == "rep":
         return SamplingConfiguration(
@@ -75,11 +95,8 @@ def get_sampling_configuration(config: str = "dev", random_seed: int = 47) -> Sa
         )
 
     if config == "rep-lite" or config == "reporting-lite" or config == "rep_lite":
-        # Reporting-grade rigour (keeps rep's target_accept) but lighter: ESS,
-        # not raw draws, is the binding metric, so fewer draws still clears the
-        # ESS > 400 bar with wide margin. 4 chains keeps the config portable on
-        # <=5-core machines; raise to 6 on >=6-core hardware for extra R-hat
-        # robustness at ~no wall-time cost. See dseinternational/vocabulary-growth#50.
+        # Retain the reporting acceptance target with fewer chains and draws.
+        # Check achieved effective sample sizes and convergence after fitting.
         return SamplingConfiguration(
             draws=SAMPLES_REP_LITE,
             tune=TUNES_REP_LITE,

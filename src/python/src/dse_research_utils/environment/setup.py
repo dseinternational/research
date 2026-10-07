@@ -6,16 +6,16 @@ from dse_research_utils.plot.styles import set_matplotlib_default_style
 
 
 def init() -> None:
-    """Initialize the environment."""
+    """Apply the default matplotlib style."""
     set_matplotlib_default_style()
 
 
 def init_script() -> None:
-    """Initialize the script environment."""
+    """Apply the default matplotlib style for a script without reporting system details."""
     init()
 
 
 def init_workbook() -> None:
-    """Initialize the workbook environment."""
+    """Apply the default matplotlib style and print environment information for a notebook."""
     init()
     report_environment_info()

@@ -5,9 +5,9 @@
 
 # Shared file writes and provenance
 
-Version 0.14.0 adds file replacement and raw provenance facts from the downstream consolidation review. Each consumer still owns its manifest fields, JSON encoding, file selection, hash prefixes and rules for accepting a saved result.
+These helpers replace files and collect provenance facts. Each consuming project retains its manifest fields, JSON encoding, file selection, hash prefixes and rules for accepting a saved result.
 
-See the [0.14.0 upgrade notes](migrating-to-0.14.md) for installation and the release sequence. These APIs use the Python standard library and add no dependencies. The library's diagnostic writer now uses the shared file operation. Its JSON formatting, non-finite value handling, returned summary and table cache remain unchanged.
+The file-write and provenance APIs require 0.14.0 or later; permission options require 0.17.0 or later. They use the Python standard library. See the [installation and upgrade notes](README.md#upgrade-a-consuming-project).
 
 ## Write one complete file
 
@@ -29,28 +29,31 @@ atomic_write(
 )
 ```
 
-Keep JSON encoding in the caller. For example, a vocabulary-growth adapter can retain its existing `_json_default` function, key sorting, indentation and final newline.
+Keep JSON encoding in the caller. This adapter accepts the project's existing encoder for values that JSON cannot encode by default. It also specifies key sorting, indentation and a final newline.
 
 ```python
 import json
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 from dse_research_utils.storage.files import atomic_write
 
 
-def write_json_atomic(path: str, payload: dict[str, Any]) -> None:
+def write_json_atomic(
+    path: str, payload: dict[str, Any], *, encode_extra: Callable[[Any], Any]
+) -> None:
     def write_temporary(temporary: Path) -> None:
         with temporary.open("w", encoding="utf-8") as destination:
-            json.dump(payload, destination, indent=2, sort_keys=True, default=_json_default)
+            json.dump(payload, destination, indent=2, sort_keys=True, default=encode_extra)
             destination.write("\n")
 
     atomic_write(path, write_temporary)
 ```
 
-In this adapter, `_json_default` is the consumer's existing encoder. Changing it is a separate change to the stored format. The file helper neither sanitises non-finite values nor changes enum, array or dataclass representations. The shared diagnostic writer continues to apply its own strict JSON sanitisation before writing.
+Pass the existing encoder as `encode_extra`. Changing it is a separate change to the stored format. The file helper neither sanitises non-finite values nor changes enum, array or dataclass representations. The shared diagnostic writer continues to apply its own strict JSON sanitisation before writing.
 
-On POSIX, the temporary file starts with owner-only read/write permissions. The destination takes the temporary file's final permissions and metadata. A callback can use `shutil.copy2` to retain source-file metadata or set an explicitly required mode. Existing destination permissions are not inherited. VG's current ordinary file creation can produce different permissions, so its migration must choose the intended sharing mode explicitly.
+On POSIX, the temporary file starts with owner-only read/write permissions. The destination takes the temporary file's final permissions and metadata. A callback can use `shutil.copy2` to retain source-file metadata or set an explicitly required mode. Existing destination permissions are not inherited. If a project previously created ordinary files, choose its sharing mode explicitly when adopting this helper.
 
 An existing destination symlink is replaced as a directory entry; its target is unchanged. A callback must leave a regular file, not a symlink or directory. Created parent directories are retained after failure.
 
@@ -115,7 +118,7 @@ Neither the Git query nor file hashing locks its inputs. Arrange stable inputs s
 
 ## Adoption and validation
 
-Adopt these functions through the existing consumer wrappers so imports and return values remain stable. Keep JSON serialization and hash inputs byte-for-byte equivalent during the first migration. The tests exercise native JSON, pandas compression, NumPy saving and metadata-preserving copies, as well as interruption, replacement failure, invalid staged files, symlinks and concurrent writers.
+Adopt these functions through the existing consumer wrappers so imports and return values remain stable. Keep JSON serialisation and hash inputs byte-for-byte equivalent during the first migration. The tests exercise native JSON, pandas compression, NumPy saving and metadata-preserving copies, as well as interruption, replacement failure, invalid staged files, symlinks and concurrent writers.
 
 Before changing a consumer's provenance implementation, compare its existing manifest against a fixture with known inputs. Preserve its package set, source-file order, separators, digest prefix and missing-value representation. The shared library's display-oriented package-version functions still return `"Not found"` for unavailable packages.
 

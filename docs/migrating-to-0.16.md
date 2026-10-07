@@ -1,84 +1,62 @@
 > [!NOTE]
 > Drafted by a LLM-based AI tool (Claude Code/Opus 5.5).
+> Updated by a LLM-based AI tool (Codex/GPT-6).
 
-<!-- cspell:ignore mathtext bfit fontname Pango mathcal mathbb mathbf mathrm fontset stixsans dejavusans cachedir fontlist findfont greenlet pyplot FIGSIZE STIX leftrightarrow rightarrow infty checkmark ylabel -->
+<!-- cspell:ignore mathtext fontname mathcal mathbb mathbf mathrm fontset stixsans dejavusans cachedir fontlist pyplot FIGSIZE bfit STIX ylabel -->
 
 # Upgrade to 0.16.0
 
-Version 0.16.0 changes the fonts in the default plot style and in model graphs, and raises three ArviZ dependency minimums. The Python API and the Python 3.14 requirement are unchanged, but figures drawn with `set_matplotlib_default_style()` (and therefore `init_workbook()` and `init_script()`) and graphs from `model_to_graphviz()` look different. That visible change is why this is a minor release rather than a patch. Publish `v0.16.0` on the merged release commit after its checks pass; downstream upgrades require that tag to exist.
+Version 0.16.0 changes the default plot fonts and model-graph fonts, and raises dependency minimums. The Python API and Python 3.14 requirement are unchanged. Review figures created after `set_matplotlib_default_style()`, `init_workbook()` or `init_script()`, and graphs from `model_to_graphviz()`.
 
 ## Default plot fonts
 
-Text now uses Noto Sans instead of Source Sans 3. Math text now uses Noto Sans Math instead of matplotlib's DejaVu Sans math fontset. `plot.styles` exposes the two family names as `FONT_FAMILY_DEFAULT` and `FONT_FAMILY_MATH`.
+Text uses Noto Sans instead of Source Sans 3. Math text uses Noto Sans Math through matplotlib's custom font settings. `plot.styles` exposes these family names as `FONT_FAMILY_DEFAULT` and `FONT_FAMILY_MATH`.
 
-| Setting                                       | 0.15.2                         | 0.16.0                    |
-| --------------------------------------------- | ------------------------------ | ------------------------- |
-| `font.sans-serif` (first choice)              | Source Sans 3                  | Noto Sans                 |
-| `mathtext.fontset`                            | `dejavusans` (matplotlib)      | `custom`                  |
-| `mathtext.rm`, `mathtext.sf`, `mathtext.cal`  | DejaVu Sans                    | Noto Sans Math            |
-| `mathtext.it`, `mathtext.bf`, `mathtext.bfit` | DejaVu Sans italic and bold    | Noto Sans italic and bold |
-| `mathtext.fallback`                           | STIX Sans (built into fontset) | `stixsans`                |
+| Setting                                       | 0.15.2                      | 0.16.0                    |
+| --------------------------------------------- | --------------------------- | ------------------------- |
+| First `font.sans-serif` choice                | Source Sans 3               | Noto Sans                 |
+| `mathtext.fontset`                            | `dejavusans`                | `custom`                  |
+| `mathtext.rm`, `mathtext.sf`, `mathtext.cal`  | DejaVu Sans                 | Noto Sans Math            |
+| `mathtext.it`, `mathtext.bf`, `mathtext.bfit` | DejaVu Sans italic and bold | Noto Sans italic and bold |
+| `mathtext.fallback`                           | STIX Sans                   | `stixsans`                |
 
-Noto Sans Math has a single upright face. The italic and bold math styles therefore come from Noto Sans, the text family Noto Sans Math is designed to pair with. Variables stay italic and `\mathbf` stays bold. Operators, digits, relations, Greek capitals and `\mathrm` come from Noto Sans Math. STIX Sans, which ships with matplotlib, supplies the glyphs that mathtext cannot reach in Noto Sans Math, such as `\mathbb` letters and the larger delimiters used by `\left` and `\right`. It was also the fallback of the previous DejaVu Sans fontset.
+Noto Sans Math has one upright face. Noto Sans supplies italic and bold math styles. Matplotlib's bundled STIX Sans supplies math glyphs that the custom font settings cannot reach, including `\mathbb` letters and larger delimiters. With these settings, `\mathcal{N}` renders as an upright N. Use the Unicode script character, for example `$𝒩(0, 1)$`, if that is the intended label.
 
-Three rendering differences need attention:
-
-- Noto Sans has no arrows or mathematical relations. A literal →, ≈, ≤ or ≥ in plain text draws as a missing-glyph box, and matplotlib only warns. [Version 0.16.1](migrating-to-0.16.1.md) fixes this; see [Symbols in plain text](#symbols-in-plain-text).
-- `\mathcal{N}` renders as an upright N. matplotlib's custom fontset cannot select the script letters in Noto Sans Math. Type the Unicode character instead (`$𝒩(0, 1)$`) for a script letter.
-- Noto Sans is wider than Source Sans 3. Titles, tick labels and legends that fitted before can now clip or overlap, most visibly in `FIGSIZE_XS` and `FIGSIZE_SM` figures at the default 12 pt size.
+Font metrics change. Review titles, tick labels and legends for clipping or overlap, particularly in small figures such as `FIGSIZE_XS` and `FIGSIZE_SM`.
 
 ### Symbols in plain text
 
-In the Unicode blocks from U+2190 to U+27FF (arrows, mathematical operators, technical symbols, geometric shapes and dingbats), Noto Sans contains only U+2212 MINUS SIGN and U+25CC DOTTED CIRCLE. It lacks, for example, →, ↔, ⇒, ≈, ≠, ≤, ≥, ∞ and ✓. Source Sans 3 had many of these. A title, axis label, legend entry or tick label that contains one as a literal character therefore rendered under 0.15.2 but draws a missing-glyph box under 0.16.0. matplotlib only warns, with messages such as `Glyph 8804 (\N{LESS-THAN OR EQUAL TO}) missing from font(s) Noto Sans.`
-
-matplotlib falls back to another font glyph by glyph only across the families named in `font.family`. The 0.16.0 style sets the generic `sans-serif`, which matplotlib resolves to a single font: the first installed entry of `font.sans-serif`. With Noto Sans installed, no other font is consulted.
-
-[Version 0.16.1](migrating-to-0.16.1.md) names fallback families in `font.family`, so upgrade to it rather than work around the gap. Under 0.16.0, write the symbols as mathtext, which the style draws from Noto Sans Math:
+The 0.16.0 style selects one font for plain text. Noto Sans lacks symbols such as arrows and mathematical relations, so literal labels containing → or ≤ can show missing-glyph boxes. [Version 0.16.1](migrating-to-0.16.1.md) adds fallback fonts. Upgrade to 0.16.1 or later when using these labels. If remaining on 0.16.0, write the symbols with mathtext:
 
 ```python
-ax.set_ylabel(r"$P(Y \leq k)$")  # not "P(Y ≤ k)"
-ax.set_title(r"Sign $\rightarrow$ speech")  # not "Sign → speech"
-```
-
-| Symbol | Mathtext          | Symbol | Mathtext     |
-| ------ | ----------------- | ------ | ------------ |
-| ≤      | `\leq`            | ≈      | `\approx`    |
-| ≥      | `\geq`            | ≠      | `\neq`       |
-| →      | `\rightarrow`     | ∞      | `\infty`     |
-| ↔      | `\leftrightarrow` | ✓      | `\checkmark` |
-| ⇒      | `\Rightarrow`     |        |              |
-
-Alternatively, set the fallback list that 0.16.1 uses. Set it after `set_matplotlib_default_style()`, which resets `font.family`, and before creating the figure, because text keeps the font list that was in effect when it was created. Leave out Noto Sans Math on machines without it, or matplotlib logs a warning for every text element.
-
-```python
-set_matplotlib_default_style()
-plt.rcParams["font.family"] = ["sans-serif", "Noto Sans Math", "DejaVu Sans"]
+ax.set_ylabel(r"$P(Y \leq k)$")
+ax.set_title(r"Sign $\rightarrow$ speech")
 ```
 
 ### Model graphs
 
-`statistics.models.pymc_utils.model_to_graphviz` now sets the graph, node and edge `fontname` to `Noto Sans,sans-serif` instead of `Helvetica`. Graphviz copies `fontname` directly into the `font-family` of SVG output, so the generic `sans-serif` gives viewers without Noto Sans a sans-serif fallback, as `Helvetica,sans-Serif` did before. PNG output reads the same family list through Pango. Noto Sans has taller line spacing than Helvetica, so nodes are slightly larger and graph layouts can shift.
+`statistics.models.pymc_utils.model_to_graphviz` sets the graph, node and edge `fontname` attributes to `Noto Sans,sans-serif` instead of `Helvetica`. Font metrics can change node sizes and layouts. SVG viewers and raster renderers choose their installed fallback when Noto Sans is unavailable.
 
 ### Install the fonts
 
-The fonts are system fonts, not Python packages, so each machine that renders figures needs them installed:
+Install the system fonts on each machine that renders figures:
 
 ```bash
-brew install --cask font-noto-sans font-noto-sans-math   # macOS
-sudo apt install fonts-noto-core                         # Debian and Ubuntu
+brew install --cask font-noto-sans font-noto-sans-math  # macOS
+sudo apt install fonts-noto-core                     # Debian and Ubuntu
 ```
 
-On Windows, install Noto Sans and Noto Sans Math from Google Fonts. matplotlib caches its font list, so a newly installed font is not found until the cache is rebuilt. Delete `fontlist-*.json` from the directory printed by the following command, and restart any running kernels:
+On Windows, install [Noto Sans](https://fonts.google.com/noto/specimen/Noto+Sans) and [Noto Sans Math](https://fonts.google.com/noto/specimen/Noto+Sans+Math) from Google Fonts. If matplotlib does not find newly installed fonts, delete `fontlist-*.json` from its cache directory and restart running kernels. Find the directory with:
 
 ```bash
 uv run python -c "import matplotlib; print(matplotlib.get_cachedir())"
 ```
 
-Without the fonts, text falls back silently to the next installed font in `font.sans-serif`, for example Arial on Windows or DejaVu Sans on a Linux runner with no other fonts. Math logs a `findfont` warning and falls back to DejaVu Sans, and Graphviz uses the system's default sans-serif font. CI images and containers that render figures therefore need the fonts installed, or their output will not match a workstation's.
+Without these fonts, ordinary text uses the next installed font in the style's list, math can produce font warnings and use DejaVu Sans, and Graphviz uses its system fallback. Use the same fonts in CI and on workstations when output must match.
 
 ### Keep the previous look
 
-A project that needs to keep the old fonts, for example while its figures are under review, can restore them after applying the style:
+To retain the earlier text and math fonts, apply this override after the default style and before creating figures. Source Sans 3 must be installed.
 
 ```python
 import matplotlib.pyplot as plt
@@ -90,39 +68,23 @@ plt.rcParams["font.sans-serif"] = ["Source Sans 3", *plt.rcParams["font.sans-ser
 plt.rcParams["mathtext.fontset"] = "dejavusans"
 ```
 
-For model graphs, set the three `fontname` attributes on the returned `Digraph` (`graph_attr`, `node_attr` and `edge_attr`) back to `Helvetica` before rendering.
+For model graphs, restore `Helvetica` in `graph_attr`, `node_attr` and `edge_attr` on the returned `Digraph` before rendering.
 
 ## Library requirements
 
-These changes are part of the package metadata, so a downstream repository must satisfy them when it selects 0.16.0.
+| Package            | Previous minimum | New minimum | Scope  |
+| ------------------ | ---------------- | ----------- | ------ |
+| arviz-base         | 1.3.0            | 1.3.1       | Base   |
+| arviz-plots        | 1.3.1            | 1.3.2       | Base   |
+| arviz-stats        | 1.3.2            | 1.3.3       | Base   |
+| azure-storage-blob | 12.30.1          | 12.30.3     | Base   |
+| pandas             | 3.0.5            | 3.0.6       | Base   |
+| networkx           | 3.6.1            | 3.7         | graphs |
+| jax                | 0.11.1           | 0.11.2      | jax    |
+| numpyro            | 0.21.0           | 0.22.0      | jax    |
 
-| Package     | Previous minimum | New minimum | Scope |
-| ----------- | ---------------- | ----------- | ----- |
-| arviz-base  | 1.3.0            | 1.3.1       | Base  |
-| arviz-plots | 1.3.1            | 1.3.2       | Base  |
-| arviz-stats | 1.3.2            | 1.3.3       | Base  |
+NumPy retains `<2.6` and PyTensor retains `<3.4`. Consumers resolve their own lock files. A consumer that uses Optuna's database storage should test creation and resumption of a study against its resolved dependencies.
 
-Every other declared minimum was already at the latest release on PyPI when checked on 27 September 2026. NumPy keeps its `<2.6` limit and PyTensor keeps `<3.4`, because NumPy 2.5.3, numba 0.67.0 and PyTensor 3.3.2 are still the latest releases.
+## Upgrade
 
-## Repository tooling
-
-The development minimum moves to Ruff 0.16.9, and the research group now requires pingouin 0.7.0. These groups are not included in the library's published dependency metadata. The release also contains cspell 10.3.4.
-
-The refreshed Python lock moves SQLAlchemy from 2.0.54 to 2.1.1. SQLAlchemy is a transitive dependency of Optuna, in the `tuning` extra, and version 2.1 drops greenlet as a default dependency. An Optuna study created, run and reloaded through SQLite storage worked on the new lock. A consumer that uses Optuna's RDB storage against another database should still run its own storage checks.
-
-## Upgrade a downstream repository
-
-1. Change the research source tag from `v0.15.2` to `v0.16.0` in the downstream `pyproject.toml`. Preserve its existing extras and other dependency constraints.
-2. Resolve the new library requirement and install the resulting environment.
-
-```bash
-uv lock --upgrade-package dse-research-utils
-uv lock --check
-uv sync --locked
-```
-
-3. Install Noto Sans and Noto Sans Math on every machine and CI image that renders figures, then clear the matplotlib font cache as described above.
-4. Regenerate the project's figures and model graphs and review them, particularly small figures, long titles, legends, any labels that use `\mathcal` and any plain-text labels that contain symbols such as ≤ or →. Saved PNG and SVG outputs will differ from those produced with 0.15.2 even where the data is unchanged.
-5. Run the downstream repository's tests. Verify that the installed library version is 0.16.0, and record the resolved tag commit and package versions.
-
-Projects upgrading from before 0.15.2 must also apply the [0.15.2 upgrade notes](migrating-to-0.15.2.md) and any earlier notes they have not yet applied.
+Follow the [shared upgrade procedure](README.md#upgrade-a-consuming-project), with `v0.16.0` as the target tag. Install the fonts, regenerate affected figures and model graphs, and review their labels and layout. Apply the [0.15.2 notes](migrating-to-0.15.2.md) and earlier requirements when upgrading from an older version.

@@ -1,70 +1,81 @@
 > [!NOTE]
 > Drafted by a LLM-based AI tool (Codex/GPT-6).
 
-<!-- cspell:words hsgp bfmi -->
+<!-- cspell:words HSGP BFMI MCMC PSIS ELPD docstrings prob -->
 
 # Python utilities
 
-`dse-research-utils` — the shared library for [Down Syndrome Education International](https://www.down-syndrome.org/) research projects.
-
-This package's `pyproject.toml` is the canonical source of the dependency floors shared across DSE research repositories. Consuming repositories depend on the library and inherit those floors transitively rather than restating package versions of their own.
+`dse-research-utils` is the shared Python library for [Down Syndrome Education International](https://www.down-syndrome.org/) research projects. It requires Python 3.14 or later.
 
 ## Install
 
-Install `v0.17.0` with the command below once the tag is published after merge. The [0.17.0 upgrade notes](../../docs/migrating-to-0.17.md) explain the diagnostic and file-permission APIs and downstream upgrade steps. The [0.16.2 upgrade notes](../../docs/migrating-to-0.16.2.md) explain the dependency minimums. The [0.16.1 upgrade notes](../../docs/migrating-to-0.16.1.md) explain the font fallback for symbols that Noto Sans lacks. The [0.16.0 upgrade notes](../../docs/migrating-to-0.16.md) explain the default plot fonts and the checks for existing consumers.
+Install the published `v0.17.0` tag:
 
 ```bash
 uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.17.0#subdirectory=src/python"
 ```
 
-The base install carries the modelling stack (PyMC, PyTensor, nutpie, ArviZ, PreliZ), the numerics core, and the netCDF engine (h5netcdf, h5py) that `InferenceData.to_netcdf` requires. Optional layers are extras:
+For an existing installation, follow the [upgrade procedure and version notes](../../docs/README.md#upgrade-a-consuming-project). Preserve the extras the project already uses.
 
-| Extra          | Adds                                    | For                                                |
-| -------------- | --------------------------------------- | -------------------------------------------------- |
-| `viz`          | seaborn                                 | `plot.grids` histogram grids                       |
-| `graphs`       | graphviz, networkx                      | `plot.graphs` — also needs the system `dot` binary |
-| `notebook`     | jupyter, jupytext                       | notebook workflows; `plot.io.display_image`        |
-| `dependence`   | dcor                                    | `ml.feature_dependence.distance_corr_matrix`       |
-| `tuning`       | optuna, optuna-integration              | hyper-parameter search                             |
-| `io`           | orjson, tabulate                        | fast JSON and table rendering                      |
-| `jax`          | jax, numpyro                            | JAX/NumPyro sampler backends                       |
-| `boosting`     | lightgbm, xgboost, shap                 | gradient boosting and explanation                  |
-| `boosting-cpu` | lightgbm, xgboost-cpu, shap             | CPU-only boosting; uses xgboost on macOS           |
-| `columnar`     | duckdb, polars, pyreadstat              | columnar and statistical data formats              |
-| `storage`      | zarr                                    | zarr as an alternative to the netCDF core          |
-| `all`          | all compatible extras; takes `boosting` | development environments                           |
+This package's `pyproject.toml` defines the shared minimum dependency versions. Consuming projects inherit these requirements and resolve their own lock files. Declare any additional requirements that their own code needs, without copying the library's version list.
 
-Helpers that need an extra lazy-import it and raise a clear error when it is absent. `boosting` and `boosting-cpu` are mutually exclusive; retain the variant already chosen by the consuming project.
+The base install includes PyMC, PyTensor, nutpie, ArviZ, PreliZ, numerical libraries and the h5netcdf/h5py engine used to save traces. Optional extras add:
 
-## Shared file operations
+| Extra          | Packages                                    | Use                                                   |
+| -------------- | ------------------------------------------- | ----------------------------------------------------- |
+| `viz`          | seaborn                                     | Histogram grids                                       |
+| `graphs`       | graphviz, networkx                          | Graph plotting; also requires the system `dot` binary |
+| `notebook`     | jupyter, jupytext                           | Notebooks and image display                           |
+| `dependence`   | dcor                                        | Distance correlation                                  |
+| `tuning`       | optuna, optuna-integration                  | Parameter search                                      |
+| `io`           | orjson, tabulate                            | JSON and table output                                 |
+| `jax`          | jax, numpyro                                | Alternative sampling backends                         |
+| `boosting`     | lightgbm, xgboost, shap                     | Gradient boosting and explanation                     |
+| `boosting-cpu` | lightgbm, xgboost-cpu, shap                 | CPU-only boosting; uses xgboost on macOS              |
+| `columnar`     | duckdb, polars, pyreadstat                  | Columnar and statistical data formats                 |
+| `storage`      | zarr                                        | Alternative array storage                             |
+| `all`          | All compatible extras, including `boosting` | Full contributor environment                          |
 
-`storage.files.atomic_write` writes one complete file through a temporary file beside its destination. `metadata.provenance` provides `git_snapshot`, `package_versions` and `sha256_file` without choosing a project's manifest schema. See the [usage and migration guide](../../docs/shared-file-provenance.md) for examples, failure handling and compatibility requirements.
+Add extras inside the dependency name, for example `dse-research-utils[graphs,viz]`, in the installation command. `boosting` and `boosting-cpu` provide the same `xgboost` import and must not be combined. Helpers import optional packages when needed and report a missing dependency if it is absent.
 
-Version 0.17.0 adds an optional `mode` to `atomic_write` and a `default_file_mode` probe. Omitting `mode` retains the callback's permissions, including the owner-only initial permissions when the callback does not change them. Callers can opt into explicit permission bits or the mode of an ordinary new file.
+## System requirements for plots
 
-## Shared sampling signals
+Graph plotting requires Graphviz's `dot` executable. Install Graphviz with `brew install graphviz`, `sudo apt install graphviz` or `winget install Graphviz.Graphviz`.
 
-Version 0.17.0 exposes `statistics.diagnostics.bfmi_per_chain`, which reads energy diagnostics in named chain and draw order. `diagnostic_extrema` reduces an existing unrounded summary into maximum R-hat, minimum effective sample size and names with unavailable diagnostics. Neither selects variables nor applies a pass/fail rule. Nullable missing diagnostics now become NaN before reduction in both the new helper and existing diagnostic writers and sampling-quality helpers. Thresholds remain unchanged.
+The default plot style uses the Noto Sans and Noto Sans Math system fonts. Install them with `brew install --cask font-noto-sans font-noto-sans-math` on macOS, `sudo apt install fonts-noto-core` on Debian or Ubuntu, or the Google Fonts downloads on Windows. The [font guide](../../docs/migrating-to-0.16.md#install-the-fonts) covers cache refresh and figure checks.
 
-## Shared statistical arrays
+Plain-text symbols fall back to Noto Sans Math when installed, then to matplotlib's bundled DejaVu Sans. Without Noto Sans, ordinary text uses the next installed font in the style's list. Missing math fonts can produce font warnings and different output. Install the same fonts on workstations and CI machines when figures must match.
 
-`statistics.samples` aligns labelled predictive and observed arrays. `statistics.predictive` computes per-observation predictive checks, and `statistics.log_likelihood` aggregates factors into explicitly chosen evaluation units. See the [statistical array guide](../../docs/shared-predictive-arrays.md) for numerical conventions and consumer migration examples.
+## Package map
 
-## Shared report assets and feature groups
+Modules live under `dse_research_utils`. Import helpers from their defining module; `__init__.py` files provide no re-exports.
 
-`report.assets` inspects direct HTML resources and checks upload inventories and HTTP availability. `ml.feature_groups` builds and cuts clustering trees from existing dissimilarity matrices. See the [usage and migration guide](../../docs/shared-assets-and-feature-groups.md) for scope, numerical conventions and consumer adapters.
+| Area                  | Purpose                                                                                               | Usage guide                                                                                                                                                                                                                            |
+| --------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `console`             | Shared Rich console, tables and run summaries                                                         | Module docstrings                                                                                                                                                                                                                      |
+| `environment`         | Script/notebook setup, output paths and disk checks                                                   | Module docstrings                                                                                                                                                                                                                      |
+| `math`                | Numerical constants                                                                                   | Module docstrings                                                                                                                                                                                                                      |
+| `metadata`, `storage` | File writes, directory promotion, provenance and Azure uploads                                        | [Files and provenance](../../docs/shared-file-provenance.md), [directory promotion](../../docs/consolidation-migration.md#promote-a-completed-directory)                                                                               |
+| `ml`                  | Feature dependence, grouping, search, cross-validation and permutation scores                         | [Feature groups](../../docs/shared-assets-and-feature-groups.md#reuse-a-dissimilarity-matrix-for-feature-grouping), [permutation scoring](../../docs/consolidation-migration.md#keep-held-out-and-pooled-permutation-scoring-explicit) |
+| `plot`                | Figure styles, saving and statistical plots                                                           | Module docstrings and [font guide](../../docs/migrating-to-0.16.md)                                                                                                                                                                    |
+| `report`              | Model artefact reads, nearest-row lookup and asset checks                                             | [Report reads](../../docs/consolidation-migration.md#read-file-state-before-applying-report-rules), [assets](../../docs/shared-assets-and-feature-groups.md)                                                                           |
+| `statistics`          | Intervals, predictive checks, likelihood aggregation, diagnostics, model helpers and sampling presets | [Statistical arrays](../../docs/shared-predictive-arrays.md), [array intervals and HSGP geometry](../../docs/consolidation-migration.md), [diagnostic reductions](../../docs/migrating-to-0.17.md)                                     |
 
-## Directory promotion, report reads and evaluation
+The helpers keep study choices in the caller. Projects select observation units, priors, interval coverage, feature cut thresholds, scoring populations, missing-value rules and criteria for accepting or publishing a fit.
 
-`storage.directories` promotes completed trees with an explicit lock and retained backup. `report.readers` distinguishes present, missing and invalid files. `statistics.array_intervals` reduces explicit sample axes, `ml.permutation` supports separate held-out and pooled evaluation, and `statistics.models.hsgp_design` records and replays fixed Gaussian-process geometry. The [combined migration guide](../../docs/consolidation-migration.md) covers these APIs and the rules each consumer retains.
+## Reporting and sampling defaults
 
-## Development
+Shared interval helpers and `ReportingConfiguration.ci_prob` default to 0.89 coverage. `ReportingConfiguration.interval_kind` defaults to `"hdi"` for a highest-density interval; several interval functions default to `"eti"` for an equal-tailed interval. Pass both coverage and kind explicitly when a report needs one convention throughout.
 
-Work from the repository root, which is the uv workspace root:
+`statistics.models.sampling.get_sampling_configuration` supplies these presets. Draws and tuning steps are per chain. MCMC means Markov chain Monte Carlo, the method used to draw samples from a posterior distribution.
 
-```bash
-uv sync                                 # create .venv
-uv run pytest                           # tests
-uv run ruff check src/python            # lint
-uv build --package dse-research-utils   # wheel + sdist
-```
+| Accepted names                           | Chains | Draws | Tuning steps | `target_accept` |
+| ---------------------------------------- | ------ | ----- | ------------ | --------------- |
+| `dev`, `development`                     | 2      | 500   | 500          | 0.85            |
+| `test`, `testing`                        | 4      | 2,000 | 2,000        | 0.90            |
+| `rep-lite`, `reporting-lite`, `rep_lite` | 4      | 4,000 | 4,000        | 0.95            |
+| `reporting`, `report`, `rep`             | 6      | 6,000 | 6,000        | 0.95            |
+
+The default seed is 47. Worker count is capped by the chain count and available cores. A preset does not guarantee convergence or sufficient precision. Check the fitted model's diagnostics.
+
+For contributor setup and checks, use the [repository readme](../../README.md#develop-in-this-repository).

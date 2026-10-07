@@ -1,5 +1,4 @@
 {
-  "$schema": "https://raw.githubusercontent.com/dsegroup/apps-common/main/schemas/design-token-pin.schema.json",
   "repository": "dsegroup/apps-common",
   "tag": "unreleased",
   "generator": "1.0.0",

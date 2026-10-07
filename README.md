@@ -9,10 +9,10 @@ Projects that use the Python package include [language-reading-predictors](https
 
 ## Use the library
 
-Install the published `v0.17.0` tag in a consuming project:
+Install the published `v0.18.0` tag in a consuming project:
 
 ```bash
-uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.17.0#subdirectory=src/python"
+uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.18.0#subdirectory=src/python"
 ```
 
 The [Python readme](src/python/readme.md) lists optional extras and system requirements. The [documentation index](docs/README.md) links to usage guides and version-specific upgrade notes.

@@ -7,7 +7,7 @@
 
 These APIs require 0.14.0 or later. The [documentation index](README.md) covers installation and upgrades. Use small project adapters to preserve stored formats and scientific choices when adopting the helpers.
 
-Related guides cover [file writing and provenance](shared-file-provenance.md), [labelled samples, predictive summaries and likelihood aggregation](shared-predictive-arrays.md), and [report assets and feature groups](shared-assets-and-feature-groups.md). This guide covers the remaining additions and the checks needed for a combined migration.
+Related guides cover [file writing and provenance](shared-file-provenance.md), [labelled samples, predictive summaries and likelihood aggregation](shared-predictive-arrays.md), and [report assets and feature groups](shared-assets-and-feature-groups.md). This guide covers directory promotion, file reads, intervals, Gaussian-process geometry and permutation scoring.
 
 ## Promote a completed directory
 

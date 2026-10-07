@@ -11,16 +11,16 @@ Start with the [repository readme](../README.md) for contributor setup or the [P
 
 These APIs were introduced in 0.14.0. File-permission options require 0.17.0 or later.
 
-| Guide                                                                   | Covers                                                                                                    |
-| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| [File writes and provenance](shared-file-provenance.md)                 | Single-file replacement, permission options, Git state, package versions and file hashes                  |
-| [Sample arrays and predictive summaries](shared-predictive-arrays.md)   | Labelled observations, predictive intervals and ranks, likelihood aggregation                             |
-| [Report assets and feature groups](shared-assets-and-feature-groups.md) | Local HTML resources, upload inventories, HTTP availability and clustering                                |
-| [Directory, report and evaluation helpers](consolidation-migration.md)  | Directory promotion, file reads, array intervals, fixed Gaussian-process geometry and permutation scoring |
+| Guide                                                                             | Covers                                                                                                    |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [File writes and provenance](shared-file-provenance.md)                           | Single-file replacement, permission options, Git state, package versions and file hashes                  |
+| [Sample arrays and predictive summaries](shared-predictive-arrays.md)             | Labelled observations, predictive intervals and ranks, likelihood aggregation                             |
+| [Report assets and feature groups](shared-assets-and-feature-groups.md)           | Local HTML resources, upload inventories, HTTP availability and clustering                                |
+| [Directory, report and evaluation helpers](shared-directory-report-evaluation.md) | Directory promotion, file reads, array intervals, fixed Gaussian-process geometry and permutation scoring |
 
 ## Upgrade a consuming project
 
-Release tags through `v0.17.0` are published. Choose the target release and read all notes between the project's current version and that target. Notes describe the changes in their named release; the package's current `pyproject.toml` may contain later dependency updates.
+The current release is `v0.17.0`. Read its [upgrade notes](migrating-to-0.17.md) and check the dependency requirements in that tag's `src/python/pyproject.toml`.
 
 1. Change the Git tag in the consuming project's `pyproject.toml`. Preserve its selected extras and any additional project constraints. For a source declared in `tool.uv.sources`, update the `tag` field in that entry.
 2. Resolve the new package version and install the project's own locked environment:
@@ -36,20 +36,6 @@ Release tags through `v0.17.0` are published. Choose the target release and read
 5. Apply the project's fit-compatibility rules before resuming or publishing stored fits. Keep historical manifests and recorded environments intact. A dependency update does not refit models, and passing library tests does not establish compatibility of every saved result.
 
 Commit the dependency declaration, lockfile and any required adapters together. Adapters should preserve the project's schemas, labels, precision, missing-value rules and reporting decisions unless the upgrade deliberately changes them.
-
-## Version notes
-
-| Version                          | Changes to review                                                              |
-| -------------------------------- | ------------------------------------------------------------------------------ |
-| [0.17.0](migrating-to-0.17.md)   | Public diagnostic reductions, nullable diagnostics and file-permission options |
-| [0.16.2](migrating-to-0.16.2.md) | Dependency minimums                                                            |
-| [0.16.1](migrating-to-0.16.1.md) | Font fallback for plain-text symbols                                           |
-| [0.16.0](migrating-to-0.16.md)   | Noto fonts and ArviZ minimums                                                  |
-| [0.15.2](migrating-to-0.15.2.md) | Dependency minimums, including NumPy and PyTensor                              |
-| [0.15.1](migrating-to-0.15.1.md) | Repository lock refresh without new package requirements                       |
-| [0.15.0](migrating-to-0.15.md)   | Wider NumPy limit and Optuna 5 defaults                                        |
-| [0.14.0](migrating-to-0.14.md)   | Shared file, statistical, reporting and evaluation APIs                        |
-| [0.13.0](migrating-to-0.13.md)   | Corrected HSGP boundaries, diagnostic decisions and upload paths               |
 
 ## Completed reviews
 

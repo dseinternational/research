@@ -71,7 +71,7 @@ atomic_write(
 
 The public `default_file_mode(directory)` helper exposes the same probe for callers that need the numeric mode. Its directory must already exist. Explicit `mode` values override permissions set by the callback, including a metadata-preserving copy. These options do not preserve access-control entries or inherit an existing destination's permissions. Consumers must select `v0.17.0` or a later tag before using them; see the [0.17.0 upgrade notes](migrating-to-0.17.md).
 
-This operation does not coordinate competing writers. The last successful replacement wins, and a read-modify-write operation can still lose another writer's update. It does not commit several files as one transaction or guarantee durability after a power loss. The [directory promotion helper](consolidation-migration.md#promote-a-completed-directory) accepts an explicit lock and retains a backup for completed directory trees.
+This operation does not coordinate competing writers. The last successful replacement wins, and a read-modify-write operation can still lose another writer's update. It does not commit several files as one transaction or guarantee durability after a power loss. The [directory promotion helper](shared-directory-report-evaluation.md#promote-a-completed-directory) accepts an explicit lock and retains a backup for completed directory trees.
 
 ## Collect provenance facts
 

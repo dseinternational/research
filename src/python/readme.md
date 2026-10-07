@@ -1,7 +1,7 @@
 > [!NOTE]
 > Drafted by a LLM-based AI tool (Codex/GPT-6).
 
-<!-- cspell:words HSGP BFMI MCMC PSIS ELPD docstrings prob -->
+<!-- cspell:words HSGP BFMI MCMC PSIS ELPD docstrings prob fontlist cachedir -->
 
 # Python utilities
 
@@ -15,7 +15,7 @@ Install the published `v0.17.0` tag:
 uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.17.0#subdirectory=src/python"
 ```
 
-For an existing installation, follow the [upgrade procedure and version notes](../../docs/README.md#upgrade-a-consuming-project). Preserve the extras the project already uses.
+For an existing installation, follow the [upgrade procedure](../../docs/README.md#upgrade-a-consuming-project) and [0.17.0 notes](../../docs/migrating-to-0.17.md). Preserve the extras the project already uses.
 
 This package's `pyproject.toml` defines the shared minimum dependency versions. Consuming projects inherit these requirements and resolve their own lock files. Declare any additional requirements that their own code needs, without copying the library's version list.
 
@@ -42,24 +42,32 @@ Add extras inside the dependency name, for example `dse-research-utils[graphs,vi
 
 Graph plotting requires Graphviz's `dot` executable. Install Graphviz with `brew install graphviz`, `sudo apt install graphviz` or `winget install Graphviz.Graphviz`.
 
-The default plot style uses the Noto Sans and Noto Sans Math system fonts. Install them with `brew install --cask font-noto-sans font-noto-sans-math` on macOS, `sudo apt install fonts-noto-core` on Debian or Ubuntu, or the Google Fonts downloads on Windows. The [font guide](../../docs/migrating-to-0.16.md#install-the-fonts) covers cache refresh and figure checks.
+The default plot style uses the Noto Sans and Noto Sans Math system fonts. Install them with `brew install --cask font-noto-sans font-noto-sans-math` on macOS, `sudo apt install fonts-noto-core` on Debian or Ubuntu, or the [Noto Sans](https://fonts.google.com/noto/specimen/Noto+Sans) and [Noto Sans Math](https://fonts.google.com/noto/specimen/Noto+Sans+Math) downloads on Windows.
 
 Plain-text symbols fall back to Noto Sans Math when installed, then to matplotlib's bundled DejaVu Sans. Without Noto Sans, ordinary text uses the next installed font in the style's list. Missing math fonts can produce font warnings and different output. Install the same fonts on workstations and CI machines when figures must match.
+
+If matplotlib cannot find newly installed fonts, delete `fontlist-*.json` from its cache directory and restart running kernels. Find the directory with:
+
+```bash
+uv run python -c "import matplotlib; print(matplotlib.get_cachedir())"
+```
+
+Regenerate affected figures and model graphs. Check labels, legends and symbols for clipping, overlap or missing glyphs.
 
 ## Package map
 
 Modules live under `dse_research_utils`. Import helpers from their defining module; `__init__.py` files provide no re-exports.
 
-| Area                  | Purpose                                                                                               | Usage guide                                                                                                                                                                                                                            |
-| --------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `console`             | Shared Rich console, tables and run summaries                                                         | Module docstrings                                                                                                                                                                                                                      |
-| `environment`         | Script/notebook setup, output paths and disk checks                                                   | Module docstrings                                                                                                                                                                                                                      |
-| `math`                | Numerical constants                                                                                   | Module docstrings                                                                                                                                                                                                                      |
-| `metadata`, `storage` | File writes, directory promotion, provenance and Azure uploads                                        | [Files and provenance](../../docs/shared-file-provenance.md), [directory promotion](../../docs/consolidation-migration.md#promote-a-completed-directory)                                                                               |
-| `ml`                  | Feature dependence, grouping, search, cross-validation and permutation scores                         | [Feature groups](../../docs/shared-assets-and-feature-groups.md#reuse-a-dissimilarity-matrix-for-feature-grouping), [permutation scoring](../../docs/consolidation-migration.md#keep-held-out-and-pooled-permutation-scoring-explicit) |
-| `plot`                | Figure styles, saving and statistical plots                                                           | Module docstrings and [font guide](../../docs/migrating-to-0.16.md)                                                                                                                                                                    |
-| `report`              | Model artefact reads, nearest-row lookup and asset checks                                             | [Report reads](../../docs/consolidation-migration.md#read-file-state-before-applying-report-rules), [assets](../../docs/shared-assets-and-feature-groups.md)                                                                           |
-| `statistics`          | Intervals, predictive checks, likelihood aggregation, diagnostics, model helpers and sampling presets | [Statistical arrays](../../docs/shared-predictive-arrays.md), [array intervals and HSGP geometry](../../docs/consolidation-migration.md), [diagnostic reductions](../../docs/migrating-to-0.17.md)                                     |
+| Area                  | Purpose                                                                                               | Usage guide                                                                                                                                                                                                                                       |
+| --------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `console`             | Shared Rich console, tables and run summaries                                                         | Module docstrings                                                                                                                                                                                                                                 |
+| `environment`         | Script/notebook setup, output paths and disk checks                                                   | Module docstrings                                                                                                                                                                                                                                 |
+| `math`                | Numerical constants                                                                                   | Module docstrings                                                                                                                                                                                                                                 |
+| `metadata`, `storage` | File writes, directory promotion, provenance and Azure uploads                                        | [Files and provenance](../../docs/shared-file-provenance.md), [directory promotion](../../docs/shared-directory-report-evaluation.md#promote-a-completed-directory)                                                                               |
+| `ml`                  | Feature dependence, grouping, search, cross-validation and permutation scores                         | [Feature groups](../../docs/shared-assets-and-feature-groups.md#reuse-a-dissimilarity-matrix-for-feature-grouping), [permutation scoring](../../docs/shared-directory-report-evaluation.md#keep-held-out-and-pooled-permutation-scoring-explicit) |
+| `plot`                | Figure styles, saving and statistical plots                                                           | Module docstrings and [font setup](#system-requirements-for-plots)                                                                                                                                                                                |
+| `report`              | Model artefact reads, nearest-row lookup and asset checks                                             | [Report reads](../../docs/shared-directory-report-evaluation.md#read-file-state-before-applying-report-rules), [assets](../../docs/shared-assets-and-feature-groups.md)                                                                           |
+| `statistics`          | Intervals, predictive checks, likelihood aggregation, diagnostics, model helpers and sampling presets | [Statistical arrays](../../docs/shared-predictive-arrays.md), [array intervals and HSGP geometry](../../docs/shared-directory-report-evaluation.md), [diagnostic reductions](../../docs/migrating-to-0.17.md)                                     |
 
 The helpers keep study choices in the caller. Projects select observation units, priors, interval coverage, feature cut thresholds, scoring populations, missing-value rules and criteria for accepting or publishing a fit.
 

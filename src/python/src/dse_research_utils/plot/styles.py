@@ -181,11 +181,12 @@ def categorical_palette(n: int, palette: str | None = None) -> list:
     """Return ``n`` colours for categorical series.
 
     The default is ``tab10`` for at most ten colours, otherwise ``tab20``.
-    Listed palettes cycle when ``n`` exceeds their size, so colours can repeat.
-    Colormaps with at least 256 entries are sampled evenly, including endpoints.
+    Colormaps with fewer than 256 entries cycle when ``n`` exceeds their size,
+    so colours can repeat. Colormaps with at least 256 entries are sampled evenly
+    from 0 to 1, including endpoints when ``n > 1``. A single colour uses 0.
     This function does not guarantee that all colours are visually distinct.
     """
     cmap = plt.get_cmap(palette or ("tab20" if n > 10 else "tab10"))
-    if cmap.N >= 256:  # continuous colormap used as qualitative
+    if cmap.N >= 256:
         return [cmap(i / max(n - 1, 1)) for i in range(n)]
     return [cmap(i % cmap.N) for i in range(n)]

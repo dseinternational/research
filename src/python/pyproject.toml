@@ -45,7 +45,7 @@ viz = ["seaborn>=0.13.2"]          # dse_research_utils.plot.grids (histogram gr
 graphs = ["graphviz>=0.21", "networkx>=3.7"]  # dse_research_utils.plot.graphs — ALSO needs the system Graphviz `dot` binary
 notebook = ["jupyter>=1.1.1", "jupytext>=1.19.6"]  # notebook/Jupyter stack (ipython drives plot.io.display_image)
 dependence = ["dcor>=0.7"]              # dse_research_utils.ml.feature_dependence.distance_corr_matrix
-tuning = ["optuna>=5.0.0", "optuna-integration>=5.0.0"]  # see docs/migrating-to-0.15.md for Optuna 5 default changes
+tuning = ["optuna>=5.0.0", "optuna-integration>=5.0.0"]
 io = ["orjson>=3.12.0", "tabulate>=0.10.0"]
 # Alternative sampler backends. PyMC samples with nutpie out of the box (core);
 # these add the JAX/NumPyro path for repos that use it.

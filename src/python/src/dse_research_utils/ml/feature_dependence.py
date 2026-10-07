@@ -22,29 +22,26 @@ from dse_research_utils.ml.feature_groups import linkage_from_dissimilarity
 
 
 def spearman_distance_matrix(X: pd.DataFrame | np.ndarray | list[float]) -> tuple[np.ndarray, np.ndarray]:
-    """
-    Compute Spearman rank correlation between all pairs of features in X (DataFrame or ndarray).
-    Returns distance matrix (1 - |correlation|) and correlation matrix.
+    """Compute feature-wise Spearman correlations and ``1 - abs(correlation)``.
 
     Parameters
     ----------
-    X: DataFrame or ndarray of shape (n_samples, n_features)
+    X : DataFrame or ndarray of shape (n_samples, n_features)
+        Rows are observations and columns are features.
 
     Returns
     -------
-    distance: distance matrix (1 - |correlation|) - ndarray of shape (n_features, n_features)
-    corr: correlation matrix - ndarray of shape (n_features, n_features)
+    distance : ndarray of shape (n_features, n_features)
+        Symmetric dissimilarity matrix with a zero diagonal.
+    corr : ndarray of shape (n_features, n_features)
+        Symmetric correlation matrix with a unit diagonal.
 
     Notes
     -----
-    Missing values are handled by pairwise-complete deletion (pandas
-    ``min_periods=2``). Both DataFrame and ndarray inputs route through the
-    same code path so the result does not depend on the input container — an
-    earlier version computed the ndarray case with
-    ``scipy.stats.spearmanr(nan_policy="propagate")``, which (a) returned a
-    bare scalar for exactly two columns and (b) zeroed out whole rows/columns
-    whenever a single value was NaN, silently disagreeing with the DataFrame
-    path.
+    Each pair uses observations available for both features, with at least two
+    required. Unavailable correlations become zero before the diagonal is set
+    to one. A zero returned off-diagonal correlation can therefore mean missing
+    information, rather than an estimated absence of association.
     """
     df = X if isinstance(X, pd.DataFrame) else pd.DataFrame(np.asarray(X))
     corr = df.corr(method="spearman", min_periods=2).to_numpy()
@@ -64,28 +61,26 @@ def spearman_distance_matrix(X: pd.DataFrame | np.ndarray | list[float]) -> tupl
 
 
 def distance_corr_matrix(X: pd.DataFrame | np.ndarray | list[float]) -> np.ndarray:
-    """
-    Compute pairwise distance correlation matrix for all feature pairs.
-
-    Distance correlation measures both linear and non-linear dependence between variables,
-    returning values in [0, 1] where 0 = independence and 1 = complete dependence.
+    """Estimate pairwise distance correlations from finite observation pairs.
 
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Input data matrix.
+        Input values, converted to float64. Requires the ``dependence`` extra.
 
     Returns
     -------
     M : ndarray of shape (n_features, n_features)
-        Symmetric matrix where M[i,j] is the distance correlation between features i and j.
-        Diagonal elements equal 1.0 (self-correlation).
+        Symmetric matrix clipped to [0, 1], with a unit diagonal. Each pair uses
+        only rows where both features are finite. Fewer than two such rows or
+        a non-finite estimate produces zero for that pair.
 
     Notes
     -----
-    - Unlike Pearson/Spearman correlation, distance correlation detects non-linear relationships
-    - More computationally expensive than standard correlation (O(n²) for n features)
-    - Values range from 0 (independent) to 1 (perfectly dependent)
+    The dcor estimator can measure nonlinear association. A zero sample value,
+    including the fallback for missing information, does not prove population
+    independence. The cost depends on both the feature count and observations
+    per pair. See https://dcor.readthedocs.io/en/latest/functions/dcor.distance_correlation.html.
     """
     try:
         import dcor  # lazy: only this function needs the optional dependency
@@ -122,28 +117,25 @@ def distance_corr_matrix(X: pd.DataFrame | np.ndarray | list[float]) -> np.ndarr
 
 
 def distance_corr_dissimilarity(X: pd.DataFrame | np.ndarray | list[float]) -> tuple[np.ndarray, np.ndarray]:
-    """
-    Compute pairwise distance correlation dissimilarity matrix for all feature pairs.
-
-    Converts distance correlation (similarity) into dissimilarity metric by computing 1 - dcor.
-    This dissimilarity matrix is suitable for clustering algorithms that expect distance-like measures.
+    """Return ``1 - distance_correlation`` and the underlying correlation matrix.
 
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Input data matrix.
+        Input data passed to :func:`distance_corr_matrix`.
 
     Returns
     -------
     dissim : ndarray of shape (n_features, n_features)
-        Symmetric dissimilarity matrix where dissim[i,j] = 1 - distance_correlation(i,j).
-        Values range from 0 (perfectly dependent) to 1 (independent).
-        Diagonal elements equal 0 (zero distance to self).
+        Symmetric dissimilarities clipped to [0, 1], with a zero diagonal.
+        Missing-information fallbacks become dissimilarities of one.
+    corr_matrix : ndarray of shape (n_features, n_features)
+        The underlying pairwise correlation estimates.
 
     Notes
     -----
-    - Distance correlation in [0,1]: 0 = independent, 1 = dependent
-    - Dissimilarity in [0,1]: 0 = similar/dependent, 1 = dissimilar/independent
+    These dissimilarities do not establish Euclidean distance or population
+    independence. See :func:`distance_corr_matrix` for finite-row handling.
     """
     corr_matrix = distance_corr_matrix(X)
     dissim = 1.0 - corr_matrix
@@ -157,35 +149,27 @@ def distance_corr_dissimilarity(X: pd.DataFrame | np.ndarray | list[float]) -> t
 def distance_corr_dissimilarity_linkage(
     X: pd.DataFrame | np.ndarray | list[float],
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Compute condensed distance correlation dissimilarity matrix for average-linkage clustering.
+    """Build an average-linkage tree from distance-correlation dissimilarities.
 
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Input data matrix.
+        Input data passed to :func:`distance_corr_dissimilarity`.
 
     Returns
     -------
     dissim : ndarray of shape (n_features, n_features)
-        Symmetric dissimilarity matrix where dissim[i,j] = 1 - distance_correlation(i,j).
-        Values range from 0 (perfectly dependent) to 1 (independent).
-        Diagonal elements equal 0 (zero distance to self).
-
+        Square dissimilarity matrix, including its missing-information fallbacks.
     condensed : ndarray of shape (n_features * (n_features - 1) / 2,)
-        Condensed dissimilarity matrix suitable for linkage clustering algorithms.
-
+        Upper-triangle values in SciPy's condensed ordering.
     linkage : ndarray
-        Linkage matrix resulting from hierarchical clustering using average linkage.
-        Zero or one feature returns shape ``(0, 4)``.
+        Average-linkage tree. Zero or one feature returns shape ``(0, 4)``.
 
     Notes
     -----
-    - Uses distance correlation dissimilarity metric
-    - Returns condensed form for compatibility with scipy linkage functions
-    - Uses average linkage because Ward linkage is correctly defined only for
-      Euclidean distances, whereas distance-correlation dissimilarity is a
-      precomputed non-Euclidean dissimilarity in general.
+    Average linkage accepts these precomputed dissimilarities. Ward linkage
+    requires Euclidean distances, which distance-correlation dissimilarities
+    do not in general establish.
     """
     dissim, _corr_matrix = distance_corr_dissimilarity(X)
     condensed = squareform(dissim)
@@ -201,42 +185,42 @@ def mutual_info_dissimilarity(
     random_state: int | None = None,
     n_jobs: int | None = None,
 ) -> np.ndarray:
-    """
-    Compute pairwise mutual information dissimilarity matrix for all feature pairs.
+    """Build symmetric dissimilarities from estimated mutual information.
 
-    Uses mutual information regression to measure dependence between features, then converts
-    to dissimilarity by computing 1 - normalized MI. Mutual information captures both linear
-    and non-linear relationships.
+    Each feature acts in turn as the continuous target of
+    ``mutual_info_regression``. Its scores are divided by the largest score in
+    that row, then subtracted from one. The result is averaged with its transpose
+    and its diagonal is set to zero.
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features)
-        Input data matrix.
-    discrete_features : {'auto', bool, array-like}, default='auto'
-        Indicates which features are discrete. 'auto' infers from data type.
-    n_neighbors : int, default=3
-        Number of neighbors for k-NN based MI estimation.
-    copy : bool, default=True
-        Whether to make a copy of X.
-    random_state : int, RandomState instance or None, default=None
-        Random seed for reproducibility.
-    n_jobs : int or None, default=None
-        Number of parallel jobs. None means 1, -1 uses all processors.
+    X : DataFrame or ndarray of shape (n_samples, n_features)
+        Input feature matrix. Every target column is treated as continuous.
+    discrete_features : {'auto', bool, array-like}, default 'auto'
+        Predictor-feature flags passed to scikit-learn. ``'auto'`` treats dense
+        inputs as continuous; it does not infer discrete features from dtype.
+    n_neighbors : int, default 3
+        Neighbour count for estimating mutual information with continuous values.
+    copy : bool, default True
+        Passed to scikit-learn. With False, its estimator can overwrite input data.
+    random_state : int or None, default None
+        Seed for noise used to break ties in continuous values.
+    n_jobs : int or None, default None
+        Parallel jobs for the estimator. -1 requests all processors; None uses
+        one job unless a joblib backend context changes it.
 
     Returns
     -------
     dissim : ndarray of shape (n_features, n_features)
-        Symmetric dissimilarity matrix where dissim[i,j] = 1 - normalized_MI(i,j).
-        Values range from 0 (high mutual information) to 1 (independent).
-        Diagonal elements near 0 (features maximally informative about themselves).
+        Symmetric dissimilarities with an exactly zero diagonal. An all-zero
+        score row becomes ones before symmetrisation and diagonal replacement.
+        A distance of one does not prove population independence.
 
     Notes
     -----
-    - Mutual information quantifies information shared between variables
-    - Normalized by max MI score per feature for scale invariance
-    - Symmetrized by averaging with transpose: (dissim + dissim.T) / 2
-    - Suitable for feature clustering and selection
-    - More robust to non-linear relationships than correlation-based methods
+    The row-wise normalisation is a relative comparison of estimated scores,
+    not a test of independence or a guaranteed scale-invariant measure.
+    See https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.mutual_info_regression.html.
     """
     # Accept DataFrames or ndarrays uniformly.
     if hasattr(X, "iloc"):
@@ -269,7 +253,6 @@ def mutual_info_dissimilarity(
             dissim[i, :] = 1.0
 
     dissim = (dissim + dissim.T) / 2  # Symmetrize
-    # Each feature is maximally informative about itself; force the
-    # diagonal so the returned matrix is a proper dissimilarity.
+    # Set the diagonal to zero by convention, including all-zero score rows.
     np.fill_diagonal(dissim, 0.0)
     return dissim

@@ -1,16 +1,12 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Configurable output-root resolver shared by the consuming repositories.
+"""Resolve configurable output roots at call time.
 
-Model traces and reporting-quality artefacts are large (a reporting-config
-``trace.nc`` exceeds 10 GB), so ephemeral scratch-disk VM runs need to redirect
-them off the repo disk without breaking the established relative layout, report
-rendering, uploads, comparisons, or scripts that read previous runs. Each repo
-declares an :class:`OutputRoot` with its own environment-variable name and
-repo-local default; the resolution *policy* — CLI override > environment
-variable > default, resolved at call time — lives here so it cannot drift
-between repositories.
+Each project supplies its environment-variable name and default directory.
+An explicit override takes precedence over the environment variable, which
+takes precedence over the default. This lets callers move output without
+changing its layout beneath the root.
 """
 
 from __future__ import annotations
@@ -22,9 +18,8 @@ from pathlib import Path
 class OutputRoot:
     """A call-time-resolved output root with a fixed precedence.
 
-    Precedence: an explicit override set via :meth:`set` (typically the parsed
-    ``--output-dir``) > the configured environment variable > the repo-local
-    default.
+    An explicit override set via :meth:`set` takes precedence over the
+    configured environment variable, then the repo-local default.
 
     Parameters
     ----------
@@ -39,7 +34,7 @@ class OutputRoot:
         How a configured path is normalised. ``True`` (default) uses
         ``Path.expanduser().resolve()``, so a symlinked path is recorded as its
         target. ``False`` uses ``expanduser`` + ``abspath``, preserving the
-        symlink in the recorded path — which matters where the output root is
+        symlink in the recorded path. This matters where the output root is
         itself a symlink to a scratch volume and the link path is the stable
         name that appears in manifests and upload prefixes.
     """
@@ -63,7 +58,7 @@ class OutputRoot:
         return Path(os.path.abspath(expanded))
 
     def set(self, path: str | os.PathLike[str] | None) -> Path:
-        """Set (or clear) the process-wide override — highest precedence.
+        """Set or clear this resolver's override, which takes highest precedence.
 
         Pass the parsed ``--output-dir`` value, or ``None`` to clear the
         override and fall back to the environment variable / default. Returns

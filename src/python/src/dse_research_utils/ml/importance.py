@@ -1,10 +1,10 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Grouped (block) out-of-fold permutation importance.
+"""Compute joint feature-block permutation scores within each held-out fold.
 
-A pure-numeric routine, estimator-agnostic and independent of any pipeline, so it
-is importable and unit-testable on its own.
+Use ``ml.permutation.pooled_oof_permutation_deltas`` when the score must be
+computed once over pooled held-out predictions.
 """
 
 from __future__ import annotations
@@ -29,11 +29,11 @@ def grouped_permutation_importance(
 ) -> dict[int, np.ndarray]:
     """Joint (grouped) out-of-fold permutation deltas, one block per cluster.
 
-    For each held-out fold it permutes ALL of a cluster's columns together (one
-    row-permutation per repeat applied to the whole block), which removes the
-    within-cluster substitution dilution that deflates per-feature scores. The RNG
-    is reset to ``seed`` at the start of each fold, mirroring a per-feature
-    permutation loop that passes a fixed ``random_state`` per fold.
+    Each repeat shuffles a cluster's columns together within one held-out fold.
+    This preserves their within-row relationships while changing which row
+    supplies them. The random generator resets to ``seed`` for each fold.
+    Results concatenate fold-specific score changes; they are not changes
+    in a score computed over pooled predictions.
 
     Parameters
     ----------
@@ -56,7 +56,8 @@ def grouped_permutation_importance(
     -------
     dict
         Cluster id -> array of deltas (held-out RMSE rise when the block is
-        permuted; positive = the cluster was useful).
+        permuted). Positive values mean that this shuffle worsened prediction
+        error on that fold; they do not establish a causal effect.
     """
     y = np.asarray(y, dtype=float)
     deltas: dict[int, list[float]] = {c: [] for c in cluster_cols}

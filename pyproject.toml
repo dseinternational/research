@@ -12,9 +12,8 @@ name = "dse-research"
 version = "0"
 description = "Development workspace for the DSE research shared libraries."
 requires-python = ">=3.14"
-# `all` pulls every optional layer (viz, notebook, graphs, jax, boosting,
-# columnar, storage, …) so a contributor's environment can run anything in the
-# repo. Consuming repos pick the narrower set of extras they actually need.
+# The contributor environment includes all compatible extras. Consumers
+# select only the extras their project needs.
 dependencies = ["dse-research-utils[all]"]
 
 [dependency-groups]
@@ -42,11 +41,8 @@ research = [
 [tool.uv]
 package = false
 default-groups = ["dev", "research"]
-# Platforms the lockfile is resolved for. Intel macOS is deliberately absent:
-# numba publishes no macosx x86_64 wheels at all, and shap pins numba<0.63
-# there, so the stack cannot solve on that platform — upstream has dropped it,
-# not us. Everything else the repos actually run on is covered, including native
-# win-amd64.
+# Resolve the workspace lock for these platforms. Intel macOS and Windows
+# ARM64 are outside this set.
 environments = [
     "sys_platform == 'linux' and platform_machine == 'x86_64'",
     "sys_platform == 'linux' and platform_machine == 'aarch64'",

@@ -30,13 +30,13 @@ def hyperparam_search_randomized(
     refit: bool | str | Callable[[dict[str, np.ndarray]], int] = True,
     output_csv: str | Path | None = None,
 ) -> tuple[RandomizedSearchCV, pd.DataFrame, dict[str, Any]]:
-    """Fit a ``RandomizedSearchCV`` (group-aware) and return the search + results.
+    """Fit a RandomizedSearchCV and return the search, result table and best parameters.
 
-    Returns ``(search, cv_results_dataframe, best_params_)``. ``best_params_`` is
-    sklearn's own tie-broken best configuration; deriving it from ``cv_results_``
-    by hand was fragile under ties in ``rank_test_score``. When ``scoring`` is
-    multi-metric, pass ``refit`` as one of the scorer keys or a callable so
-    sklearn knows which metric defines ``best_params_``.
+    The return tuple is ``(search, cv_results_dataframe, best_params_)``. Scikit-learn
+    selects the best configuration, including ties. For multiple scorers, ``refit``
+    must be a scorer key or a callable that selects a result row. The ``groups``
+    argument is passed to ``fit``; callers must supply a cross-validation splitter
+    that uses groups if group separation is required.
     """
     if _is_multi_metric_scoring(scoring) and isinstance(refit, bool):
         raise ValueError(

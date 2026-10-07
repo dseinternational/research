@@ -5,7 +5,7 @@
 
 # Shared report assets and feature groups
 
-Version 0.14.0 adds direct HTML asset inspection and feature grouping from an existing distance matrix. See the [upgrade notes](migrating-to-0.14.md) for installation and the release sequence. Both APIs use dependencies already available in the library. They do not upload a report, select a scientific result for publication or choose a study's feature cutoff.
+These APIs inspect direct HTML resources and group features from an existing distance matrix. They require 0.14.0 or later. See the [installation and upgrade notes](README.md#upgrade-a-consuming-project). The caller uploads reports and chooses publication rules and feature cut thresholds.
 
 ## Check the local report before checking an upload
 
@@ -40,13 +40,13 @@ with TemporaryDirectory() as directory:
 
 The upload check accepts raw filenames from `BlobUploadResult.relative_paths`, including Windows separators. It does not infer filenames from uploaded URLs. The entry page must be present at its inspected path; a nested `assets/index.html` cannot replace an entry at `index.html`. An inventory entry cannot hide a missing or unsupported local resource. Inspect and upload stable files because inspection is a snapshot.
 
-Ordinary links remain available in `inspection.references`. Set `include_navigation=True` to require local downloads and page links too. VG's current publication checks treat existing local links to CSVs, images and HTML as required, so its initial adapter should select this option. External URLs, data URLs and same-page fragments are recorded but not requested. A successful local check says nothing about those references.
+Ordinary links remain available in `inspection.references`. Set `include_navigation=True` to require local downloads and page links too. Select this option when a report requires linked downloads and pages as part of its bundle. External URLs, data URLs and same-page fragments are recorded but not requested. A successful local check says nothing about those references.
 
 Set `follow_pages=True` to inspect referenced local `.html` and `.htm` pages recursively. Those pages become required even when ordinary navigation is otherwise optional. Invalid HTML paths that escape the root remain failures and are never opened. Repeated references and ordinary page cycles do not cause repeated scans. A new URL alias that resolves to an ancestor page produces an unsupported `cyclic_page_alias` finding. This stops symlink cycles without claiming to have checked resources under the new URL. Without recursive inspection, only the supplied page's direct references are inspected. Neither mode follows CSS imports, CSS image/font URLs, JavaScript imports or dynamically generated resources.
 
-Nonempty `base href` and responsive `srcset` attributes currently produce explicit unsupported failures. Even `base href="./"` changes how query-only URLs resolve. These constructs can change which file a browser loads, so ignoring them could certify an incomplete bundle. Root-relative URLs such as `/figure.png` are invalid for local bundle matching because the browser resolves them at the website origin, rather than under the report's upload prefix. Consumer adapters must handle these findings before reporting success.
+Nonempty `base href` and responsive `srcset` attributes produce explicit unsupported failures. Even `base href="./"` changes how query-only URLs resolve. These constructs can change which file a browser loads, so ignoring them could certify an incomplete bundle. Root-relative URLs such as `/figure.png` are invalid for local bundle matching because the browser resolves them at the website origin, rather than under the report's upload prefix. Consumer adapters must handle these findings before reporting success.
 
-The scanner decodes HTML entities, separates URL path/query/fragment, then decodes the path once. Plus signs remain plus signs. URL path separators must be literal `/` characters. Encoded separators, repeated slashes and directory-shaped URLs ending in `/`, `/.` or `/..` are invalid for file matching because filesystem normalization could otherwise change the requested URL. For a filename containing the literal text `%20`, the HTML must contain `%2520`. The current VG test that links the literal filename `50%20.csv` as `href="50%20.csv"` is not a valid compatibility target: a browser asks for `50 .csv`. The shared inspection exposes that missing file. Tests retain both the mismatch and the correctly encoded form.
+The scanner decodes HTML entities, separates URL path/query/fragment, then decodes the path once. Plus signs remain plus signs. URL path separators must be literal `/` characters. Encoded separators, repeated slashes and directory-shaped URLs ending in `/`, `/.` or `/..` are invalid for file matching because filesystem normalization could otherwise change the requested URL. For a filename containing the literal text `%20`, the HTML must contain `%2520`. A link `href="50%20.csv"` requests `50 .csv`, not a file literally named `50%20.csv`. Use `href="50%2520.csv"` for the latter. Tests cover both the mismatch and the correctly encoded form.
 
 ## Check HTTP availability separately
 
@@ -72,7 +72,7 @@ assert failures == (AssetFailure("missing.png", "http_status", 404),)
 
 The default transport uses a bounded HTTP GET, closes the response without downloading its body and rejects redirects. A login page reached through a redirect cannot supply a successful status for the requested asset. Callers can inject a transport that returns an integer status and follows the same redirect rule. Failures record a relative path, an HTTP status or exception type; raw exception messages are excluded.
 
-Run the local/upload inventory check first, then make HTTP requests only after it passes. A 200 response establishes HTTP availability, not correct bytes, content type, complete page rendering or permission to publish the scientific results. VG and LRP retain their report visibility rules and final success messages.
+Run the local/upload inventory check first, then make HTTP requests only after it passes. A 200 response establishes HTTP availability, not correct bytes, content type, complete page rendering or permission to publish the scientific results. Keep report visibility rules and final success messages in the caller.
 
 ## Reuse a dissimilarity matrix for feature grouping
 
@@ -102,7 +102,7 @@ consumer_groups = {
 assert consumer_groups["cluster_01"] == ["reading", "language"]
 ```
 
-USBC can retain its `cluster_01` identifiers through that adapter. LRP can keep the numeric keys for joins to its feature and cluster-importance tables. Its adapter should preserve the existing int32 dtype for the in-memory `cluster_id` column; constructing a DataFrame directly from Python integer keys otherwise infers int64. Numeric labels are local to a tree and cut; they are not stable identities across changed feature order, distances or thresholds. A tree stores positions and cannot detect names supplied in the wrong order.
+Use that adapter when a project needs `cluster_01` identifiers. Numeric keys can instead support existing table joins. Preserve any required int32 dtype for an in-memory `cluster_id` column; a DataFrame built from Python integer keys otherwise infers int64. Numeric labels are local to a tree and cut; they are not stable identities across changed feature order, distances or thresholds. A tree stores positions and cannot detect names supplied in the wrong order.
 
 Average linkage uses the average distance between merging clusters. Its threshold does not bound every pairwise distance inside a group or guarantee a minimum pairwise correlation. For distances 0.1, 0.2 and 0.8 among three features, average linkage merges all three at 0.5 even though one pair is 0.8 apart. Tests retain this distinction.
 
@@ -110,6 +110,6 @@ The existing `distance_corr_dissimilarity_linkage` helper delegates tree constru
 
 ## Validate consumer adapters
 
-Asset fixtures check missing files, upload omissions, raw and encoded names, recursive page paths, HTTP failures and the intentional changes from VG's scanner. Grouping fixtures retain member order, consumer identifiers and joins to importance tables. Tests use synthetic inputs and injected HTTP responses; they do not upload reports or access live publications.
+Asset fixtures check missing files, upload omissions, raw and encoded names, recursive page paths and HTTP failures. Grouping fixtures retain member order, consumer identifiers and joins to importance tables. Tests use synthetic inputs and injected HTTP responses; they do not upload reports or access live publications.
 
-Consumers should compare their own inventories and grouped output tables before migration. Keep their input cleanup, imputation, cutoff, feature roles, publication checks and saved-fit identity policies in their adapters. The [statistical array guide](shared-predictive-arrays.md) and [file/provenance guide](shared-file-provenance.md) describe the earlier additions in this PR.
+Consumers should compare their own inventories and grouped output tables before migration. Keep their input cleanup, imputation, cutoff, feature roles, publication checks and saved-fit identity policies in their adapters. The [statistical array guide](shared-predictive-arrays.md) and [file/provenance guide](shared-file-provenance.md) cover related APIs.

@@ -1,17 +1,11 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Figure save / notebook-display helpers.
+"""Save figures, plot collections and optional data tables.
 
-The house figure-artifact policy: always write ``<name>.png`` (the artifact
-report templates reference — raster keeps output pages quick to browse); also
-write an ``<name>.svg`` sibling, optionally capped in size (very large SVGs are
-what make report viewers slow); optionally write ``<name>.csv`` of the data
-behind the plot. Both matplotlib figures and ``arviz_plots`` ``PlotCollection``
-objects route through here so a single change propagates everywhere.
-
-Consistent house style (fonts, colours, grid, DPI) comes from
-``set_matplotlib_default_style``; these helpers only standardise *saving*.
+The styled save helpers write PNG, with optional SVG and CSV siblings.
+Callers choose SVG size limits and whether to close the saved figures.
+Apply ``set_matplotlib_default_style`` separately for fonts, colours and DPI.
 """
 
 from __future__ import annotations
@@ -54,8 +48,8 @@ def save_figure(
 def display_image(filename: str, output_dir: str | os.PathLike, width: int = 600) -> Any:
     """Display an image from ``output_dir / filename`` in a notebook.
 
-    Requires IPython (install the ``notebook`` extra:
-    ``pip install dse-research-utils[notebook]``).
+    Requires IPython, supplied by the ``notebook`` extra. See the Python
+    readme for installation from a published Git tag.
     """
     try:
         from IPython.display import Image, display
@@ -84,8 +78,9 @@ def _write_svg_sibling(save: Any, base: str, svg_max_bytes: int | None = None) -
 
     ``save`` is a one-arg callable (``fig.savefig`` or ``pc.savefig``) so this
     works for both matplotlib figures and ``arviz_plots`` collections. With
-    ``svg_max_bytes=None`` the SVG is kept regardless of size. Guarded so an
-    SVG-backend hiccup never costs the (already-written) PNG.
+    ``svg_max_bytes=None`` the SVG is kept regardless of size. SVG failures are reported and the failed sibling is
+    removed where possible.
+    The already-written PNG remains.
     """
     svg = base + ".svg"
     try:

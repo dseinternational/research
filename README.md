@@ -1,32 +1,48 @@
 > [!NOTE]
 > Drafted by a LLM-based AI tool (Codex/GPT-6).
 
-# Research
+# DSE research utilities
 
-**\*Shared libraries and utilities for research supported by [Down Syndrome Education International](https://www.down-syndrome.org/).**
+Shared libraries for research supported by [Down Syndrome Education International](https://www.down-syndrome.org/). The Python package, [`dse-research-utils`](src/python/readme.md), provides statistical, plotting, reporting and storage helpers. The [.NET area](src/dotnet/readme.md) has configuration but no projects.
 
-Current projects using these libraries include:
+Projects that use the Python package include [language-reading-predictors](https://github.com/dseinternational/language-reading-predictors), [vocabulary-growth](https://github.com/dseinternational/vocabulary-growth) and [us-birth-certificates](https://github.com/dspopulations/us-birth-certificates).
 
-- [dseinternational/language-reading-predictors](https://github.com/dseinternational/language-reading-predictors)
-- [dseinternational/vocabulary-growth](https://github.com/dseinternational/vocabulary-growth)
-- [dspopulations/us-birth-certificates](https://github.com/dspopulations/us-birth-certificates)
+## Use the library
 
-## Getting started
-
-The Python environment is managed with [uv](https://docs.astral.sh/uv/). uv provisions CPython 3.14 itself, so this is the whole setup:
+Install the published `v0.17.0` tag in a consuming project:
 
 ```bash
-uv sync                                # create .venv from uv.lock
-uv run pytest                          # run the test suite
-uv build --package dse-research-utils  # build the wheel
+uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.17.0#subdirectory=src/python"
 ```
 
-Windows is supported natively — WSL is no longer required. Intel macOS is not supported, because numba publishes no macOS x86_64 wheels. Plotting model graphs additionally needs the system Graphviz `dot` binary (`brew install graphviz`, `apt install graphviz`, `winget install Graphviz.Graphviz`). The default plot style and model graphs use the Noto Sans and Noto Sans Math system fonts (`brew install --cask font-noto-sans font-noto-sans-math`, `apt install fonts-noto-core`, or Google Fonts on Windows). Symbols that Noto Sans lacks, such as arrows and ≤, fall back to Noto Sans Math and then to DejaVu Sans, which ships with matplotlib. Without the fonts, text uses the next installed font in `font.sans-serif` and math uses DejaVu Sans.
+The [Python readme](src/python/readme.md) lists optional extras and system requirements. The [documentation index](docs/README.md) links to usage guides and version-specific upgrade notes.
 
-The [0.17.0 upgrade notes](docs/migrating-to-0.17.md) describe the public diagnostic reductions, file-permission options and downstream upgrade steps. The [0.16.2 upgrade notes](docs/migrating-to-0.16.2.md) describe the earlier dependency minimums and downstream upgrade steps. The [0.16.1 upgrade notes](docs/migrating-to-0.16.1.md) describe the font fallback that draws symbols Noto Sans lacks. The [0.16.0 upgrade notes](docs/migrating-to-0.16.md) describe the switch to Noto Sans and Noto Sans Math in the default plot style and the raised ArviZ minimums. The [0.15.2 upgrade notes](docs/migrating-to-0.15.2.md) describe the earlier raised minimum dependency versions and downstream upgrade steps. The [0.15.1 upgrade notes](docs/migrating-to-0.15.1.md) record the earlier lock refresh. The [0.15.0 upgrade notes](docs/migrating-to-0.15.md) describe the lifted NumPy ceiling and the Optuna 5.0 move. The [0.14.0 upgrade notes](docs/migrating-to-0.14.md) describe the shared-helper release sequence and installation. The [shared-helper migration guide](docs/consolidation-migration.md) explains how downstream projects can adopt the shared APIs in one dependency upgrade.
+## Develop in this repository
 
-## License
+Run these commands from the repository root. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) first; it provisions Python 3.14 from `.python-version`.
 
-All source code in this repository is licensed under the GNU Affero General Public License v3.0 **(AGPL-3.0-only)**. See `LICENSE`.
+```bash
+uv sync --locked
+uv run pytest
+uv run ruff check src/python
+uv run ruff format --check src/python
+uv build --package dse-research-utils
+```
 
-AGPL-3.0 requires that if you modify and run this software to provide a network service, you must offer the corresponding source code to users of that service.
+The root `pyproject.toml` defines the contributor environment. The package requirements live in `src/python/pyproject.toml`. Consuming projects resolve their own dependencies and do not inherit this repository's lockfile or development groups.
+
+The workspace resolves environments for Linux x86_64 and ARM64, Apple silicon macOS, and Windows x64. Windows runs natively. Intel macOS is outside the configured environments.
+
+Use Node.js 24, as specified in `.nvmrc`, for the Markdown checks:
+
+```bash
+npm ci
+npm run spellcheck
+npm run format:check
+```
+
+`npm run format` formats tracked Markdown files, except `data/**/*.md`. It preserves paragraph line breaks, so write each paragraph on one line. Follow [the contributor and agent instructions](AGENTS.md) for source conventions, AI attribution and commit messages.
+
+## Licence
+
+The source headers and npm metadata specify `AGPL-3.0-or-later`. See the [GNU Affero General Public License](LICENSE).

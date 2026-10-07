@@ -1,17 +1,13 @@
 # Copyright (c) 2026 Down Syndrome Education International and contributors
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Shared MCMC convergence gate and its report banner.
+"""Write and display a shared sampling-diagnostic gate.
 
-A single, robust pass/fail convergence summary built from stable ArviZ surfaces
-(divergences, R-hat, ESS, per-chain BFMI), written as ``diagnostics_summary.json``
-next to a fit's other artefacts, plus a Markdown renderer so every DSE report shows
-the same banner. The JSON schema is produced by :func:`write_diagnostics_summary` and
-consumed by :func:`convergence_banner_markdown`; keeping both here keeps that contract
-in one place.
-
-Thresholds follow the shared workflow standard (R-hat <= 1.01, ESS >= 400,
-divergences = 0, BFMI >= 0.3; Vehtari et al. 2021 for R-hat).
+``write_diagnostics_summary`` writes the gate payload and
+``convergence_banner_markdown`` renders it. The defaults require R-hat <= 1.01,
+bulk and tail effective sample sizes >= 400, no divergences and per-chain
+BFMI >= 0.3, with assessable diagnostics. Passing these checks does not
+establish model validity or permission to publish results.
 """
 
 from __future__ import annotations
@@ -111,12 +107,12 @@ def write_diagnostics_summary(
     var_names: list[str] | None = None,
     tables: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Emit ``diagnostics_summary.json`` -- the report's pass/fail convergence gate.
+    """Write the sampling gate to ``diagnostics_summary.json``.
 
-    One robust summary built from stable ArviZ surfaces: divergences from
-    ``sample_stats``, R-hat / ESS from ``az.summary`` over the named (or all scalar)
-    parameters, and per-chain BFMI. Written unconditionally so a report's banner
-    always renders, even when a diagnostic could not be computed.
+    Read divergences from ``sample_stats``, R-hat and effective sample sizes
+    from an unrounded ``az.summary``, and BFMI from chain energies. Failed
+    diagnostic calculations are recorded in the payload. File-write errors
+    still propagate.
 
     Parameters
     ----------
@@ -127,7 +123,8 @@ def write_diagnostics_summary(
         Directory to write ``diagnostics_summary.json`` into (created if absent).
     var_names : list of str, optional
         Restrict the R-hat / ESS scan to these variables; ``None`` scans the trace's
-        default (scalar) parameters.
+        default variable selection, which can include deterministic and array-valued
+        variables.
     tables : dict, optional
         When given, the payload is also stored under ``tables["diagnostics_summary"]``
         (mirrors a fit context's table cache).

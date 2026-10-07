@@ -39,12 +39,12 @@ def plot_prior_samples_binomial(
 
     for i in idx:
         counts = y_samples[:, i] * n_trials
-        plt.plot(x, counts, c=plot_styles.COLOUR_ORANGE, alpha=0.1, lw=1)
+        plt.plot(x, counts, c=plot_styles.CHART_COLOURS[2], alpha=0.1, lw=1)
 
     plt.scatter(
         x_observed,
         y_observed,
-        c=plot_styles.COLOUR_BLUE,
+        c=plot_styles.CHART_COLOURS[0],
         alpha=0.4,
         label="Observed data",
     )

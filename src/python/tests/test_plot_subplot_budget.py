@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import arviz as az
 import numpy as np
+import pytest
 import xarray as xr
 
 from dse_research_utils.plot.diagnostics_mcmc import (
@@ -14,7 +15,7 @@ from dse_research_utils.plot.diagnostics_mcmc import (
     plot_required_subplots,
     plot_variable_count,
 )
-from dse_research_utils.plot.styles import categorical_palette
+from dse_research_utils.plot.styles import CHART_COLOURS, categorical_palette
 
 
 def _trace_with_scalar_and_vector_parameters() -> xr.DataTree:
@@ -68,12 +69,16 @@ def test_capped_plot_var_names_skips_large_observed_diagnostic():
     assert plot_variable_count(trace, "kappa_obs") == 100
 
 
-def test_categorical_palette_distinct_and_auto_widens():
-    small = categorical_palette(4)
-    assert len(small) == 4
-    assert len(set(small)) == 4
-    wide = categorical_palette(15)  # auto-widens to tab20
-    assert len(wide) == 15
+def test_categorical_palette_takes_the_chart_colours_in_order():
+    assert categorical_palette(4) == list(CHART_COLOURS[:4])
+    assert categorical_palette(6) == list(CHART_COLOURS)
+
+
+def test_categorical_palette_refuses_more_than_six_series():
+    # The design language allows six categorical series; a named palette is the explicit way past it.
+    with pytest.raises(ValueError, match="more than the 6 chart colours"):
+        categorical_palette(7)
+    wide = categorical_palette(15, palette="tab20")
     assert len(set(wide)) == 15
 
 

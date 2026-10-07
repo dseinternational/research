@@ -32,19 +32,72 @@ def test_portrait_sizes_are_swap_of_landscape() -> None:
 
 
 def test_colour_constants_are_hex() -> None:
-    for name in dir(styles):
-        if name.startswith(("COLOUR_", "TEXT_COLOUR", "LINE_COLOUR")):
-            value = getattr(styles, name)
-            assert isinstance(value, str)
-            assert value.startswith("#")
-            assert len(value) in (7, 9)  # #rrggbb or #rrggbbaa
+    names = [name for name in dir(styles) if name.endswith("_COLOUR")]
+    assert {"TEXT_COLOUR", "MUTED_TEXT_COLOUR", "LINE_COLOUR", "BACKGROUND_COLOUR"} <= set(names)
+    for name in names:
+        value = getattr(styles, name)
+        assert isinstance(value, str)
+        assert value.startswith("#")
+        assert len(value) == 7
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("COLOUR_BLUE", styles.CHART_COLOURS[0]),
+        ("COLOUR_GREEN", styles.CHART_COLOURS[1]),
+        ("COLOUR_ORANGE", styles.CHART_COLOURS[2]),
+        ("COLOUR_PURPLE", styles.CHART_COLOURS[3]),
+        ("COLOUR_RED", "#d62728"),
+        ("COLOUR_DARK_GREEN", "#036903"),
+    ],
+)
+def test_named_hues_are_deprecated(name: str, expected: str) -> None:
+    with pytest.warns(DeprecationWarning, match=name):
+        assert getattr(styles, name) == expected
+
+
+def test_named_hues_can_still_be_imported() -> None:
+    with pytest.warns(DeprecationWarning):
+        from dse_research_utils.plot.styles import COLOUR_DARK_BLUE
+    assert COLOUR_DARK_BLUE == "#014b7f"
+
+
+def test_unknown_attributes_raise() -> None:
+    with pytest.raises(AttributeError):
+        _ = styles.COLOUR_TEAL
 
 
 def test_set_matplotlib_default_style_applies() -> None:
-    styles.set_matplotlib_default_style()
-    assert plt.rcParams["figure.facecolor"] == "white"
-    assert plt.rcParams["axes.grid"] is True
-    assert plt.rcParams["font.size"] == float(styles.FONT_SIZE_DEFAULT)
+    with plt.rc_context():
+        styles.set_matplotlib_default_style()
+        assert plt.rcParams["figure.facecolor"] == styles.BACKGROUND_COLOUR
+        assert plt.rcParams["axes.grid"] is True
+        assert plt.rcParams["font.size"] == float(styles.FONT_SIZE_DEFAULT)
+
+
+def test_default_style_draws_series_and_images_in_chart_colours() -> None:
+    with plt.rc_context():
+        styles.set_matplotlib_default_style()
+        assert plt.rcParams["axes.prop_cycle"].by_key()["color"] == list(styles.CHART_COLOURS)
+        assert plt.rcParams["image.cmap"] == "dse_sequential"
+        assert plt.rcParams["text.color"] == styles.TEXT_COLOUR
+
+
+def test_ordered_palettes() -> None:
+    assert styles.sequential_palette(3) == list(styles.SEQUENTIAL_PALETTES[3])
+    assert styles.diverging_palette(5) == list(styles.DIVERGING_PALETTES[5])
+    # The middle step of an odd diverging set is grey.
+    middle = styles.diverging_palette(5)[2]
+    assert middle[1:3] == middle[3:5] == middle[5:7]
+
+
+@pytest.mark.parametrize("n", [2, 6])
+def test_ordered_palettes_reject_unsupported_sizes(n: int) -> None:
+    with pytest.raises(ValueError, match="3, 4, 5"):
+        styles.sequential_palette(n)
+    with pytest.raises(ValueError, match="3, 4, 5"):
+        styles.diverging_palette(n)
 
 
 def test_default_style_uses_noto_fonts() -> None:

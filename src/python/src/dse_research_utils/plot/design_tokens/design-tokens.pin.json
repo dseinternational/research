@@ -1,0 +1,12 @@
+{
+  "repository": "dsegroup/apps-common",
+  "tag": "unreleased",
+  "generator": "1.0.0",
+  "files": [
+    {
+      "source": "dist/research/colors.json",
+      "path": "src/python/src/dse_research_utils/plot/design_tokens/colors.json",
+      "sha256": "ee043b0f952c61477e55a063a4d6024aef3a97d36f4bf06b005569fcc2bcece0"
+    }
+  ]
+}

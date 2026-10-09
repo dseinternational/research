@@ -36,7 +36,7 @@ Substitute the tool and model used for the draft. GitHub alert syntax does not r
 
 ## Markdown and commits
 
-Write each prose paragraph on one unwrapped line. Use only the blank lines needed to separate Markdown elements. Prettier preserves prose wrapping. `npm run format` formats tracked Markdown except `data/**/*.md`; `npm run format:check` checks it. `npm run spellcheck` uses cspell, whose configuration excludes the three agent instruction files.
+Write each prose paragraph on one unwrapped line. Use only the blank lines needed to separate Markdown elements. Prettier preserves prose wrapping. `pnpm run format` formats tracked Markdown except `data/**/*.md`; `pnpm run format:check` checks it. `pnpm run spellcheck` uses cspell, whose configuration excludes the three agent instruction files.
 
 Every commit must follow Conventional Commits. Use an imperative subject without a trailing period:
 
@@ -49,6 +49,8 @@ Types include `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `build`, `ci`, 
 ## Dependencies and checks
 
 Run commands from the repository root. `uv sync --locked` installs the committed environment; `uv run` runs commands in it. The [readme](https://github.com/dseinternational/research/blob/main/README.md#develop-in-this-repository) lists Python, build and Markdown checks. Use `uv run pytest path/to/test_file.py` or `uv run pytest path/to/test_file.py::test_function_name` for focused tests.
+
+Use Node.js 24 from `.nvmrc` and the pnpm version pinned in `package.json` for Markdown tooling. `pnpm install --frozen-lockfile` installs the committed dependencies. Use pnpm for dependency changes and commit `pnpm-lock.yaml` with them.
 
 Declare library requirements and extras in `src/python/pyproject.toml`. Keep their minimum versions there rather than copying that list into consumers. The root `pyproject.toml` is not packaged; its `dev` and `research` groups are repository tooling. Run `uv lock` after changing dependency declarations and commit `uv.lock` with them.
 

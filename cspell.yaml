@@ -1,0 +1,12 @@
+version: "0.2"
+language: en-GB
+ignorePaths:
+  - .github/copilot-instructions.md
+  - AGENTS.md
+  - CLAUDE.md
+dictionaryDefinitions:
+  - name: project-words
+    path: ./cspell-words.txt
+    addWords: true
+dictionaries:
+  - project-words

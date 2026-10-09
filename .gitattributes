@@ -26,6 +26,7 @@
 # Lockfiles — LF, and collapsed in review as generated content
 *.lock      text eol=lf
 uv.lock     text eol=lf linguist-generated=true
+pnpm-lock.yaml text eol=lf linguist-generated=true
 
 # Binary — do not modify
 *.png       binary

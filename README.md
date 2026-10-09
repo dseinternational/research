@@ -33,16 +33,16 @@ The root `pyproject.toml` defines the contributor environment. The package requi
 
 The workspace resolves environments for Linux x86_64 and ARM64, Apple silicon macOS, and Windows x64. Windows runs natively. Intel macOS is outside the configured environments.
 
-Use Node.js 24, as specified in `.nvmrc`, for the Markdown checks:
+Use Node.js 24, as specified in `.nvmrc`, and pnpm 12.10.1, as pinned in `package.json`, for the Markdown checks. Install that pnpm version using [pnpm's installation guide](https://pnpm.io/installation), then run:
 
 ```bash
-npm ci
-npm run spellcheck
-npm run format:check
+pnpm install --frozen-lockfile
+pnpm run spellcheck
+pnpm run format:check
 ```
 
-`npm run format` formats tracked Markdown files, except `data/**/*.md`. It preserves paragraph line breaks, so write each paragraph on one line. Follow [the contributor and agent instructions](AGENTS.md) for source conventions, AI attribution and commit messages.
+`pnpm run format` formats tracked Markdown files, except `data/**/*.md`. It preserves paragraph line breaks, so write each paragraph on one line. Follow [the contributor and agent instructions](AGENTS.md) for source conventions, AI attribution and commit messages.
 
 ## Licence
 
-The source headers and npm metadata specify `AGPL-3.0-or-later`. See the [GNU Affero General Public License](LICENSE).
+The source headers and package metadata specify `AGPL-3.0-or-later`. See the [GNU Affero General Public License](LICENSE).

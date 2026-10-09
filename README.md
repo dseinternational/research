@@ -43,6 +43,8 @@ pnpm run format:check
 
 `pnpm run format` formats tracked Markdown files, except `data/**/*.md`. It preserves paragraph line breaks, so write each paragraph on one line. Follow [the contributor and agent instructions](AGENTS.md) for source conventions, AI attribution and commit messages.
 
+Cspell settings live in `cspell.yaml`. Add project terms to `cspell-words.txt`, one word per line.
+
 ## Licence
 
 The source headers and package metadata specify `AGPL-3.0-or-later`. See the [GNU Affero General Public License](LICENSE).

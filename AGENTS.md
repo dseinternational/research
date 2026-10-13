@@ -50,7 +50,7 @@ Types include `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `build`, `ci`, 
 
 Run commands from the repository root. `uv sync --locked` installs the committed environment; `uv run` runs commands in it. The [readme](https://github.com/dseinternational/research/blob/main/README.md#develop-in-this-repository) lists Python, build and Markdown checks. Use `uv run pytest path/to/test_file.py` or `uv run pytest path/to/test_file.py::test_function_name` for focused tests.
 
-Use Node.js 24 from `.nvmrc` and the pnpm version pinned in `package.json` for Markdown tooling. `pnpm install --frozen-lockfile` installs the committed dependencies. Use pnpm for dependency changes and commit `pnpm-lock.yaml` with them.
+Use Node.js 26 from `.nvmrc` and the pnpm version pinned in `package.json` for Markdown tooling. `pnpm install --frozen-lockfile` installs the committed dependencies. Use pnpm for dependency changes and commit `pnpm-lock.yaml` with them.
 
 Declare library requirements and extras in `src/python/pyproject.toml`. Keep their minimum versions there rather than copying that list into consumers. The root `pyproject.toml` is not packaged; its `dev` and `research` groups are repository tooling. Run `uv lock` after changing dependency declarations and commit `uv.lock` with them.
 

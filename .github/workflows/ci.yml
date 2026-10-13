@@ -51,7 +51,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Windows runs x64: uv.lock resolves no win-arm64 environment.
+        # Windows runs x64: jaxlib has no win-arm64 wheels, so uv.lock resolves
+        # no win-arm64 environment. Move to windows-11-arm once it does.
         os: [ubuntu-26.04-arm, windows-2025]
     runs-on: ${{ matrix.os }}
     steps:

@@ -72,8 +72,8 @@ for _cmap in (SEQUENTIAL_CMAP, DIVERGING_CMAP, SEQUENTIAL_CMAP.reversed(), DIVER
 # their old value until callers move to a chart colour or an ordered step.
 _DEPRECATED_COLOURS: dict[str, tuple[str, str]] = {
     "COLOUR_BLUE": (CHART_COLOURS[0], "CHART_COLOURS[0]"),
-    "COLOUR_GREEN": (CHART_COLOURS[1], "CHART_COLOURS[1]"),
-    "COLOUR_ORANGE": (CHART_COLOURS[2], "CHART_COLOURS[2]"),
+    "COLOUR_GREEN": (CHART_COLOURS[2], "CHART_COLOURS[2]"),
+    "COLOUR_ORANGE": (CHART_COLOURS[1], "CHART_COLOURS[1]"),
     "COLOUR_PURPLE": (CHART_COLOURS[3], "CHART_COLOURS[3]"),
     "COLOUR_RED": ("#d62728", "a CHART_COLOURS entry"),
     "COLOUR_YELLOW": ("#ffbb00", "a CHART_COLOURS entry"),

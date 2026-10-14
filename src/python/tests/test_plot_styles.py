@@ -7,6 +7,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pytest
+from matplotlib.colors import rgb_to_hsv, to_rgb
 
 from dse_research_utils.plot import styles
 
@@ -45,8 +46,8 @@ def test_colour_constants_are_hex() -> None:
     ("name", "expected"),
     [
         ("COLOUR_BLUE", styles.CHART_COLOURS[0]),
-        ("COLOUR_GREEN", styles.CHART_COLOURS[1]),
-        ("COLOUR_ORANGE", styles.CHART_COLOURS[2]),
+        ("COLOUR_GREEN", styles.CHART_COLOURS[2]),
+        ("COLOUR_ORANGE", styles.CHART_COLOURS[1]),
         ("COLOUR_PURPLE", styles.CHART_COLOURS[3]),
         ("COLOUR_RED", "#d62728"),
         ("COLOUR_DARK_GREEN", "#036903"),
@@ -55,6 +56,22 @@ def test_colour_constants_are_hex() -> None:
 def test_named_hues_are_deprecated(name: str, expected: str) -> None:
     with pytest.warns(DeprecationWarning, match=name):
         assert getattr(styles, name) == expected
+
+
+@pytest.mark.parametrize(
+    ("name", "low", "high"),
+    [
+        ("COLOUR_BLUE", 190, 250),
+        ("COLOUR_GREEN", 90, 170),
+        ("COLOUR_ORANGE", 10, 45),
+        ("COLOUR_PURPLE", 250, 300),
+    ],
+)
+def test_named_hues_keep_their_hue(name: str, low: int, high: int) -> None:
+    # The names pick chart colours by position, so a token release that reorders the colours must not change a hue.
+    with pytest.warns(DeprecationWarning, match=name):
+        hue = rgb_to_hsv(to_rgb(getattr(styles, name)))[0] * 360
+    assert low <= hue <= high
 
 
 def test_named_hues_can_still_be_imported() -> None:

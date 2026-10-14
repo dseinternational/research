@@ -63,7 +63,7 @@ Figure colours follow the DSE design language, so a group has the same colour in
 - Continuous scales are `SEQUENTIAL_CMAP` and `DIVERGING_CMAP`, registered as `dse_sequential` and `dse_diverging`, with `_r` reversals. The sequential scale is the default `image.cmap`. `plot_heatmap(..., centre=0.0)` centres the diverging scale, for example for correlations.
 - `TEXT_COLOUR`, `MUTED_TEXT_COLOUR`, `LINE_COLOUR` and `BACKGROUND_COLOUR` are the design language's text, secondary text, hairline and background roles. Draw a reference line that carries meaning in `MUTED_TEXT_COLOUR`; `LINE_COLOUR` is for grid lines.
 
-The named hues `COLOUR_BLUE` to `COLOUR_DARK_PURPLE` are deprecated and raise `DeprecationWarning`. Blue, green, orange and purple now return `CHART_COLOURS[0]` to `CHART_COLOURS[3]`; the others keep their old values until callers choose a chart colour or an ordered step.
+The named hues `COLOUR_BLUE` to `COLOUR_DARK_PURPLE` are deprecated and raise `DeprecationWarning`. Blue, orange, green and purple now return `CHART_COLOURS[0]` to `CHART_COLOURS[3]`; the others keep their old values until callers choose a chart colour or an ordered step.
 
 ## Package map
 

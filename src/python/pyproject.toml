@@ -20,15 +20,15 @@ dependencies = [
     "h5netcdf>=1.8.1",  # the only DataTree-capable netCDF engine; InferenceData.to_netcdf needs it
     "h5py>=3.16.0",  # h5netcdf's own requirement; named to keep the floor explicit
     "matplotlib>=3.11.2",
-    "numba>=0.67.0",  # PyMC's default compile backend; pytensor currently requires <=0.67.0
-    "numpy>=2.5.4,<2.6",  # numba 0.67 requires numpy <2.6; review when pytensor admits a newer numba
+    "numba>=0.68.0",  # PyMC's default compile backend; pytensor currently requires <=0.68.0
+    "numpy>=2.5.4,<2.6",  # numba 0.68 requires numpy <2.6; review when pytensor admits a newer numba
     "nutpie>=0.16.11",  # auto-selected as PyMC's default NUTS sampler when installed
     "pandas>=3.0.6",
     "preliz>=0.28.0",
     "psutil>=7.2.2",
     "pyarrow>=26.0.0",  # pandas 3.x's default `str` dtype is Arrow-backed
     "pymc>=6.3.2",  # imported by dse_research_utils.statistics.models.*
-    "pytensor>=3.3.3,<3.4",  # imported by statistics.models.*; 3.3.2 fixes Numba compatibility with SciPy 1.18
+    "pytensor>=3.3.4,<3.4",  # imported by statistics.models.*; 3.3.4 admits Numba 0.68
     "rich>=15.0.0",
     "scikit-learn>=1.9.1",
     "scipy>=1.18.1",
@@ -51,7 +51,7 @@ io = ["orjson>=3.13.0", "tabulate>=0.10.0"]
 # these add the JAX/NumPyro path for repos that use it.
 jax = ["jax>=0.11.2", "numpyro>=0.22.0"]  # CPU builds; GPU acceleration is an opt-in overlay
 # Gradient boosting + explanation, previously declared per repo.
-boosting = ["lightgbm>=4.7.0", "shap>=0.53.0", "xgboost>=3.4.1"]
+boosting = ["lightgbm>=4.7.0", "shap>=0.54.1", "xgboost>=3.4.1"]
 # CPU-only variant of `boosting`, for repos that do no GPU training. xgboost's
 # default PyPI wheel is the GPU build on Linux and hard-requires
 # nvidia-nccl-cu13; `xgboost-cpu` is the same library built without GPU support,
@@ -66,7 +66,7 @@ boosting = ["lightgbm>=4.7.0", "shap>=0.53.0", "xgboost>=3.4.1"]
 # Keep the lightgbm and shap floors identical to `boosting` above.
 boosting-cpu = [
     "lightgbm>=4.7.0",
-    "shap>=0.53.0",
+    "shap>=0.54.1",
     "xgboost-cpu>=3.4.1; sys_platform != 'darwin'",
     "xgboost>=3.4.1; sys_platform == 'darwin'"
 ]

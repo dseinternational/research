@@ -33,7 +33,7 @@ The root `pyproject.toml` defines the contributor environment. The package requi
 
 The workspace resolves environments for Linux x86_64 and ARM64, Apple silicon macOS, and Windows x64. Windows runs natively. Intel macOS is outside the configured environments.
 
-Use Node.js 26, as specified in `.nvmrc`, and pnpm 12.11.2, as pinned in `package.json`, for the Markdown checks. Install that pnpm version using [pnpm's installation guide](https://pnpm.io/installation), then run:
+Use Node.js 26, as specified in `.nvmrc`, and pnpm 12.14.0, as pinned in `package.json`, for the Markdown checks. Install that pnpm version using [pnpm's installation guide](https://pnpm.io/installation), then run:
 
 ```bash
 pnpm install --frozen-lockfile

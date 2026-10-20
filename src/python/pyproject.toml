@@ -49,7 +49,7 @@ tuning = ["optuna>=5.0.0", "optuna-integration>=5.0.0"]
 io = ["orjson>=3.13.0", "tabulate>=0.10.0"]
 # Alternative sampler backends. PyMC samples with nutpie out of the box (core);
 # these add the JAX/NumPyro path for repos that use it.
-jax = ["jax>=0.11.2", "numpyro>=0.22.0"]  # CPU builds; GPU acceleration is an opt-in overlay
+jax = ["jax>=0.12.0", "numpyro>=0.22.0"]  # CPU builds; GPU acceleration is an opt-in overlay
 # Gradient boosting + explanation, previously declared per repo.
 boosting = ["lightgbm>=4.7.0", "shap>=0.54.1", "xgboost>=3.4.1"]
 # CPU-only variant of `boosting`, for repos that do no GPU training. xgboost's

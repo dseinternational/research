@@ -38,6 +38,8 @@ The base install includes PyMC, PyTensor, nutpie, ArviZ, PreliZ, numerical libra
 
 Add extras inside the dependency name, for example `dse-research-utils[graphs,viz]`, in the installation command. `boosting` and `boosting-cpu` provide the same `xgboost` import and must not be combined. Helpers import optional packages when needed and report a missing dependency if it is absent.
 
+The `jax` extra requires AVX2 and FMA instructions on x86-64 CPUs because [JAX 0.12.0 raised its CPU requirements](https://docs.jax.dev/en/latest/changelog.html#jax-0-12-0-october-19-2026). This includes the `all` extra. Apple silicon uses the ARM64 builds.
+
 ## System requirements for plots
 
 Graph plotting requires Graphviz's `dot` executable. Install Graphviz with `brew install graphviz`, `sudo apt install graphviz` or `winget install Graphviz.Graphviz`.

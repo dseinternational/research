@@ -1,12 +1,12 @@
 {
   "repository": "dsegroup/apps-common",
-  "tag": "tokens/2026.3.2",
+  "tag": "tokens/2026.3.4",
   "generator": "1.0.0",
   "files": [
     {
       "source": "dist/research/colors.json",
       "path": "src/python/src/dse_research_utils/plot/design_tokens/colors.json",
-      "sha256": "1f7e5f680345490a244daf4241c1c68d4dab4d5b29791c29d805d03e0aa4f468"
+      "sha256": "1e63584b56a1ec4a22964b663da9dd04eb5729c21bf401f05e160c21a93b3baa"
     }
   ]
 }

@@ -17,6 +17,8 @@ uv add "dse-research-utils @ git+https://github.com/dseinternational/research.gi
 
 For an existing installation, follow the [upgrade procedure](../../docs/README.md#upgrade-a-consuming-project) and [0.18.0 notes](../../docs/migrating-to-0.18.md). Preserve the extras the project already uses.
 
+Version 0.19.0 is in preparation. Read its [upgrade notes](../../docs/migrating-to-0.19.md) before adopting the new dependency minimums or regenerating figures. The installation command above uses the latest published tag.
+
 This package's `pyproject.toml` defines the shared minimum dependency versions. Consuming projects inherit these requirements and resolve their own lock files. Declare any additional requirements that their own code needs, without copying the library's version list.
 
 The base install includes PyMC, PyTensor, nutpie, ArviZ, PreliZ, numerical libraries and the h5netcdf/h5py engine used to save traces. Optional extras add:

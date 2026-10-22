@@ -17,6 +17,8 @@ uv add "dse-research-utils @ git+https://github.com/dseinternational/research.gi
 
 The [Python readme](src/python/readme.md) lists optional extras and system requirements. The [documentation index](docs/README.md) links to usage guides and version-specific upgrade notes.
 
+Version 0.19.0 is in preparation. Its [upgrade notes](docs/migrating-to-0.19.md) cover the dependency updates and colour-order changes since 0.18.0. The installation command above uses the latest published tag.
+
 ## Develop in this repository
 
 Run these commands from the repository root. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) first; it provisions Python 3.14 from `.python-version`.

@@ -3,15 +3,19 @@
 
 <!-- cspell:words dateutil dtype fetchone jaxlib timedelta -->
 
-# Upgrade to 0.19.0
+# Upgrade to 0.19.3
 
-Version 0.19.0 is in preparation. These notes cover changes since the published `v0.18.0` tag, including dependency updates already merged after that release. Python 3.14 remains the minimum. Public helper signatures are unchanged, but dependencies can change results, file compatibility and figure colours.
+These notes cover changes from `v0.18.0` to `v0.19.3`. Python 3.14 remains the minimum. Public helper signatures are unchanged, but dependencies can change results, file compatibility and figure colours.
+
+## Changes since 0.19.2
+
+Version 0.19.3 raises the base pandas minimum from 3.0.6 to 3.1.0 and the `columnar` Polars minimum from 2.0.0 to 2.1.0. The `all` extra inherits both increases. Projects already on 0.19.2 should review the pandas 3.1 and Polars 2.1 behaviour changes below; the other package minimums and plot colours are unchanged from that tag. The contributor lock files and repository tools also advance.
 
 ## Dependency minimums
 
 These requirements increase from 0.18.0. Other package minimums are unchanged. The `all` extra inherits all these increases.
 
-| Requirement | Applies to                 | 0.18.0 minimum | 0.19.0 minimum |
+| Requirement | Applies to                 | 0.18.0 minimum | 0.19.3 minimum |
 | ----------- | -------------------------- | -------------- | -------------- |
 | numba       | Base                       | 0.67.0         | 0.68.0         |
 | numpy       | Base                       | 2.5.3          | 2.5.4          |
@@ -60,6 +64,6 @@ The contributor tools now use Node.js 26, pnpm 12.15.0 and Ruff 0.17.2. The CI u
 
 ## Upgrade
 
-After `v0.19.0` is published, follow the [shared upgrade procedure](README.md#upgrade-a-consuming-project) with that target tag. Preserve the project's selected extras. Run its tests and compare data schemas, date handling, representative model diagnostics and rendered figures.
+Follow the [shared upgrade procedure](README.md#upgrade-a-consuming-project) with target tag `v0.19.3`. Preserve the project's selected extras. Run its tests and compare data schemas, date handling, representative model diagnostics and rendered figures.
 
 Record the resolved commit and installed package versions. Keep historical fit manifests and environments intact. Apply the project's fit-compatibility rules before reusing or publishing stored fits. The shared library's tests do not establish compatibility of a consuming project's databases, queries or stored fits.

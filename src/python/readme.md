@@ -9,15 +9,15 @@
 
 ## Install
 
-Install the published `v0.18.0` tag:
+Install the `v0.19.3` release:
 
 ```bash
-uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.18.0#subdirectory=src/python"
+uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.19.3#subdirectory=src/python"
 ```
 
-For an existing installation, follow the [upgrade procedure](../../docs/README.md#upgrade-a-consuming-project) and [0.18.0 notes](../../docs/migrating-to-0.18.md). Preserve the extras the project already uses.
+For an existing installation, follow the [upgrade procedure](../../docs/README.md#upgrade-a-consuming-project) and [0.19.3 notes](../../docs/migrating-to-0.19.md). Preserve the extras the project already uses.
 
-Version 0.19.0 is in preparation. Read its [upgrade notes](../../docs/migrating-to-0.19.md) before adopting the new dependency minimums or regenerating figures. The installation command above uses the latest published tag.
+The 0.19.3 notes cover dependency and figure-colour changes since 0.18.0, including the pandas and Polars updates since 0.19.2. Review them before adopting the new dependency minimums or regenerating figures.
 
 This package's `pyproject.toml` defines the shared minimum dependency versions. Consuming projects inherit these requirements and resolve their own lock files. Declare any additional requirements that their own code needs, without copying the library's version list.
 

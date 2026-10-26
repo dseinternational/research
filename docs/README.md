@@ -20,9 +20,9 @@ These APIs were introduced in 0.14.0. File-permission options require 0.17.0 or 
 
 ## Upgrade a consuming project
 
-The current release is `v0.18.0`. Read its [upgrade notes](migrating-to-0.18.md); a project on 0.16.2 or earlier also needs the [0.17.0 notes](migrating-to-0.17.md). Check the dependency requirements in that tag's `src/python/pyproject.toml`.
+These instructions target `v0.19.3`. Read its [upgrade notes](migrating-to-0.19.md), including the changes since 0.19.2. A project on 0.17.0 or earlier also needs the [0.18.0 notes](migrating-to-0.18.md); a project on 0.16.2 or earlier also needs the [0.17.0 notes](migrating-to-0.17.md). Check the dependency requirements in the target tag's `src/python/pyproject.toml`.
 
-Version 0.19.0 is in preparation. Its [upgrade notes](migrating-to-0.19.md) cover the dependency minimums, database and data-import changes, and categorical colour order since 0.18.0. Use `v0.19.0` in the procedure below after that tag is published.
+The 0.19.3 notes cover the dependency minimums, database and data-import changes, and categorical colour order since 0.18.0. Use `v0.19.3` as the target tag in the procedure below.
 
 1. Change the Git tag in the consuming project's `pyproject.toml`. Preserve its selected extras and any additional project constraints. For a source declared in `tool.uv.sources`, update the `tag` field in that entry.
 2. Resolve the new package version and install the project's own locked environment:

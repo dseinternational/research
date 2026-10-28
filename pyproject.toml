@@ -22,10 +22,10 @@ dependencies = ["dse-research-utils[all]"]
 # here reaches consumers of dse-research-utils.
 dev = [
     "build>=1.6.1",
-    "hatch>=1.18.1",
+    "hatch>=1.18.2",
     "pandas-stubs>=3.0.5.260914",
-    "pytest>=9.1.1",
-    "ruff>=0.17.2",
+    "pytest>=9.2.0",
+    "ruff>=0.17.3",
     "scipy-stubs>=1.18.1.1"
 ]
 # Pure-Python tail used by research work in this repo (notebooks, scratch

@@ -9,15 +9,15 @@ Projects that use the Python package include [language-reading-predictors](https
 
 ## Use the library
 
-Install the `v0.19.3` release in a consuming project:
+Install the `v0.19.4` release in a consuming project:
 
 ```bash
-uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.19.3#subdirectory=src/python"
+uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.19.4#subdirectory=src/python"
 ```
 
 The [Python readme](src/python/readme.md) lists optional extras and system requirements. The [documentation index](docs/README.md) links to usage guides and version-specific upgrade notes.
 
-Read the [0.19.3 upgrade notes](docs/migrating-to-0.19.md) before updating an existing project. They cover the dependency updates and colour-order changes since 0.18.0, including the pandas and Polars updates since 0.19.2.
+Read the [0.19.4 upgrade notes](docs/migrating-to-0.19.md) before updating an existing project. They cover the dependency updates and colour-order changes since 0.18.0, including PyMC 6.4 and pandas 3.1.1 since 0.19.3.
 
 ## Develop in this repository
 

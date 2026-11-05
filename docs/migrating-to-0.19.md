@@ -1,36 +1,50 @@
 > [!NOTE]
 > Drafted by a LLM-based AI tool (Codex/GPT-6).
 
-<!-- cspell:words dateutil dtype fetchone jaxlib timedelta -->
+<!-- cspell:words dateutil dtype fetchone isoparse jaxlib LKJ timedelta -->
 
-# Upgrade to 0.19.3
+# Upgrade to 0.19.4
 
-These notes cover changes from `v0.18.0` to `v0.19.3`. Python 3.14 remains the minimum. Public helper signatures are unchanged, but dependencies can change results, file compatibility and figure colours.
+These notes cover changes from `v0.18.0` to `v0.19.4`. Python 3.14 remains the minimum. Public helper signatures are unchanged, but dependencies can change results, file compatibility and figure colours.
 
-## Changes since 0.19.2
+## Changes since 0.19.3
 
-Version 0.19.3 raises the base pandas minimum from 3.0.6 to 3.1.0 and the `columnar` Polars minimum from 2.0.0 to 2.1.0. The `all` extra inherits both increases. Projects already on 0.19.2 should review the pandas 3.1 and Polars 2.1 behaviour changes below; the other package minimums and plot colours are unchanged from that tag. The contributor lock files and repository tools also advance.
+Version 0.19.4 includes PyMC 6.4.0, PyTensor 3.3.7 and pandas 3.1.1. It also raises the Azure Identity, Azure Blob Storage, h5netcdf, PyArrow and Zarr minimums shown below. The build requirement advances from Hatchling 1.32.4 to 1.33.0. The contributor lock files and tools include the updates merged after 0.19.3.
+
+PyMC 6.4 fixes forward sampling for LKJ correlation and covariance distributions with more than two dimensions, and their log-density normalization. Projects that use these distributions should review the fixes before comparing, resuming or reusing stored fits. PyMC also changes `find_MAP` and adds boundary-condition options to its Gaussian-process approximation. See the [PyMC 6.4 release notes](https://github.com/pymc-devs/pymc/releases/tag/v6.4.0). Library tests do not establish compatibility of a consuming project's saved models.
+
+Pandas 3.1.1 fixes missing datetime values becoming Unix-epoch timestamps during conversion to Arrow timestamp types. It also fixes Arrow-backed forward and backward fill sharing data with the source, and compatibility with dateutil time zones. Review affected data conversions against the [pandas 3.1.1 release notes](https://pandas.pydata.org/docs/whatsnew/v3.1.1.html).
+
+The design-token pin advances from `tokens/2026.3.4` to `tokens/2026.3.7`. The research colour file is unchanged between these tags, so this update introduces no further colour changes after 0.19.3.
+
+## Changes in 0.19.3
+
+Version 0.19.3 raised the base pandas minimum from 3.0.6 to 3.1.0 and the `columnar` Polars minimum from 2.0.0 to 2.1.0. Projects upgrading from 0.19.2 or earlier should also review the pandas 3.1 and Polars 2.1 behaviour changes below.
 
 ## Dependency minimums
 
 These requirements increase from 0.18.0. Other package minimums are unchanged. The `all` extra inherits all these increases.
 
-| Requirement | Applies to                 | 0.18.0 minimum | 0.19.3 minimum |
-| ----------- | -------------------------- | -------------- | -------------- |
-| numba       | Base                       | 0.67.0         | 0.68.0         |
-| numpy       | Base                       | 2.5.3          | 2.5.4          |
-| pandas      | Base                       | 3.0.6          | 3.1.0          |
-| pyarrow     | Base                       | 25.0.1         | 26.0.0         |
-| pytensor    | Base                       | 3.3.3          | 3.3.4          |
-| orjson      | `io`                       | 3.12.0         | 3.13.0         |
-| jax         | `jax`                      | 0.11.2         | 0.12.0.1       |
-| shap        | `boosting`, `boosting-cpu` | 0.52.0         | 0.54.1         |
-| duckdb      | `columnar`                 | 1.5.6          | 2.0.0          |
-| polars      | `columnar`                 | 1.44.2         | 2.1.0          |
-| pyreadstat  | `columnar`                 | 1.3.6          | 1.3.7          |
-| zarr        | `storage`                  | 3.4.0          | 3.4.1          |
+| Requirement        | Applies to                 | 0.18.0 minimum | 0.19.4 minimum |
+| ------------------ | -------------------------- | -------------- | -------------- |
+| azure-identity     | Base                       | 1.26.0         | 1.27.0         |
+| azure-storage-blob | Base                       | 12.31.0        | 12.31.1        |
+| h5netcdf           | Base                       | 1.8.1          | 1.8.2          |
+| numba              | Base                       | 0.67.0         | 0.68.0         |
+| numpy              | Base                       | 2.5.3          | 2.5.4          |
+| pandas             | Base                       | 3.0.6          | 3.1.1          |
+| pyarrow            | Base                       | 25.0.1         | 26.0.1         |
+| pymc               | Base                       | 6.3.2          | 6.4.0          |
+| pytensor           | Base                       | 3.3.3          | 3.3.7          |
+| orjson             | `io`                       | 3.12.0         | 3.13.0         |
+| jax                | `jax`                      | 0.11.2         | 0.12.0.1       |
+| shap               | `boosting`, `boosting-cpu` | 0.52.0         | 0.54.1         |
+| duckdb             | `columnar`                 | 1.5.6          | 2.0.0          |
+| polars             | `columnar`                 | 1.44.2         | 2.1.0          |
+| pyreadstat         | `columnar`                 | 1.3.6          | 1.3.7          |
+| zarr               | `storage`                  | 3.4.0          | 3.4.2          |
 
-NumPy remains below 2.6 because Numba 0.68 requires that limit. PyTensor remains below 3.4; version 3.3.4 admits Numba 0.68. The package keeps these compatibility bounds.
+All direct package minimums match the latest stable releases checked on 5 November 2026, except Numba. Numba 0.68.1 is available, but [PyTensor 3.3.7 requires Numba 0.68.0 or earlier](https://github.com/pymc-devs/pytensor/blob/rel-3.3.7/pyproject.toml). Numba therefore stays at 0.68.0. Raising its minimum would make the requirements impossible to resolve. NumPy remains below 2.6 because Numba 0.68 requires that limit. PyTensor remains below 3.4, as required by PyMC 6.4.
 
 ## Changes to review in consuming projects
 
@@ -52,18 +66,18 @@ The `jax` and `all` extras require JAX 0.12.0.1 or later. JAX 0.12 requires AVX2
 
 ### Figure colours
 
-The design tokens advance from `tokens/2026.3.0` to `tokens/2026.3.4`. The default categorical order is now blue, orange, green, purple, teal and pink. In 0.18.0, green preceded orange. As a result, `CHART_COLOURS[1]` and `"C1"` become orange, while `CHART_COLOURS[2]` and `"C2"` become green. The default `categorical_palette` follows the same order. The deprecated `COLOUR_GREEN` and `COLOUR_ORANGE` names retain their named hues.
+The design tokens advance from `tokens/2026.3.0` to `tokens/2026.3.7`. The default categorical order is now blue, orange, green, purple, teal and pink. In 0.18.0, green preceded orange. As a result, `CHART_COLOURS[1]` and `"C1"` become orange, while `CHART_COLOURS[2]` and `"C2"` become green. The default `categorical_palette` follows the same order. The deprecated `COLOUR_GREEN` and `COLOUR_ORANGE` names retain their named hues. These colour changes were already present in 0.19.3.
 
 Regenerate representative figures and check series meanings, legends and labels. Committed figures change only when rendered again. The [0.18.0 notes](migrating-to-0.18.md) still apply to projects upgrading from an earlier release.
 
 ## Repository environment
 
-The contributor lockfile updates direct and indirect dependencies. This update includes python-dateutil 3.0.0, which changes time-zone handling. In particular, times in daylight-saving clock-change gaps can receive different UTC offsets. Review date parsing and time-zone calculations if the consuming project's resolver also selects it. See the [dateutil release notes](https://github.com/dateutil/dateutil/releases/tag/3.0.0).
+The contributor lockfile updates direct and indirect dependencies. Since 0.19.3, it advances python-dateutil from 3.0.0 to 4.0.0. Version 4.0 requires exact ASCII digit counts in the numeric fields accepted by `isoparse` and related parsers. Some malformed dates and offsets that it previously accepted now raise `ValueError`. It also fixes calculations for the 366th day of a leap year. See the [dateutil 4.0 release notes](https://github.com/dateutil/dateutil/releases/tag/4.0.0). Projects upgrading from 0.18.0 should also review the [dateutil 3.0 time-zone changes](https://github.com/dateutil/dateutil/releases/tag/3.0.0), including UTC offsets in daylight-saving clock-change gaps.
 
-The contributor tools now use Node.js 26, pnpm 12.15.0 and Ruff 0.17.2. The CI uv setup action advances to 10.3.2, and the .NET SDK pin advances to 10.0.403. These tools, the root development groups and this repository's lockfile do not become requirements of the published Python package. Consuming projects resolve their own environments from the package requirements and their own constraints.
+The contributor tools use Node.js 26, pnpm 12.16.1, Hatch 1.18.2, pytest 9.2.0, Ruff 0.17.3 and pandas-stubs 3.1.0.261029. CI uses setup-uv 10.3.3 and pnpm/action-setup 6.1.1. The .NET SDK remains at 10.0.403. The npm packages, CI actions, runtime pins and design-token tag were also checked for stable updates. These tools, the root development groups and this repository's lockfile do not become requirements of the published Python package. Consuming projects resolve their own environments from the package requirements and their own constraints.
 
 ## Upgrade
 
-Follow the [shared upgrade procedure](README.md#upgrade-a-consuming-project) with target tag `v0.19.3`. Preserve the project's selected extras. Run its tests and compare data schemas, date handling, representative model diagnostics and rendered figures.
+Follow the [shared upgrade procedure](README.md#upgrade-a-consuming-project) with target tag `v0.19.4`. Preserve the project's selected extras. Run its tests and compare data schemas, date handling, representative model diagnostics and rendered figures.
 
 Record the resolved commit and installed package versions. Keep historical fit manifests and environments intact. Apply the project's fit-compatibility rules before reusing or publishing stored fits. The shared library's tests do not establish compatibility of a consuming project's databases, queries or stored fits.

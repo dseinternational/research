@@ -28,7 +28,7 @@ dependencies = [
     "psutil>=7.2.2",
     "pyarrow>=26.0.1",  # pandas 3.x's default `str` dtype is Arrow-backed
     "pymc>=6.4.0",  # imported by dse_research_utils.statistics.models.*
-    "pytensor>=3.3.7,<3.4",  # imported by statistics.models.*; requires Numba <=0.68.0
+    "pytensor>=3.3.8,<3.4",  # imported by statistics.models.*; requires Numba <=0.68.0
     "rich>=15.0.0",
     "scikit-learn>=1.9.1",
     "scipy>=1.18.1",

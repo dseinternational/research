@@ -9,19 +9,17 @@ Projects that use the Python package include [language-reading-predictors](https
 
 ## Use the library
 
-Install the `v0.19.4` release in a consuming project:
+To install the `v0.19.4` release, run this in your project's root.
 
 ```bash
 uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.19.4#subdirectory=src/python"
 ```
 
-The [Python readme](src/python/readme.md) lists optional extras and system requirements. The [documentation index](docs/README.md) links to usage guides and version-specific upgrade notes.
-
-Read the [0.19.4 upgrade notes](docs/migrating-to-0.19.md) before updating an existing project. They cover the dependency updates and colour-order changes since 0.18.0, including PyMC 6.4 and pandas 3.1.1 since 0.19.3.
+See the [Python readme](src/python/readme.md) for extras and system requirements, and the [documentation index](docs/README.md) for usage guides and the upgrade procedure.
 
 ## Develop in this repository
 
-Run these commands from the repository root. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) first; it provisions Python 3.14 from `.python-version`.
+Run the contributor commands from this repository's root. Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then use the locked workspace. uv uses the Python version in `.python-version`.
 
 ```bash
 uv sync --locked
@@ -31,11 +29,11 @@ uv run ruff format --check src/python
 uv build --package dse-research-utils
 ```
 
-The root `pyproject.toml` defines the contributor environment. The package requirements live in `src/python/pyproject.toml`. Consuming projects resolve their own dependencies and do not inherit this repository's lockfile or development groups.
+The root `pyproject.toml` defines the contributor workspace and its development groups. Each consumer resolves the package requirements from `src/python/pyproject.toml` in its own lockfile.
 
-The workspace resolves environments for Linux x86_64 and ARM64, Apple silicon macOS, and Windows x64. Windows runs natively. Intel macOS is outside the configured environments.
+`uv.lock` covers Linux x86_64 and ARM64, Apple silicon macOS, and native Windows x64. CI runs the Python tests on Linux ARM64 and Windows x64.
 
-Use Node.js 26, as specified in `.nvmrc`, and pnpm 12.23.0, as pinned in `package.json`, for the Markdown checks. Install that pnpm version using [pnpm's installation guide](https://pnpm.io/installation), then run:
+For Markdown, use the Node.js version in `.nvmrc` and the pnpm version in `package.json`. After installing [pnpm](https://pnpm.io/installation), run the following checks.
 
 ```bash
 pnpm install --frozen-lockfile
@@ -43,7 +41,7 @@ pnpm run spellcheck
 pnpm run format:check
 ```
 
-`pnpm run format` formats tracked Markdown files, except `data/**/*.md`. It preserves paragraph line breaks, so write each paragraph on one line. Follow [the contributor and agent instructions](AGENTS.md) for source conventions, AI attribution and commit messages.
+Use `pnpm run format` to format tracked Markdown outside `data/**/*.md`. Follow the [contributor and agent instructions](AGENTS.md) for paragraph wrapping, source conventions, AI attribution and commits.
 
 Cspell settings live in `cspell.yaml`. Add project terms to `cspell-words.txt`, one word per line.
 

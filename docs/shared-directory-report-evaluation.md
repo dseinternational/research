@@ -5,9 +5,7 @@
 
 # Directory, report and evaluation helpers
 
-These APIs require 0.14.0 or later. The [documentation index](README.md) covers installation and upgrades. Use small project adapters to preserve stored formats and scientific choices when adopting the helpers.
-
-Related guides cover [file writing and provenance](shared-file-provenance.md), [labelled samples, predictive summaries and likelihood aggregation](shared-predictive-arrays.md), and [report assets and feature groups](shared-assets-and-feature-groups.md). This guide covers directory promotion, file reads, intervals, Gaussian-process geometry and permutation scoring.
+These APIs require 0.14.0 or later. Use project adapters to preserve stored formats and scientific choices. [Other guides](README.md#usage-guides) · [Upgrade procedure](README.md#upgrade-a-consuming-project)
 
 ## Promote a completed directory
 
@@ -68,11 +66,11 @@ assert row["estimate"] == 2.0  # First row wins the equal-distance tie.
 assert nearest_row(grid, key="age", at=40, max_distance=3) is None
 ```
 
-A parsed file still needs the project's schema, freshness and scientific visibility checks. JSON `null` is present, a header-only CSV is present and empty, and a zero-byte document is invalid. Pandas can accept a short CSV row by filling missing cells, so successful parsing does not establish a complete table. The JSON reader rejects non-finite numeric tokens and floating numbers that overflow. The existing `ReportData.load_summary` and `load_json` methods retain their return and exception behaviour, including the legacy JSON parser's permissive treatment of non-finite numbers.
+A JSON `null` is present with a `None` value. A header-only CSV is present and empty. A zero-byte document is invalid. Pandas can accept short rows by filling missing cells. Check schema, freshness and report visibility in the report adapter. `read_json` rejects non-finite numeric tokens and floating-point overflow. `ReportData.load_json` uses the legacy parser, which accepts non-finite tokens.
 
 `nearest_row` skips unusable keys, retains the original row label and selects the first positional tie. With no distance bound it selects an endpoint outside the grid; that choice supplies neither interpolation nor evidence of support at the requested value. Exact distances for integer keys and integral queries avoid unsigned subtraction, signed overflow and false ties from rounded integer queries. `ReportData.value_at` delegates row selection to this helper.
 
-Keep required columns, unknown-file rules, accepted-fit checks and trace-based withholding in the report adapter. Give an invalid file a visible failure state. Use a pending-fit placeholder only for an absent fit when that is the report's intended rule. Recheck visibility if it can change during rendering.
+Give invalid files a visible failure state. Use a pending-fit placeholder only when a fit is missing and the report's rules allow it. Recheck visibility if it can change during rendering.
 
 ## Choose interval axes and missing-value rules explicitly
 
@@ -125,11 +123,11 @@ subset_basis, _ = gp.prior_linearized(rows[1:])
 np.testing.assert_array_equal(full_basis.eval()[1:], subset_basis.eval())
 ```
 
-`c_floor=None` uses PyMC's unmodified calibration. An explicit floor expands the boundary and recalculates the basis count to retain frequency coverage. Calibration depends on the installed PyMC version. Save the realised scalars instead of recalibrating when query rows change. The calibration label identifies the recipe; it is not a model identity or a numerical-library version. Validate input units, scaling and approximation accuracy in the project. Unrepresentable geometry is rejected with a request to rescale inputs.
+`c_floor=None` uses PyMC's calibration. A floor above PyMC's recommendation expands the boundary and recalculates the basis count to retain frequency coverage. Save the realised geometry with the fit and reuse it for new query rows. Record the PyMC version separately from the calibration recipe. Validate input units, scaling and approximation accuracy in the project, and rescale inputs if the geometry is unrepresentable.
 
 `create_hsgp` takes the caller's one-dimensional covariance and creates no random variables or model names. A public PyMC call fixes the saved centre before query rows enter the object. It supports centered and noncentered coefficients and an explicit first-basis removal option. Later numeric or symbolic query inputs must be finite, use the declared units and lie inside the saved domain. The caller remains responsible for those inputs and the covariance parameters.
 
-Keep priors, variable names and order, dimensions, observed-row projections and anchoring in the project. Store the realised geometry with its design metadata. The high-level `build_hsgp_1d` also uses shared calibration while retaining its prior and graph construction. Do not append plotting rows and recalibrate a saved fit.
+Keep priors, variable names and order, dimensions, observed-row projections and anchoring in the project. The high-level `build_hsgp_1d` uses shared calibration with its own prior and graph construction.
 
 ## Keep held-out and pooled permutation scoring explicit
 

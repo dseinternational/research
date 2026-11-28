@@ -5,11 +5,11 @@
 
 # Upgrade to 0.19.4
 
-These notes cover changes from `v0.18.0` to `v0.19.4`. Python 3.14 remains the minimum. Public helper signatures are unchanged, but dependencies can change results, file compatibility and figure colours.
+These notes cover the tagged `v0.19.4` release, with `v0.18.0` as the baseline. Python 3.14 remains the minimum. Review the changes that affect your project's models, data and figures.
 
 ## Changes since 0.19.3
 
-Version 0.19.4 includes PyMC 6.4.0, PyTensor 3.3.7 and pandas 3.1.1. It also raises the Azure Identity, Azure Blob Storage, h5netcdf, PyArrow and Zarr minimums shown below. The build requirement advances from Hatchling 1.32.4 to 1.33.0. The contributor lock files and tools include the updates merged after 0.19.3.
+The base requirements move to PyMC 6.4.0, PyTensor 3.3.7 and pandas 3.1.1. The table below includes the other dependency changes. The build requirement moves from Hatchling 1.32.4 to 1.33.0.
 
 PyMC 6.4 fixes forward sampling for LKJ correlation and covariance distributions with more than two dimensions, and their log-density normalization. Projects that use these distributions should review the fixes before comparing, resuming or reusing stored fits. PyMC also changes `find_MAP` and adds boundary-condition options to its Gaussian-process approximation. See the [PyMC 6.4 release notes](https://github.com/pymc-devs/pymc/releases/tag/v6.4.0). Library tests do not establish compatibility of a consuming project's saved models.
 
@@ -23,7 +23,7 @@ Version 0.19.3 raised the base pandas minimum from 3.0.6 to 3.1.0 and the `colum
 
 ## Dependency minimums
 
-These requirements increase from 0.18.0. Other package minimums are unchanged. The `all` extra inherits all these increases.
+Minimums that increased between the two tags are listed below. The `all` extra inherits these increases.
 
 | Requirement        | Applies to                 | 0.18.0 minimum | 0.19.4 minimum |
 | ------------------ | -------------------------- | -------------- | -------------- |
@@ -44,7 +44,7 @@ These requirements increase from 0.18.0. Other package minimums are unchanged. T
 | pyreadstat         | `columnar`                 | 1.3.6          | 1.3.7          |
 | zarr               | `storage`                  | 3.4.0          | 3.4.2          |
 
-All direct package minimums match the latest stable releases checked on 5 November 2026, except Numba. Numba 0.68.1 is available, but [PyTensor 3.3.7 requires Numba 0.68.0 or earlier](https://github.com/pymc-devs/pytensor/blob/rel-3.3.7/pyproject.toml). Numba therefore stays at 0.68.0. Raising its minimum would make the requirements impossible to resolve. NumPy remains below 2.6 because Numba 0.68 requires that limit. PyTensor remains below 3.4, as required by PyMC 6.4.
+PyTensor 3.3.7 limits Numba to 0.68.0. Numba 0.68 requires NumPy below 2.6, and PyMC 6.4 requires PyTensor below 3.4. [PyTensor requirements](https://github.com/pymc-devs/pytensor/blob/rel-3.3.7/pyproject.toml)
 
 ## Changes to review in consuming projects
 
@@ -62,7 +62,7 @@ Pyreadstat 1.3.7 fixes parallel Polars reads of chunks that contain only missing
 
 ### JAX sampling
 
-The `jax` and `all` extras require JAX 0.12.0.1 or later. JAX 0.12 requires AVX2 and FMA instructions on x86-64 CPUs; Apple silicon uses ARM64 builds. It also changes some array and random-number APIs. Review the [JAX 0.12.0 changes](https://docs.jax.dev/en/latest/changelog.html#jax-0-12-0-october-19-2026) if the project calls JAX directly. The [0.12.0.1 patch](https://github.com/jax-ml/jax/releases/tag/jax-v0.12.0.1) fixes Windows CPU intrinsics; this repository locks both JAX and jaxlib to that patch.
+The `jax` and `all` extras require JAX 0.12.0.1 or later. JAX 0.12 requires AVX2 and FMA instructions on x86-64 CPUs and changes some array and random-number APIs. The 0.12.0.1 patch fixes Windows CPU intrinsics. The `v0.19.4` lockfile pins JAX and jaxlib to that patch. [JAX 0.12.0 changes](https://docs.jax.dev/en/latest/changelog.html#jax-0-12-0-october-19-2026) · [0.12.0.1 patch](https://github.com/jax-ml/jax/releases/tag/jax-v0.12.0.1)
 
 ### Figure colours
 
@@ -74,10 +74,8 @@ Regenerate representative figures and check series meanings, legends and labels.
 
 The contributor lockfile updates direct and indirect dependencies. Since 0.19.3, it advances python-dateutil from 3.0.0 to 4.0.0. Version 4.0 requires exact ASCII digit counts in the numeric fields accepted by `isoparse` and related parsers. Some malformed dates and offsets that it previously accepted now raise `ValueError`. It also fixes calculations for the 366th day of a leap year. See the [dateutil 4.0 release notes](https://github.com/dateutil/dateutil/releases/tag/4.0.0). Projects upgrading from 0.18.0 should also review the [dateutil 3.0 time-zone changes](https://github.com/dateutil/dateutil/releases/tag/3.0.0), including UTC offsets in daylight-saving clock-change gaps.
 
-The contributor tools use Node.js 26, pnpm 12.16.1, Hatch 1.18.2, pytest 9.2.0, Ruff 0.17.3 and pandas-stubs 3.1.0.261029. CI uses setup-uv 10.3.3 and pnpm/action-setup 6.1.1. The .NET SDK remains at 10.0.403. The npm packages, CI actions, runtime pins and design-token tag were also checked for stable updates. These tools, the root development groups and this repository's lockfile do not become requirements of the published Python package. Consuming projects resolve their own environments from the package requirements and their own constraints.
+For contributor tool versions, see the configuration and lock files at `v0.19.4`. Consumers resolve from the package requirements and their own constraints. [Release source](https://github.com/dseinternational/research/tree/v0.19.4)
 
 ## Upgrade
 
-Follow the [shared upgrade procedure](README.md#upgrade-a-consuming-project) with target tag `v0.19.4`. Preserve the project's selected extras. Run its tests and compare data schemas, date handling, representative model diagnostics and rendered figures.
-
-Record the resolved commit and installed package versions. Keep historical fit manifests and environments intact. Apply the project's fit-compatibility rules before reusing or publishing stored fits. The shared library's tests do not establish compatibility of a consuming project's databases, queries or stored fits.
+Use `v0.19.4` as the target tag. Compare data schemas, date handling, representative model diagnostics and rendered figures as part of the project's checks. [Shared upgrade procedure](README.md#upgrade-a-consuming-project)

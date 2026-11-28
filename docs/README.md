@@ -9,7 +9,7 @@ Start with the [repository readme](../README.md) for contributor setup or the [P
 
 ## Usage guides
 
-These APIs were introduced in 0.14.0. File-permission options require 0.17.0 or later.
+The guides list the minimum release for the APIs they cover.
 
 | Guide                                                                             | Covers                                                                                                    |
 | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
@@ -20,12 +20,14 @@ These APIs were introduced in 0.14.0. File-permission options require 0.17.0 or 
 
 ## Upgrade a consuming project
 
-These instructions target `v0.19.4`. Read its [upgrade notes](migrating-to-0.19.md), including the changes since 0.19.3. A project on 0.17.0 or earlier also needs the [0.18.0 notes](migrating-to-0.18.md); a project on 0.16.2 or earlier also needs the [0.17.0 notes](migrating-to-0.17.md). Check the dependency requirements in the target tag's `src/python/pyproject.toml`.
+The current release is `v0.19.4`. Read the notes for each release you cross, and check `src/python/pyproject.toml` at your target tag for its dependency requirements.
 
-The 0.19.4 notes cover the dependency minimums, PyMC changes, database and data-import changes, and categorical colour order since 0.18.0. Use `v0.19.4` as the target tag in the procedure below.
+- [0.19.4](migrating-to-0.19.md) covers changes since 0.18.0, including separate notes for projects already on 0.19.3.
+- [0.18.0](migrating-to-0.18.md) covers design-token colours and palette changes.
+- [0.17.0](migrating-to-0.17.md) covers diagnostic reductions and file permissions.
 
 1. Change the Git tag in the consuming project's `pyproject.toml`. Preserve its selected extras and any additional project constraints. For a source declared in `tool.uv.sources`, update the `tag` field in that entry.
-2. Resolve the new package version and install the project's own locked environment:
+2. Resolve the new package version and install the project's locked environment.
 
    ```bash
    uv lock --upgrade-package dse-research-utils
@@ -33,9 +35,9 @@ The 0.19.4 notes cover the dependency minimums, PyMC changes, database and data-
    uv sync --locked
    ```
 
-3. Review the lockfile changes. Minimum requirements can force dependency updates, but the resolver may also select later compatible releases. This repository's lockfile and development groups are not inherited. Use `uv lock --upgrade` only when an update of the whole environment is intended.
+3. Review the lockfile for transitive dependency changes. Use `uv lock --upgrade` only when you intend to update the whole environment.
 4. Run the consuming project's documented checks and compare affected outputs. Record the resolved Git commit and installed package versions. Check both the installed distribution version and `dse_research_utils.__version__`.
-5. Apply the project's fit-compatibility rules before resuming or publishing stored fits. Keep historical manifests and recorded environments intact. A dependency update does not refit models, and passing library tests does not establish compatibility of every saved result.
+5. Apply the project's fit-compatibility rules before resuming or publishing stored fits. Keep historical manifests and environment records intact. Refit when the project's rules require it.
 
 Commit the dependency declaration, lockfile and any required adapters together. Adapters should preserve the project's schemas, labels, precision, missing-value rules and reporting decisions unless the upgrade deliberately changes them.
 

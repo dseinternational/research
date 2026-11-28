@@ -3,28 +3,28 @@
 
 # Copilot Instructions
 
-Keep `AGENTS.md`, `CLAUDE.md` and `.github/copilot-instructions.md` identical except for their first heading. Update all three when changing this guidance.
+Keep `AGENTS.md`, `CLAUDE.md` and `.github/copilot-instructions.md` identical except for the first heading.
 
 ## Repository scope
 
-This repository provides shared utilities for Down Syndrome Education International research projects. The Python package lives in `src/python/`; the root is its uv development workspace. The .NET area has no projects yet.
+This repository provides shared research utilities for Down Syndrome Education International. The Python package is in `src/python/` and its uv workspace is at the repository root.
 
-Read the [repository readme](https://github.com/dseinternational/research/blob/main/README.md) for setup and checks, the [Python readme](https://github.com/dseinternational/research/blob/main/src/python/readme.md) for the package map and defaults, and the [documentation index](https://github.com/dseinternational/research/blob/main/docs/README.md) for usage and migration guides. Check the source before changing a documented API contract.
+Read `README.md` for setup and checks, `src/python/readme.md` for the package map and defaults, and `docs/README.md` for usage and upgrade guides. Check the source before changing a documented API contract.
 
-The consumers include `dseinternational/language-reading-predictors`, `dseinternational/vocabulary-growth` and `dspopulations/us-birth-certificates`. Their locations are not fixed. When working across repositories, locate the intended checkout and read its instructions first.
+Consumers include `dseinternational/language-reading-predictors`, `dseinternational/vocabulary-growth` and `dspopulations/us-birth-certificates`. When working across repositories, locate the intended checkout and read its instructions first.
 
-Keep scientific and reporting choices in the consuming project. These include observation and likelihood units, priors, interval coverage, missing-value rules, permutation donors, fit acceptance and publication decisions. A shared helper or passing library test does not establish compatibility of a consumer's stored fits.
+Keep observation and likelihood units, priors, interval coverage, missing-value rules, permutation donors, fit acceptance and publication decisions in the consuming project. Verify stored-fit compatibility using the project's own rules.
 
 ## AI attribution
 
-Prefix document drafts, pull request descriptions, issue descriptions and comments on pull requests or issues with a callout that identifies the actual AI tool and model. Place it before the document title or other body text. Use this form for Markdown rendered on GitHub:
+Put an attribution callout with the actual AI tool and model before the title or body of document drafts, pull request and issue descriptions, and comments on pull requests or issues. Use this form for GitHub Markdown.
 
 ```markdown
 > [!NOTE]
 > Drafted by a LLM-based AI tool (Codex/GPT-6).
 ```
 
-For Quarto `.qmd` documents, use a Quarto callout:
+For Quarto `.qmd` documents, use a Quarto callout.
 
 ```markdown
 ::: {.callout-note appearance="simple"}
@@ -32,33 +32,29 @@ Drafted by a LLM-based AI tool (Codex/GPT-6).
 :::
 ```
 
-Substitute the tool and model used for the draft. GitHub alert syntax does not render as a Quarto callout.
-
 ## Markdown and commits
 
-Write each prose paragraph on one unwrapped line. Use only the blank lines needed to separate Markdown elements. Prettier preserves prose wrapping. `pnpm run format` formats tracked Markdown except `data/**/*.md`; `pnpm run format:check` checks it. `pnpm run spellcheck` uses cspell, whose configuration excludes the three agent instruction files.
+Write prose paragraphs on single lines and use blank lines to separate Markdown elements. See `README.md` for the format and spelling commands.
 
-Every commit must follow Conventional Commits. Use an imperative subject without a trailing period:
+Follow Conventional Commits. Write the description as an imperative without a trailing period.
 
 ```text
 <type>[optional scope]: <description>
 ```
 
-Types include `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `build`, `ci`, `chore` and `revert`. Mark a breaking change with `!` before the colon or a `BREAKING CHANGE:` footer. Add a body after a blank line when explanation is needed.
+Mark breaking changes with `!` before the colon or a `BREAKING CHANGE:` footer. Separate an optional explanatory body from the subject with a blank line.
 
 ## Dependencies and checks
 
-Run commands from the repository root. `uv sync --locked` installs the committed environment; `uv run` runs commands in it. The [readme](https://github.com/dseinternational/research/blob/main/README.md#develop-in-this-repository) lists Python, build and Markdown checks. Use `uv run pytest path/to/test_file.py` or `uv run pytest path/to/test_file.py::test_function_name` for focused tests.
+Run commands from the repository root. Follow the setup and checks in `README.md`. For a focused test, use `uv run pytest path/to/test_file.py` or append `::test_function_name` to the file path.
 
-Use Node.js 26 from `.nvmrc` and the pnpm version pinned in `package.json` for Markdown tooling. `pnpm install --frozen-lockfile` installs the committed dependencies. Use pnpm for dependency changes and commit `pnpm-lock.yaml` with them.
-
-Declare library requirements and extras in `src/python/pyproject.toml`. Keep their minimum versions there rather than copying that list into consumers. The root `pyproject.toml` is not packaged; its `dev` and `research` groups are repository tooling. Run `uv lock` after changing dependency declarations and commit `uv.lock` with them.
-
-The `boosting` and `boosting-cpu` extras both provide `xgboost` and must not be combined. The `all` extra selects `boosting`. The [Python readme](https://github.com/dseinternational/research/blob/main/src/python/readme.md#system-requirements-for-plots) covers the Graphviz executable and plot fonts, which are system requirements rather than Python packages.
+- Declare shared requirements and extras in `src/python/pyproject.toml`. Consumers inherit those minimums. The root `pyproject.toml` defines the contributor environment. Run `uv lock` after changing dependency declarations and commit `uv.lock` with them.
+- Use pnpm to change Markdown tooling dependencies and commit `pnpm-lock.yaml` with them.
+- Use either `boosting` or `boosting-cpu`, since both provide `xgboost`. `all` includes `boosting`. See `src/python/readme.md` for system requirements for graphs and plots.
 
 ## Python conventions
 
-Every source file starts with:
+Start every Python source file with these headers.
 
 ```python
 # Copyright (c) 2026 Down Syndrome Education International and contributors
@@ -68,17 +64,15 @@ Every source file starts with:
 - Use `snake_case` for files, functions and variables, and `UPPER_CASE` for constants. Keep domain affixes such as `FIGSIZE_`, `DPI_` and `_COLOUR`.
 - Annotate function signatures. Use `X | Y` for unions.
 - Use NumPy-style docstrings with sections such as `Parameters` and `Returns`. Document dataclass fields with a string literal after each declaration.
-- Use fully qualified absolute imports. Do not add `__init__.py` re-exports. The package root stores `__version__` for Hatch; other package initialisers contain no executable definitions.
+- Use fully qualified absolute imports. Keep initialisers free of re-exports and executable definitions, except for `__version__` in `dse_research_utils/__init__.py`, which Hatch reads.
 - Use standard-library dataclasses and `__post_init__` for validation.
-- Print library output through `get_console()` from `dse_research_utils.console.console`. The shared console handles characters that legacy output encodings cannot represent. Notebooks and scripts can use `from rich import print`.
+- Use `get_console()` from `dse_research_utils.console.console` for library output, including on legacy encodings. Notebooks and scripts can use `from rich import print`.
 - Follow existing plotting patterns. Create and draw the figure, optionally save to `output_dir` as PNG at 300 DPI and SVG, then return the figure. Keep figure lifetime explicit when using save helpers, which can close it.
-- Take plot colours from `plot.styles`, which reads the DSE design tokens vendored in `plot/design_tokens/`: `CHART_COLOURS` or `categorical_palette()` for up to six categories, `sequential_palette()` or `diverging_palette()` for three to five ordered values, and `SEQUENTIAL_CMAP` or `DIVERGING_CMAP` for continuous scales. The tokens are generated by `dsegroup/apps-common` and pinned in `design-tokens.pin.json`; never edit them by hand, and bump them by copying the released file and updating the pin.
-- Call `init_workbook()` at the start of notebooks and `init_script()` at the start of scripts. Both apply the default plot style; workbook setup also reports environment information.
-
-Ruff settings in `src/python/pyproject.toml` specify Python 3.14, a 120-character line limit and the enabled rules. Tests omit annotation rules. Check lint with `uv run ruff check src/python` and formatting with `uv run ruff format --check src/python`.
-
-Read reporting defaults from `ReportingConfiguration` and sampling presets from `statistics.models.sampling`. Pass interval coverage and kind explicitly when a report must use the same convention in its tables and figures. Preset draw counts do not guarantee convergence.
+- Use `plot.styles` for colours. The Python readme explains which palette to use. Update `plot/design_tokens/` by copying the released colour file from `dsegroup/apps-common` and updating `design-tokens.pin.json` together.
+- Start notebooks with `init_workbook()` and scripts with `init_script()` from `environment.setup`. Both apply the default plot style. Notebooks also report environment information.
+- Follow the Ruff settings in `src/python/pyproject.toml`, including the 120-character line limit and the annotation exemption for tests.
+- Read reporting defaults from `ReportingConfiguration` and sampling presets from `statistics.models.sampling`. Pass interval coverage and kind explicitly when tables and figures must agree. Check convergence after sampling.
 
 ## .NET configuration
 
-[`global.json`](https://github.com/dseinternational/research/blob/main/global.json) sets the SDK and test runner. [`NuGet.config`](https://github.com/dseinternational/research/blob/main/NuGet.config) defines package sources and mapping. The [.NET readme](https://github.com/dseinternational/research/blob/main/src/dotnet/readme.md) records the current implementation status.
+See `src/dotnet/readme.md` for the SDK, package sources and implementation status.

@@ -5,9 +5,7 @@
 
 # Shared file writes and provenance
 
-These helpers replace files and collect provenance facts. Each consuming project retains its manifest fields, JSON encoding, file selection, hash prefixes and rules for accepting a saved result.
-
-The file-write and provenance APIs require 0.14.0 or later; permission options require 0.17.0 or later. They use the Python standard library. See the [installation and upgrade notes](README.md#upgrade-a-consuming-project).
+File-write and provenance helpers require 0.14.0 or later. Permission options require 0.17.0 or later. Keep manifest fields, JSON encoding, file selection, hash prefixes and fit-acceptance rules in the consuming project. [Upgrade procedure](README.md#upgrade-a-consuming-project)
 
 ## Write one complete file
 
@@ -51,7 +49,7 @@ def write_json_atomic(
     atomic_write(path, write_temporary)
 ```
 
-Pass the existing encoder as `encode_extra`. Changing it is a separate change to the stored format. The file helper neither sanitises non-finite values nor changes enum, array or dataclass representations. The shared diagnostic writer continues to apply its own strict JSON sanitisation before writing.
+Pass the project's existing encoder as `encode_extra` to preserve its stored format. The shared diagnostic writer sanitises its own JSON before calling the file helper.
 
 On POSIX, the temporary file starts with owner-only read/write permissions. The destination takes the temporary file's final permissions and metadata. A callback can use `shutil.copy2` to retain source-file metadata or set an explicitly required mode. Existing destination permissions are not inherited. If a project previously created ordinary files, choose its sharing mode explicitly when adopting this helper.
 
@@ -108,7 +106,7 @@ facts = {
 }
 ```
 
-This example field set is illustrative. Do not replace an existing manifest schema with it during migration. File-open and read errors from `sha256_file` propagate. Package lookup reads installed distribution metadata without importing the package; missing, unreadable or malformed metadata produces `None`.
+Use the project's existing manifest schema. `sha256_file` propagates file-open and read errors. `package_versions` reads installed distribution metadata and returns `None` for missing, unreadable or malformed metadata.
 
 `GitSnapshot.state` distinguishes `available`, `partial` and `unavailable`. A detached HEAD or a branch with no commits yet is a valid, available Git state. In those cases, the absent branch or commit is `None`, with `detached` or `unborn` set explicitly. Failed queries also retain `None` for unknown facts, including `dirty`; they do not report a clean checkout by default. A successful but incomplete response retains only the facts it could establish and records `incomplete_output`.
 

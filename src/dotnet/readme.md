@@ -3,6 +3,8 @@
 
 # .NET utilities
 
-This directory has no projects or implementation yet. There is no .NET build or test command to run.
+This directory is reserved for .NET projects. The repository currently has no .NET build or test commands.
 
-The root [`global.json`](../../global.json) sets SDK 10.0.404, permits later minor SDK versions and selects `Microsoft.Testing.Platform`. [`NuGet.config`](../../NuGet.config) maps `DSE.*` packages to the `dseinternational` feed and other packages to `nuget.org`.
+The SDK pin, minor-version roll-forward and `Microsoft.Testing.Platform` test runner are set in [`global.json`](../../global.json).
+
+`DSE.*` packages use the `dseinternational` feed and other packages use `nuget.org`, as mapped in [`NuGet.config`](../../NuGet.config).

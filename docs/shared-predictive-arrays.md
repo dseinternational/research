@@ -5,13 +5,13 @@
 
 # Shared sample arrays and predictive summaries
 
-These APIs require 0.14.0 or later and use NumPy, pandas and xarray. See the [installation and upgrade notes](README.md#upgrade-a-consuming-project). Consuming projects retain their observation units, groups, reporting schemas, missing-value rules and fit-acceptance policies.
+These APIs require 0.14.0 or later. Keep observation units, groups, reporting schemas, missing-value rules and fit-acceptance policies in the consuming project. [Upgrade procedure](README.md#upgrade-a-consuming-project)
 
 ## Preserve observation identity when reshaping samples
 
 `statistics.samples.sample_matrix` turns an xarray `DataArray` into an observation-by-sample NumPy matrix. Every dimension must be declared as either a sample dimension or an observation dimension. Each dimension must have explicit, unique, non-missing coordinate labels. The last declared dimension in each group varies fastest. Coordinates remain in their existing order.
 
-The returned `SampleMatrix` contains the values, sample and observation indexes, and the declared dimension names. Its `observed_values` method checks the observed array against the saved observation indexes before flattening it. It accepts a different dimension order but rejects reordered labels, different index types and implicit coordinates. It never aligns by sorting, drops rows or assumes that equal shapes prove alignment.
+`SampleMatrix` contains the values, sample and observation indexes, and declared dimension names. Its `observed_values` method checks the observed array against the saved indexes before flattening. Dimension order may differ. Within each dimension, coordinates must be explicit and match in order, labels and index type.
 
 ```python
 import xarray as xr
@@ -60,9 +60,7 @@ Midpoint PIT counts the probability below the observation plus half the probabil
 
 Bounds use NumPy's linear quantiles at `(1 - p) / 2` and `1 - (1 - p) / 2`. Inclusion counts both endpoints. Actual predictive mass can differ from nominal coverage. For draws `[0, 1]`, the 90% bounds are `[0.05, 0.95]`, with no predictive draws inside. Do not label the measured mass as necessarily at least nominal coverage.
 
-Both inputs must contain finite real numeric values and nonempty observation and sample axes. Masked arrays require explicit filtering or filling. Boolean predictive draws require explicit conversion to numeric zero/one values. Overflow raises an error. The helper neither silently removes missing values nor chooses which observation population to report.
-
-If a project excludes non-finite observations, apply the same mask to observations, draw rows, labels and groups before calling. Handle the case where no rows remain in the adapter. These choices determine the population shown in the report.
+Both inputs need finite real numeric values and nonempty observation and sample axes. Filter or fill masked arrays explicitly and convert Boolean predictive draws to numeric zeroes and ones. Overflow raises an error. If you exclude observations, apply the same mask to observations, draw rows, labels and groups, and handle an empty result in the adapter.
 
 Scalar quantile calculations preserve float32 bounds and medians. The predictive mean uses the input reduction dtype before storage as float64. To preserve an existing grouped summary, check the dtype of interval widths before aggregation and whether mean error is calculated as a mean of differences or a difference of means. These choices can change floating-point results.
 

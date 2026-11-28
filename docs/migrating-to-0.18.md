@@ -35,7 +35,7 @@ Colour strings such as `"C1"` follow the cycle. `"C1"` was orange and is now gre
 
 ### Deprecated named hues
 
-Reading a `COLOUR_*` name, including through `from dse_research_utils.plot.styles import COLOUR_BLUE` or `hasattr`, raises `DeprecationWarning`. Python shows the warning by default only when the code reading the name runs as `__main__`, such as a script, so a use in a package module usually appears only under pytest.
+Accessing a `COLOUR_*` name, including through an import or `hasattr`, emits `DeprecationWarning`. Use the warning filter below to catch accesses in scripts and tests.
 
 | Name                                                            | Returns in 0.18.0                        | Replace with                                                |
 | --------------------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------- |

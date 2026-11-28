@@ -1,7 +1,7 @@
 > [!NOTE]
 > Drafted by a LLM-based AI tool (Codex/GPT-6).
 
-<!-- cspell:words HSGP BFMI MCMC PSIS ELPD docstrings prob fontlist cachedir CMAP cmap dsegroup edgecolor fetchone -->
+<!-- cspell:words HSGP docstrings prob fontlist cachedir CMAP cmap dsegroup edgecolor -->
 
 # Python utilities
 
@@ -9,40 +9,36 @@
 
 ## Install
 
-Install the `v0.19.4` release:
+Install the `v0.19.4` release from your project's root.
 
 ```bash
 uv add "dse-research-utils @ git+https://github.com/dseinternational/research.git@v0.19.4#subdirectory=src/python"
 ```
 
-For an existing installation, follow the [upgrade procedure](../../docs/README.md#upgrade-a-consuming-project) and [0.19.4 notes](../../docs/migrating-to-0.19.md). Preserve the extras the project already uses.
+For an existing installation, follow the [upgrade procedure](../../docs/README.md#upgrade-a-consuming-project) and [0.19.4 notes](../../docs/migrating-to-0.19.md).
 
-The 0.19.4 notes cover dependency and figure-colour changes since 0.18.0, including PyMC 6.4 and pandas 3.1.1 since 0.19.3. Review them before adopting the new dependency minimums or regenerating figures.
+The base install includes PyMC, PyTensor, nutpie, ArviZ, PreliZ, numerical libraries and the h5netcdf/h5py engine used to save traces. See `pyproject.toml` in the target tag for dependency minimums. Add extras inside the dependency name in the install command, for example `dse-research-utils[graphs,viz]`.
 
-This package's `pyproject.toml` defines the shared minimum dependency versions. Consuming projects inherit these requirements and resolve their own lock files. Declare any additional requirements that their own code needs, without copying the library's version list.
+| Extra          | Packages                                    | Use                                             |
+| -------------- | ------------------------------------------- | ----------------------------------------------- |
+| `viz`          | seaborn                                     | Histogram grids                                 |
+| `graphs`       | graphviz, networkx                          | Graph plotting with the system `dot` executable |
+| `notebook`     | jupyter, jupytext                           | Notebooks and image display                     |
+| `dependence`   | dcor                                        | Distance correlation                            |
+| `tuning`       | optuna, optuna-integration                  | Parameter search                                |
+| `io`           | orjson, tabulate                            | JSON and table output                           |
+| `jax`          | jax, numpyro                                | Alternative sampling backends                   |
+| `boosting`     | lightgbm, xgboost, shap                     | Gradient boosting and explanation               |
+| `boosting-cpu` | lightgbm, xgboost-cpu, shap                 | CPU-only boosting (xgboost on macOS)            |
+| `columnar`     | duckdb, polars, pyreadstat                  | Columnar and statistical data formats           |
+| `storage`      | zarr                                        | Alternative array storage                       |
+| `all`          | All compatible extras, including `boosting` | All optional library features                   |
 
-The base install includes PyMC, PyTensor, nutpie, ArviZ, PreliZ, numerical libraries and the h5netcdf/h5py engine used to save traces. Optional extras add:
+Choose one of `boosting` and `boosting-cpu`. Both provide the `xgboost` import. Helpers report missing optional packages when called.
 
-| Extra          | Packages                                    | Use                                                   |
-| -------------- | ------------------------------------------- | ----------------------------------------------------- |
-| `viz`          | seaborn                                     | Histogram grids                                       |
-| `graphs`       | graphviz, networkx                          | Graph plotting; also requires the system `dot` binary |
-| `notebook`     | jupyter, jupytext                           | Notebooks and image display                           |
-| `dependence`   | dcor                                        | Distance correlation                                  |
-| `tuning`       | optuna, optuna-integration                  | Parameter search                                      |
-| `io`           | orjson, tabulate                            | JSON and table output                                 |
-| `jax`          | jax, numpyro                                | Alternative sampling backends                         |
-| `boosting`     | lightgbm, xgboost, shap                     | Gradient boosting and explanation                     |
-| `boosting-cpu` | lightgbm, xgboost-cpu, shap                 | CPU-only boosting; uses xgboost on macOS              |
-| `columnar`     | duckdb, polars, pyreadstat                  | Columnar and statistical data formats                 |
-| `storage`      | zarr                                        | Alternative array storage                             |
-| `all`          | All compatible extras, including `boosting` | Full contributor environment                          |
+The `jax` and `all` extras require AVX2 and FMA instructions on x86-64 CPUs. Apple silicon uses ARM64 builds. [JAX 0.12 release notes](https://docs.jax.dev/en/latest/changelog.html#jax-0-12-0-october-19-2026)
 
-Add extras inside the dependency name, for example `dse-research-utils[graphs,viz]`, in the installation command. `boosting` and `boosting-cpu` provide the same `xgboost` import and must not be combined. Helpers import optional packages when needed and report a missing dependency if it is absent.
-
-The `jax` extra requires AVX2 and FMA instructions on x86-64 CPUs because [JAX 0.12.0 raised its CPU requirements](https://docs.jax.dev/en/latest/changelog.html#jax-0-12-0-october-19-2026). This includes the `all` extra. Apple silicon uses the ARM64 builds.
-
-The `columnar` and `all` extras require DuckDB 2.0 or later. DuckDB 2.0 creates database files in a format that earlier versions cannot read. Its Python relation API also changes, including removal of `fetchone()`. Review the [DuckDB migration guide](https://www.duckdb.org/docs/preview/operations_manual/migration) before upgrading a project that shares database files with DuckDB 1.x or uses extensions built for it. Passing this library's tests does not establish compatibility with a consuming project's SQL queries or stored databases.
+The `columnar` and `all` extras require DuckDB 2.0 or later. Check file and Python API compatibility before upgrading from 1.x. [Database and data-import changes](../../docs/migrating-to-0.19.md#databases-and-data-imports)
 
 ## System requirements for plots
 
@@ -52,7 +48,7 @@ The default plot style uses the Noto Sans and Noto Sans Math system fonts. Insta
 
 Plain-text symbols fall back to Noto Sans Math when installed, then to matplotlib's bundled DejaVu Sans. Without Noto Sans, ordinary text uses the next installed font in the style's list. Missing math fonts can produce font warnings and different output. Install the same fonts on workstations and CI machines when figures must match.
 
-If matplotlib cannot find newly installed fonts, delete `fontlist-*.json` from its cache directory and restart running kernels. Find the directory with:
+If matplotlib cannot find newly installed fonts, use the command below to locate its cache directory. Delete `fontlist-*.json` there, then restart running kernels.
 
 ```bash
 uv run python -c "import matplotlib; print(matplotlib.get_cachedir())"
@@ -62,18 +58,18 @@ Regenerate affected figures and model graphs. Check labels, legends and symbols 
 
 ## Plot colours
 
-Figure colours follow the DSE design language, so a group has the same colour in a research figure as on DSE's websites. `dse_research_utils.plot.styles` reads them from `plot/design_tokens/colors.json`, a file generated by the design tokens in `dsegroup/apps-common` and pinned by its hash. The test suite fails if the copy changes; replace it only with a released file, and update `design-tokens.pin.json` with it.
+`dse_research_utils.plot.styles` reads the DSE design tokens from `plot/design_tokens/colors.json`. To update the tokens, copy a released file from `dsegroup/apps-common` and update `design-tokens.pin.json` with it.
 
-- Categorical series take `CHART_COLOURS` in order, which is also the default colour cycle. `categorical_palette(n)` returns up to six, as hex strings; more raises `ValueError`, because the design language allows six categorical series. Group the smallest categories, use small multiples or label series directly, or pass a matplotlib `palette` for a figure outside the design language.
+- Use `CHART_COLOURS` in order for categorical series. It is also the default colour cycle. `categorical_palette(n)` returns up to six hex colours and raises `ValueError` above six. For more categories, group the smallest categories, use small multiples, label series directly or pass a named matplotlib `palette`.
 - Ordered values take `sequential_palette(n)`, from least to most, or `diverging_palette(n)`, from the low or negative end in orange to the high or positive end in blue, for three to five values. Every categorical colour and ordered step reaches 3:1 against the white background. Separate neighbouring segments, such as the parts of a stacked bar, with `edgecolor=BACKGROUND_COLOUR`.
 - Continuous scales are `SEQUENTIAL_CMAP` and `DIVERGING_CMAP`, registered as `dse_sequential` and `dse_diverging`, with `_r` reversals. The sequential scale is the default `image.cmap`. `plot_heatmap(..., centre=0.0)` centres the diverging scale, for example for correlations.
-- `TEXT_COLOUR`, `MUTED_TEXT_COLOUR`, `LINE_COLOUR` and `BACKGROUND_COLOUR` are the design language's text, secondary text, hairline and background roles. Draw a reference line that carries meaning in `MUTED_TEXT_COLOUR`; `LINE_COLOUR` is for grid lines.
+- Use `TEXT_COLOUR` for text, `MUTED_TEXT_COLOUR` for secondary text and reference lines, `LINE_COLOUR` for grid lines, and `BACKGROUND_COLOUR` for backgrounds.
 
-The named hues `COLOUR_BLUE` to `COLOUR_DARK_PURPLE` are deprecated and raise `DeprecationWarning`. Blue, orange, green and purple now return `CHART_COLOURS[0]` to `CHART_COLOURS[3]`; the others keep their old values until callers choose a chart colour or an ordered step.
+Accessing a deprecated `COLOUR_*` name emits `DeprecationWarning`. Blue, orange, green and purple map to `CHART_COLOURS[0]` through `[3]`. Other names retain their legacy values. [Deprecated named hues](../../docs/migrating-to-0.18.md#deprecated-named-hues)
 
 ## Package map
 
-Modules live under `dse_research_utils`. Import helpers from their defining module; `__init__.py` files provide no re-exports.
+Import helpers from their defining module under `dse_research_utils`.
 
 | Area                  | Purpose                                                                                               | Usage guide                                                                                                                                                                                                                                       |
 | --------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -86,13 +82,11 @@ Modules live under `dse_research_utils`. Import helpers from their defining modu
 | `report`              | Model artefact reads, nearest-row lookup and asset checks                                             | [Report reads](../../docs/shared-directory-report-evaluation.md#read-file-state-before-applying-report-rules), [assets](../../docs/shared-assets-and-feature-groups.md)                                                                           |
 | `statistics`          | Intervals, predictive checks, likelihood aggregation, diagnostics, model helpers and sampling presets | [Statistical arrays](../../docs/shared-predictive-arrays.md), [array intervals and HSGP geometry](../../docs/shared-directory-report-evaluation.md), [diagnostic reductions](../../docs/migrating-to-0.17.md)                                     |
 
-The helpers keep study choices in the caller. Projects select observation units, priors, interval coverage, feature cut thresholds, scoring populations, missing-value rules and criteria for accepting or publishing a fit.
-
 ## Reporting and sampling defaults
 
-Shared interval helpers and `ReportingConfiguration.ci_prob` default to 0.89 coverage. `ReportingConfiguration.interval_kind` defaults to `"hdi"` for a highest-density interval; several interval functions default to `"eti"` for an equal-tailed interval. Pass both coverage and kind explicitly when a report needs one convention throughout.
+`ReportingConfiguration` defaults to 0.89 coverage (`ci_prob`) and a highest-density interval (`interval_kind="hdi"`). Helpers such as `interval_1d` default to an equal-tailed interval (`kind="eti"`) at the same coverage. Pass both settings explicitly when tables and figures must agree.
 
-`statistics.models.sampling.get_sampling_configuration` supplies these presets. Draws and tuning steps are per chain. MCMC means Markov chain Monte Carlo, the method used to draw samples from a posterior distribution.
+`statistics.models.sampling.get_sampling_configuration` defaults to `dev`. Draws and tuning steps are per chain.
 
 | Accepted names                           | Chains | Draws | Tuning steps | `target_accept` |
 | ---------------------------------------- | ------ | ----- | ------------ | --------------- |
@@ -101,6 +95,6 @@ Shared interval helpers and `ReportingConfiguration.ci_prob` default to 0.89 cov
 | `rep-lite`, `reporting-lite`, `rep_lite` | 4      | 4,000 | 4,000        | 0.95            |
 | `reporting`, `report`, `rep`             | 6      | 6,000 | 6,000        | 0.95            |
 
-The default seed is 47. Worker count is capped by the chain count and available cores. A preset does not guarantee convergence or sufficient precision. Check the fitted model's diagnostics.
+The default seed is 47. Worker count is capped by the chain count and available cores. Check convergence and precision using the fitted model's diagnostics.
 
 For contributor setup and checks, use the [repository readme](../../README.md#develop-in-this-repository).

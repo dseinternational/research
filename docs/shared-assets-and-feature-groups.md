@@ -5,11 +5,11 @@
 
 # Shared report assets and feature groups
 
-These APIs inspect direct HTML resources and group features from an existing distance matrix. They require 0.14.0 or later. See the [installation and upgrade notes](README.md#upgrade-a-consuming-project). The caller uploads reports and chooses publication rules and feature cut thresholds.
+These APIs require 0.14.0 or later. The consuming project handles uploads, publication rules and feature cut thresholds. [Upgrade procedure](README.md#upgrade-a-consuming-project)
 
 ## Check the local report before checking an upload
 
-`report.assets.inspect_local_assets` parses HTML rather than searching for quoted strings. It records direct resource references, such as images, scripts and stylesheets, and distinguishes them from ordinary navigation. Each reference records its source page, element, attribute, target, required status and local file state. Missing files remain visible.
+`report.assets.inspect_local_assets` parses HTML and distinguishes direct resources such as images, scripts and stylesheets from navigation links. Each reference records its source page, element, attribute, target, required status and local file state, including missing files.
 
 The inspection root is the directory that corresponds to the upload prefix. It defaults to the entry page's directory. A reference such as `../figures/plot.png` can resolve inside an explicitly supplied root, but paths and symlinks that escape the root are invalid. The scanner preserves an internal symlink's referenced filename for matching against the uploader's inventory.
 
@@ -23,7 +23,6 @@ from dse_research_utils.report.assets import (
     AssetFailure,
     check_uploaded_assets,
     inspect_local_assets,
-    verify_published_assets,
 )
 
 with TemporaryDirectory() as directory:
@@ -53,7 +52,9 @@ The scanner decodes HTML entities, separates URL path/query/fragment, then decod
 `verify_published_assets` accepts a directory URL and raw relative filenames. It preserves an already encoded upload prefix and encodes each filename once. It requests each distinct path once, in the supplied order. To check the entry page first, put it first explicitly.
 
 ```python
-requests = []
+from dse_research_utils.report.assets import AssetFailure, verify_published_assets
+
+requests: list[str] = []
 
 
 def fetch_status(url: str, timeout: float) -> int:
@@ -72,7 +73,7 @@ assert failures == (AssetFailure("missing.png", "http_status", 404),)
 
 The default transport uses a bounded HTTP GET, closes the response without downloading its body and rejects redirects. A login page reached through a redirect cannot supply a successful status for the requested asset. Callers can inject a transport that returns an integer status and follows the same redirect rule. Failures record a relative path, an HTTP status or exception type; raw exception messages are excluded.
 
-Run the local/upload inventory check first, then make HTTP requests only after it passes. A 200 response establishes HTTP availability, not correct bytes, content type, complete page rendering or permission to publish the scientific results. Keep report visibility rules and final success messages in the caller.
+Verify the upload inventory against the local inspection before checking HTTP availability. A 200 response establishes availability. The consuming project checks content and rendering and decides whether to publish.
 
 ## Reuse a dissimilarity matrix for feature grouping
 
